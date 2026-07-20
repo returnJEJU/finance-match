@@ -1,0 +1,89 @@
+# =========================================================
+#  비밀값 · 보안  (DB / 인프라 — 절대 커밋 금지)
+# =========================================================
+# 환경 변수 (실제 비밀값: DB 비밀번호, JWT secret 등)
+.env
+.env.*
+!.env.example
+
+# 개인 비밀 설정 (로컬 더미값 담은 application-local.properties 는 커밋함)
+**/application-secret.properties
+**/application-*-local.properties
+
+# 인증서 · 개인 키 (Nginx HTTPS, SSH 등)
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+*.keystore
+**/certs/
+
+# 클라우드 자격증명 (AWS 등)
+.aws/
+credentials
+
+# DB 덤프 · 백업 · Redis 스냅샷
+#  (schema.sql / data.sql 은 스키마라 커밋 대상 → 여기서 제외하지 않음)
+*.dump
+*.bak
+dump.rdb
+*backup*.sql
+
+# =========================================================
+#  빌드 산출물 · 의존성
+# =========================================================
+# 프론트엔드 (Node / Vite)
+node_modules/
+**/node_modules/
+**/dist/
+**/coverage/
+**/.vite/
+
+# 백엔드 (Gradle / Java)
+.gradle/
+**/build/
+*.class
+out/
+#  ↑ gradlew, gradlew.bat, gradle-wrapper.jar 는 커밋해야 함 (build/ 에 안 들어감)
+
+# 도커 볼륨 데이터 (bind mount 시 생기는 경우 대비)
+**/mysql-data/
+**/redis-data/
+
+# 로그
+logs/
+*.log
+
+# =========================================================
+#  OS 생성 파일  (맥 · 윈도우 혼재 대응)
+# =========================================================
+# macOS
+.DS_Store
+.AppleDouble
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# =========================================================
+#  IDE · 에디터
+# =========================================================
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+
+# VS Code (팀 공유용 확장 추천만 커밋)
+.vscode/*
+!.vscode/extensions.json
+
+# Eclipse / STS
+.classpath
+.project
+.settings/

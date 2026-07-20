@@ -1,0 +1,49 @@
+# 로컬 개발 인프라 — MySQL + Redis.
+#
+# 팀원은 clone 후 프로젝트 루트에서:
+#   docker compose up -d       # MySQL·Redis 띄우기
+#   docker compose down        # 정지 (데이터는 볼륨에 유지)
+#   docker compose down -v     # 데이터까지 삭제 (스키마 초기화가 필요할 때)
+#
+# 백엔드(Spring)는 IDE/Gradle 로, 프론트(Vue)는 npm 으로 각자 실행한다.
+# Nginx·앱 컨테이너는 배포(운영) 단계에서 추가한다.
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: finance-match-mysql
+    environment:
+      MYSQL_DATABASE: finance_match
+      MYSQL_USER: fmatch
+      MYSQL_PASSWORD: fmatch
+      MYSQL_ROOT_PASSWORD: root
+      TZ: Asia/Seoul
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 테이블 스키마(schema.sql)는 도메인 확정 후 여기에 마운트한다:
+      # - ./be/src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-proot']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: finance-match-redis
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mysql-data:
+  redis-data:

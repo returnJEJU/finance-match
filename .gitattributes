@@ -1,0 +1,48 @@
+# =========================================================
+#  줄바꿈(EOL) 통일 — 윈도우/맥 혼재 협업 필수
+#  저장소에는 LF 로 저장해 OS 간 diff 노이즈를 없앤다.
+# =========================================================
+
+# 기본: 텍스트 파일은 자동 감지 + LF 로 정규화
+* text=auto eol=lf
+
+# 쉘 스크립트는 반드시 LF (윈도우에서도 gradlew, git bash 실행 보장)
+*.sh   text eol=lf
+gradlew text eol=lf
+
+# 윈도우 배치/명령 파일은 반드시 CRLF
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+gradlew.bat text eol=crlf
+
+# 소스/설정 (명시적으로 텍스트 취급)
+*.java   text
+*.js     text
+*.vue    text
+*.ts     text
+*.json   text
+*.css    text
+*.html   text
+*.xml    text
+*.yml    text
+*.yaml   text
+*.md     text
+*.properties text
+*.sql    text
+*.gradle text
+
+# =========================================================
+#  바이너리 — 변환 금지 (줄바꿈 손상 방지)
+# =========================================================
+*.jar   binary
+*.war   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary

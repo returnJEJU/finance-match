@@ -1,0 +1,8 @@
+plugins {
+    // JDK toolchain 자동 프로비저닝.
+    // 팀원이 JDK 17 을 설치하지 않았어도 Gradle 이 자동으로 탐지/다운로드한다.
+    // 윈도우/맥 혼재 환경에서 JDK 경로 하드코딩 없이 동작하게 하는 핵심 플러그인.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+rootProject.name = 'finance-match-api'
