@@ -1,2 +1,15 @@
 /* Tailwind CSS v4 엔트리. 이 한 줄이 Tailwind 전체를 불러온다. */
 @import 'tailwindcss';
+
+/* Pretendard (가변 폰트). 빌드에 포함되어 오프라인·배포 환경에서도 안정적. */
+@import 'pretendard/dist/web/variable/pretendardvariable.css';
+
+/* Tailwind v4: 기본 sans 폰트를 Pretendard 로 지정 (font-sans 유틸/기본값에 반영) */
+@theme {
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* 전역 폰트 고정 */
+body {
+  font-family: var(--font-sans);
+}
