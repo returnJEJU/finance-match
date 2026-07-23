@@ -22,8 +22,11 @@ services:
       - '3306:3306'
     volumes:
       - mysql-data:/var/lib/mysql
-      # 테이블 스키마(schema.sql)는 도메인 확정 후 여기에 마운트한다:
-      # - ./be/src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      # DB 초기화 sql (빈 볼륨 첫 기동에만 파일명 순서로 실행)
+      #   01·02 = 스키마 + 운영 참조데이터(상품·연령중앙값) → 운영에도 필요
+      #   03(데모 시드)은 개발 전용이라 docker-compose.override.yml 에서만 마운트
+      - ./be/src/main/resources/db/01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./be/src/main/resources/db/02-seed-product.sql:/docker-entrypoint-initdb.d/02-seed-product.sql:ro
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-proot']
       interval: 10s
