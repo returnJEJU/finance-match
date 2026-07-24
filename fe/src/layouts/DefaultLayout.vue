@@ -13,7 +13,7 @@ const showBack = computed(() => route.meta.showBack ?? false)
 </script>
 
 <template>
-  <div class="mx-auto min-h-screen max-w-md bg-gray-50">
+  <div class="mx-auto min-h-screen max-w-[393px] bg-gray-50">
     <AppHeader :title="title" :show-back="showBack" />
 
     <!-- 상단바(50px)·하단탭(58px)에 가리지 않게 여백 -->

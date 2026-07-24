@@ -15,7 +15,7 @@ const route = useRoute()
 
 // to: 라우터 등록 시 이 name과 맞춰야 활성 표시가 동작한다.
 const tabs = [
-  { name: 'home', label: '홈', to: '/', empty: homeEmpty, filled: homeFilled },
+  { name: 'dashboard', label: '홈', to: '/dashboard', empty: homeEmpty, filled: homeFilled },
   { name: 'recommend', label: '추천', to: '/recommend', empty: boxEmpty, filled: boxFilled },
   { name: 'report', label: '리포트', to: '/report', empty: reportEmpty, filled: reportFilled },
   { name: 'my', label: '마이페이지', to: '/my', empty: personEmpty, filled: personFilled },
@@ -26,7 +26,7 @@ const isActive = (name) => route.name === name
 
 <template>
   <nav
-    class="fixed inset-x-0 bottom-0 z-40 mx-auto flex h-[58px] max-w-md items-center justify-around border-t border-gray-100 bg-white"
+    class="fixed inset-x-0 bottom-0 z-40 mx-auto flex h-[58px] max-w-[393px] items-center justify-around border-t border-gray-100 bg-white"
   >
     <RouterLink
       v-for="tab in tabs"

@@ -15,7 +15,7 @@ const router = useRouter()
 
 <template>
   <header
-    class="fixed inset-x-0 top-0 z-40 mx-auto flex h-[50px] max-w-md items-center justify-between border-b border-gray-100 bg-white px-4"
+    class="fixed inset-x-0 top-0 z-40 mx-auto flex h-[50px] max-w-[393px] items-center justify-between border-b border-gray-100 bg-white px-4"
   >
     <!-- 왼쪽: 뒤로가기 -->
     <button
