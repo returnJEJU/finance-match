@@ -1,0 +1,13 @@
+# 로컬 개발 전용 오버라이드 — `docker compose up` 시 자동 병합된다.
+#
+# 03-seed-demo.sql(데모 커플 목데이터)은 개발 전용이므로 여기서만 마운트한다.
+# 운영 배포에서는 이 파일을 제외(`docker compose -f docker-compose.yml up`)하여
+# 01·02 만 적재되게 한다.
+#
+# ⚠️ initdb 는 빈 볼륨 첫 기동에만 실행된다. 03 변경분 재적재는:
+#    docker compose down -v && docker compose up -d
+
+services:
+  mysql:
+    volumes:
+      - ./be/src/main/resources/db/03-seed-demo.sql:/docker-entrypoint-initdb.d/03-seed-demo.sql:ro
