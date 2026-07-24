@@ -6,7 +6,7 @@ import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <div class="mx-auto min-h-screen max-w-md bg-white">
+  <div class="mx-auto min-h-screen max-w-[393px] bg-white">
     <RouterView />
   </div>
 </template>
