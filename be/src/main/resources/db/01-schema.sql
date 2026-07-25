@@ -379,6 +379,7 @@ CREATE TABLE financial_summary (
     member_id             BIGINT        NOT NULL,
     financial_asset       DECIMAL(18,0) NOT NULL DEFAULT 0        COMMENT '총 금융자산(연금·IRP 잔액 포함)',
     total_debt            DECIMAL(18,0) NOT NULL DEFAULT 0        COMMENT '총 부채',
+    available_balance     DECIMAL(18,0) NOT NULL DEFAULT 0       COMMENT '입출금·파킹통장 잔액 합계(예금 추천 슬롯 판단용)',
     annual_debt_payment   DECIMAL(18,0) NOT NULL DEFAULT 0        COMMENT '향후 12개월 예상 원리금 총 상환액(과거 아님)',
     average_interest_rate DECIMAL(5,2)  NULL                      COMMENT '전체 대출 가중평균 금리(추천 대환 슬롯용·점수 미사용)',
     has_high_rate_debt    TINYINT(1)    NOT NULL DEFAULT 0        COMMENT '고금리 부채 보유 여부(추천 대환 슬롯용·점수 미사용)',
@@ -389,6 +390,7 @@ CREATE TABLE financial_summary (
     CONSTRAINT fk_financial_summary_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT chk_fs_asset   CHECK (financial_asset     >= 0),
     CONSTRAINT chk_fs_debt    CHECK (total_debt          >= 0),
+    CONSTRAINT chk_fs_balance CHECK (available_balance >= 0),
     CONSTRAINT chk_fs_payment CHECK (annual_debt_payment >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='마이데이터 자산·부채 요약';
 

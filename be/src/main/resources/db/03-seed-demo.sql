@@ -84,9 +84,9 @@ INSERT INTO couple (id,inviter_id,invitee_id,invitation_code_id,investment_type)
 (1,1,2,1,'NEUTRAL');
 
 -- ─── 마이데이터: 자산·부채 요약 ───
-INSERT INTO financial_summary (member_id,financial_asset,total_debt,annual_debt_payment,average_interest_rate,has_high_rate_debt) VALUES
-(1, 90000000, 20000000, 6000000, 4.50, 0),
-(2,180000000, 40000000,10000000, 5.20, 0);
+INSERT INTO financial_summary (member_id,financial_asset,total_debt,available_balance,annual_debt_payment,average_interest_rate,has_high_rate_debt) VALUES
+(1, 90000000, 20000000, 4000000, 6000000, 4.50, 0),
+(2,180000000, 40000000, 3000000, 10000000, 5.20, 0);
 
 -- ─── 마이데이터: 연금·ISA 계좌 요약 ───
 --   A: 연금저축·ISA 보유(IRP·DC 미보유=0) / B: 연금저축·IRP·ISA 보유
