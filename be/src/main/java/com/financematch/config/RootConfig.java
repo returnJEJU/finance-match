@@ -13,6 +13,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Controller;
@@ -42,6 +43,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @EnableTransactionManagement
 @Slf4j
 public class RootConfig {
+
+    /**
+     * {@code @Value} 의 {@code ${...}} 치환기. {@code @PropertySource} 로 읽은 값을 {@code @Value} 에서
+     * 쓰려면 필요하다. BeanFactoryPostProcessor 라서 반드시 static 으로 선언한다.
+     */
+    @Bean
+    public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+        return new PropertySourcesPlaceholderConfigurer();
+    }
 
     @Value("${jdbc.driver}")
     private String driver;
