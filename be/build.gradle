@@ -1,6 +1,22 @@
+// Flyway Gradle 플러그인이 MySQL 에 접속하려면 DB 모듈과 드라이버가
+// 플러그인 클래스패스에 있어야 한다 (Flyway 10 부터 DB 지원이 모듈 분리).
+buildscript {
+    // plugins 블록의 버전과 동일하게 유지할 것
+    ext.flywayVersion = '13.0.0'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.flywaydb:flyway-mysql:${flywayVersion}"
+        classpath 'com.mysql:mysql-connector-j:9.1.0'
+    }
+}
+
 plugins {
     id 'java'
     id 'war'
+    id 'org.flywaydb.flyway' version '13.0.0'   // buildscript.ext.flywayVersion 과 동일하게
 }
 
 group = 'com.financematch'
@@ -47,6 +63,12 @@ dependencies {
     // ===== DB (MySQL + 커넥션 풀) =====
     implementation 'com.mysql:mysql-connector-j:9.1.0'
     implementation 'com.zaxxer:HikariCP:5.1.0'
+
+    // ===== Flyway (DB 마이그레이션) =====
+    //  앱 기동 시 RootConfig 의 Flyway 빈이 migrate() 를 호출한다.
+    //  flyway-mysql 이 없으면 런타임에 MySQL 인식 실패.
+    implementation "org.flywaydb:flyway-core:${flywayVersion}"
+    implementation "org.flywaydb:flyway-mysql:${flywayVersion}"
 
     // ===== Redis (refresh 토큰 · 로그아웃 블랙리스트 · 캐시) =====
     //  Spring Data Redis 2.7.x + Lettuce. Jedis 4.x 는 spring-data-redis 2.7 과 호환되지 않아
@@ -113,4 +135,38 @@ tasks.withType(JavaCompile).configureEach {
 
 test {
     useJUnitPlatform()
+}
+
+// Flyway 설정 (flywayInfo · flywayMigrate · flywayValidate · flywayRepair)
+// 접속정보는 application-local.properties 를 재사용한다(단일 출처).
+// 운영·CI 는 환경변수(DB_URL·DB_USERNAME·DB_PASSWORD)가 우선한다.
+// -Pprod 는 데모 시드(dev-seed)를 제외한다.
+def isProd = project.hasProperty('prod')
+
+def localDbProps = new Properties()
+def localPropsFile = file('src/main/resources/application-local.properties')
+if (localPropsFile.exists()) {
+    localPropsFile.withInputStream { localDbProps.load(it) }
+}
+
+flyway {
+    url      = System.getenv('DB_URL')      ?: localDbProps['jdbc.url']
+    user     = System.getenv('DB_USERNAME') ?: localDbProps['jdbc.username']
+    password = System.getenv('DB_PASSWORD') ?: localDbProps['jdbc.password']
+
+    locations = isProd
+            ? ['filesystem:src/main/resources/db/migration']
+            : ['filesystem:src/main/resources/db/migration',
+               'filesystem:src/main/resources/db/dev-seed']
+
+    encoding = 'UTF-8'
+    cleanDisabled = true       // flyway clean(스키마 전체 삭제) 영구 차단
+    validateOnMigrate = true   // 이미 적용된 마이그레이션 변조 감지
+}
+
+// 운영 WAR 에는 데모 시드를 물리적으로 포함시키지 않는다.
+processResources {
+    if (isProd) {
+        exclude 'db/dev-seed/**'
+    }
 }

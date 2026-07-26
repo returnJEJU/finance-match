@@ -35,10 +35,11 @@ git clone <repo-url>
 cd finance-match
 
 # 2. 인프라 실행 (로컬은 MySQL · Redis 만 — Nginx는 배포 단계)
+#    MySQL 은 빈 DB 로 뜬다. 스키마·시드는 다음 단계의 Flyway 가 넣는다.
 docker compose up -d
 
-# 3. 백엔드 실행
-cd be && ./gradlew build
+# 3. DB 스키마 적용 + 백엔드 빌드
+cd be && ./gradlew flywayMigrate && ./gradlew build
 
 # 4. 프론트엔드 실행
 cd fe && npm install && npm run dev

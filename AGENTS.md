@@ -60,17 +60,20 @@ finance-match/
 - **컨트롤러 성공 응답은 `ApiResponse.ok(data)`로 감싼다.** 실패는 `ApiException`을 던지면 `GlobalExceptionHandler`가 `ApiResponse.fail(...)`로 변환 — 컨트롤러에서 직접 실패 응답 만들지 말 것.
 - 새 에러는 `ErrorCode`에 추가 후 사용. Lombok 사용 가능.
 - `application-local.properties`는 로컬 더미값이라 **커밋한다**. 실제 비밀값(`application-secret.properties`)은 커밋 금지(.gitignore됨).
+- **DB 스키마 변경은 반드시 새 마이그레이션 파일로.** `be/src/main/resources/db/migration/`에 `V<YYYYMMDD>_<HHmm>__<영문설명>.sql`(밑줄 2개)을 추가한다. **이미 올라간 `V` 파일은 수정 금지** — 남이 만든 것도 마찬가지다. 이미 적용한 팀원 DB에서 체크섬 오류가 난다. 잘못됐으면 되돌리는 **새 파일**을 추가한다. 시드(`R__`)는 직접 수정해도 된다(내용이 바뀌면 자동 재적용). 상세는 [`be/src/main/resources/db/README.md`](./be/src/main/resources/db/README.md).
 
 ## 명령어
 
 ```bash
 # 인프라 (프로젝트 루트, colima 또는 Docker Desktop 먼저 실행)
-docker compose up -d          # MySQL·Redis 띄우기
+docker compose up -d          # MySQL·Redis 띄우기 (빈 DB — 스키마는 Flyway 가 넣는다)
 docker compose down           # 정지 (데이터 유지)
 
 # 백엔드
-cd be && ./gradlew build      # 빌드
-                              # 실행은 Tomcat(8080)에 배포 / IDE에서 실행
+cd be && ./gradlew flywayMigrate   # DB 스키마·시드 최신화 (git pull 후에도 이것만)
+cd be && ./gradlew flywayInfo      # 적용 상태 확인
+cd be && ./gradlew build           # 빌드
+                                   # 실행은 Tomcat(8080)에 배포 / IDE에서 실행 (기동 시 자동 마이그레이션)
 
 # 프론트엔드
 cd fe && npm install          # 의존성 설치 (+ lefthook 훅 자동 설치)
