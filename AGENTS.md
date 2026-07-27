@@ -57,6 +57,7 @@ finance-match/
 
 - 베이스 패키지 `com.financematch`. 도메인별 하위 패키지로 추가.
 - **MyBatis는 XML 설정 파일 없이 Java Config**(`SqlSessionFactoryBean`). `snake_case → camelCase` 자동 매핑 켜져 있음.
+- **컨트롤러 경로에 `/api`를 쓰지 않는다.** DispatcherServlet 이 `/api/*`에 매핑돼 있어(`WebAppInitializer`) 톰캣이 `/api`를 떼고 넘긴다. `@PostMapping("/auth/login")`이 실제로는 `/api/auth/login`이 된다. `/api`를 또 쓰면 404(`No mapping for ...`)가 난다.
 - **컨트롤러 성공 응답은 `ApiResponse.ok(data)`로 감싼다.** 실패는 `ApiException`을 던지면 `GlobalExceptionHandler`가 `ApiResponse.fail(...)`로 변환 — 컨트롤러에서 직접 실패 응답 만들지 말 것.
 - 새 에러는 `ErrorCode`에 추가 후 사용. Lombok 사용 가능.
 - `application-local.properties`는 로컬 더미값이라 **커밋한다**. 실제 비밀값(`application-secret.properties`)은 커밋 금지(.gitignore됨).
