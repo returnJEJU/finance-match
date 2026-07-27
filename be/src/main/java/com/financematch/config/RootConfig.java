@@ -107,10 +107,15 @@ public class RootConfig {
 
         if (env.getProperty("flyway.enabled", Boolean.class, true)) {
             MigrateResult result = flyway.migrate();
+            // 적용된 게 없으면 targetSchemaVersion 이 null 이라 기존 버전을 그대로 쓴다.
+            String version =
+                    result.targetSchemaVersion != null
+                            ? result.targetSchemaVersion
+                            : result.initialSchemaVersion;
             log.info(
                     "Flyway 마이그레이션 완료 — 적용 {}건, 스키마 버전 {}",
                     result.migrationsExecuted,
-                    result.targetSchemaVersion);
+                    version);
         } else {
             log.info("Flyway 자동 마이그레이션 비활성(flyway.enabled=false) — 배포 파이프라인이 적용한다.");
         }
@@ -125,9 +130,11 @@ public class RootConfig {
         // 도메인 VO 타입 별칭 (하위 패키지 전체)
         factory.setTypeAliasesPackage("com.financematch");
         // 매퍼 XML 위치. 도메인 매퍼는 resources/mappers/ 아래에 둔다.
+        // classpath*: 는 mappers/ 가 아직 없어도 예외 없이 빈 배열을 돌려준다
+        // (classpath: 는 디렉터리가 없으면 FileNotFoundException).
         factory.setMapperLocations(
                 new PathMatchingResourcePatternResolver()
-                        .getResources("classpath:mappers/**/*.xml"));
+                        .getResources("classpath*:mappers/**/*.xml"));
 
         org.apache.ibatis.session.Configuration mybatisConfig =
                 new org.apache.ibatis.session.Configuration();
