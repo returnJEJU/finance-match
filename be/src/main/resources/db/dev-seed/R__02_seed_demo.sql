@@ -47,10 +47,11 @@ DELETE FROM member_agreement;
 DELETE FROM member;
 SET FOREIGN_KEY_CHECKS=1;
 
--- ─── 회원 (A=초대자·안정추구형 32세 / B=피초대자·적극투자형 33세) ───
-INSERT INTO member (id,email,password,name,gender,birth_date,status,last_login_at,investment_type) VALUES
-(1,'demo.a@chaltteok.dev','$2b$10$S7kxCvVErKro6iMGGYtqieadaYQh/mlP/3AOB6q8G81Dl2MoyJeBG','김하나','F','1994-03-15','ACTIVE','2026-07-22 09:30:00','STABLE_SEEKING'),
-(2,'demo.b@chaltteok.dev','$2b$10$S7kxCvVErKro6iMGGYtqieadaYQh/mlP/3AOB6q8G81Dl2MoyJeBG','이두리','M','1992-11-20','ACTIVE','2026-07-22 21:10:00','AGGRESSIVE');
+-- ─── 회원 (A=초대자·안정추구형 32세·KB스타적금Ⅲ 가입 가능 / B=피초대자·적극투자형 33세·가입 불가) ───
+INSERT INTO member
+ (id,email,password,name,gender,birth_date,status,last_login_at,investment_type,kb_star_savings_eligible) VALUES
+(1,'demo.a@chaltteok.dev','$2b$10$S7kxCvVErKro6iMGGYtqieadaYQh/mlP/3AOB6q8G81Dl2MoyJeBG','김하나','F','1994-03-15','ACTIVE','2026-07-22 09:30:00','STABLE_SEEKING',1),
+(2,'demo.b@chaltteok.dev','$2b$10$S7kxCvVErKro6iMGGYtqieadaYQh/mlP/3AOB6q8G81Dl2MoyJeBG','이두리','M','1992-11-20','ACTIVE','2026-07-22 21:10:00','AGGRESSIVE',0);
 
 -- ─── 약관 동의 ───
 INSERT INTO member_agreement (member_id,agree_mydata_terms,agree_privacy,agree_asset_link,agree_couple_share,agree_marketing,agreed_at) VALUES
