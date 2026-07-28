@@ -21,8 +21,8 @@
 
 ```
 finance-match/
-├── fe/   프론트엔드 (Vue 앱)
-└── be/   백엔드 (Spring Legacy)
+├── frontend/   프론트엔드 (Vue 앱)
+└── backend/    백엔드 (Spring Legacy)
 ```
 
 ## 로컬 실행 방법
@@ -39,10 +39,10 @@ cd finance-match
 docker compose up -d
 
 # 3. DB 스키마 적용 + 백엔드 빌드
-cd be && ./gradlew flywayMigrate && ./gradlew build
+cd backend && ./gradlew flywayMigrate && ./gradlew build
 
 # 4. 프론트엔드 실행
-cd fe && npm install && npm run dev
+cd frontend && npm install && npm run dev
 ```
 
 > 상세 실행 방법은 각 단계 세팅이 끝나면 채워집니다.

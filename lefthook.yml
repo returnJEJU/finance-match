@@ -3,9 +3,9 @@
 # 역할: 커밋 직전(pre-commit) 변경된 FE 코드에 ESLint --fix + Prettier 를
 #       자동 적용해, 포맷/린트가 어긋난 코드가 커밋되지 않도록 강제한다.
 #
-# 설치: fe/ 에서 `npm install` 하면 package.json 의 prepare 스크립트가
+# 설치: frontend/ 에서 `npm install` 하면 package.json 의 prepare 스크립트가
 #       자동으로 `lefthook install` 을 실행해 .git/hooks 에 훅을 건다.
-#       (수동 설치가 필요하면 fe/ 에서 `npx lefthook install`)
+#       (수동 설치가 필요하면 frontend/ 에서 `npx lefthook install`)
 #
 # 범위: 지금은 FE(JS/Vue) 만. BE(Java) 포맷은 spotless 도입 등 팀 논의 후 별도 추가.
 
@@ -13,13 +13,13 @@ pre-commit:
   parallel: false   # eslint --fix 와 prettier --write 가 같은 파일을 동시에 쓰지 않도록 순차 실행
   commands:
     01-eslint:
-      root: "fe/"                          # fe 디렉터리 기준 실행 (staged 경로도 fe/ 상대경로로 변환)
+      root: "frontend/"                          # frontend 디렉터리 기준 실행 (staged 경로도 frontend/ 상대경로로 변환)
       glob: "*.{js,jsx,vue}"               # 이번 커밋에 포함된 JS/Vue 파일만 대상
       run: npx eslint --fix {staged_files}
       stage_fixed: true                    # 자동 수정된 파일을 다시 스테이징해 커밋에 포함
 
     02-prettier:
-      root: "fe/"
+      root: "frontend/"
       glob: "*.{js,jsx,vue,css,scss,html,json,md}"
       run: npx prettier --write {staged_files}
       stage_fixed: true

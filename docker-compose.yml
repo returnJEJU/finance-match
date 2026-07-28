@@ -5,7 +5,7 @@
 #   docker compose down        # 정지 (데이터는 볼륨에 유지)
 #
 # 스키마·시드는 여기서 넣지 않는다. Flyway 가 적용한다.
-#   cd be && ./gradlew flywayMigrate     (또는 앱을 기동하면 자동)
+#   cd backend && ./gradlew flywayMigrate     (또는 앱을 기동하면 자동)
 # 완전 초기화가 필요할 때만: docker compose down -v && docker compose up -d
 #
 # 백엔드(Spring)는 IDE/Gradle 로, 프론트(Vue)는 npm 으로 각자 실행한다.
