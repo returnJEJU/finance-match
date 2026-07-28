@@ -57,7 +57,8 @@ finance-match/
 
 - 베이스 패키지 `com.financematch`. 도메인별 하위 패키지로 추가.
 - **MyBatis는 XML 설정 파일 없이 Java Config**(`SqlSessionFactoryBean`). `snake_case → camelCase` 자동 매핑 켜져 있음.
-- **컨트롤러 경로에 `/api`를 쓰지 않는다.** DispatcherServlet 이 `/api/*`에 매핑돼 있어(`WebAppInitializer`) 톰캣이 `/api`를 떼고 넘긴다. `@PostMapping("/auth/login")`이 실제로는 `/api/auth/login`이 된다. `/api`를 또 쓰면 404(`No mapping for ...`)가 난다.
+- **컨트롤러 경로는 `/v1`로 시작한다.** DispatcherServlet 이 `/api/*`에 매핑돼 있어(`WebAppInitializer`) 톰캣이 `/api`를 떼고 넘긴다. 버전은 컨트롤러가 직접 쓴다 — `@RequestMapping("/v1/auth")` + `@PostMapping("/login")` = `/api/v1/auth/login`. **클래스 레벨에 `/v1`을 두어** 메서드마다 빠뜨리는 일을 막는다. `/api`를 직접 쓰면 404(`No mapping for ...`)가 난다. 단 **헬스체크(`/api/health`)는 예외** — 로드밸런서·모니터링이 쓰는 인프라 엔드포인트라 버전을 붙이지 않는다.
+- **개인 리소스는 `/v1/members/me/` 아래에 둔다.** 회원 식별자를 경로에 노출하지 않아 남의 리소스를 지목할 수 없게 한다(IDOR 차단). 인증(`/v1/auth/*`)과 공용 리소스(`/v1/products/{productId}`)는 예외. 경로에 `{id}`가 있으면 조회 쿼리에 소유 조건을 넣어 "내 것 중에서" 찾는다.
 - **컨트롤러 성공 응답은 `ApiResponse.ok(data)`로 감싼다.** 실패는 `ApiException`을 던지면 `GlobalExceptionHandler`가 `ApiResponse.fail(...)`로 변환 — 컨트롤러에서 직접 실패 응답 만들지 말 것.
 - 새 에러는 `ErrorCode`에 추가 후 사용. Lombok 사용 가능.
 - `application-local.properties`는 로컬 더미값이라 **커밋한다**. 실제 비밀값(`application-secret.properties`)은 커밋 금지(.gitignore됨).
