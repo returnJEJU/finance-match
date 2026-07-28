@@ -6,7 +6,8 @@ import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <div class="mx-auto min-h-screen max-w-[393px] bg-white">
+  <!-- 배경색은 main.css 의 body 에서 정한다. 여기서 덮지 않는다. -->
+  <div class="mx-auto min-h-screen max-w-[393px]">
     <RouterView />
   </div>
 </template>
