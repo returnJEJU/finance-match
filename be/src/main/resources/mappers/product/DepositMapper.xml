@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.product.mapper.DepositMapper">
+
+    <resultMap id="depositProductMap"
+               type="com.financematch.product.dto.DepositProduct">
+
+        <!-- 상품 -->
+        <id property="productId"
+            column="product_id"/>
+
+        <result property="productName"
+                column="product_name"/>
+
+        <result property="description"
+                column="description"/>
+
+        <result property="url"
+                column="url"/>
+
+        <result property="companyName"
+                column="company_name"/>
+
+
+        <!-- 예적금 -->
+        <result property="depositType"
+                column="deposit_type"
+                javaType="com.financematch.product.type.DepositType"/>
+
+        <result property="minTerm"
+                column="deposit_min_term"/>
+
+        <result property="maxTerm"
+                column="deposit_max_term"/>
+
+        <result property="savingMin"
+                column="saving_min"/>
+
+        <result property="savingMax"
+                column="saving_max"/>
+
+        <result property="minRate"
+                column="min_rate"/>
+
+        <result property="maxRate"
+                column="max_rate"/>
+
+
+        <!-- 기간별 금리 -->
+        <collection property="rates"
+                    ofType="com.financematch.product.domain.DepositRate"
+                    notNullColumn="rate_id">
+
+            <id property="id"
+                column="rate_id"/>
+
+            <result property="depositId"
+                    column="rate_deposit_id"/>
+
+            <result property="minTerm"
+                    column="rate_min_term"/>
+
+            <result property="maxTerm"
+                    column="rate_max_term"/>
+
+            <result property="baseRate"
+                    column="base_rate"/>
+
+<!--            <result property="createdAt"-->
+<!--                    column="rate_created_at"/>-->
+
+<!--            <result property="updatedAt"-->
+<!--                    column="rate_updated_at"/>-->
+
+        </collection>
+
+    </resultMap>
+
+    <select id="findAll"
+            resultMap="depositProductMap">
+
+        SELECT
+        p.id AS product_id,
+        p.product_name,
+        p.description,
+        p.url,
+        p.company_name,
+
+        d.type AS deposit_type,
+        d.min_term AS deposit_min_term,
+        d.max_term AS deposit_max_term,
+        d.saving_min,
+        d.saving_max,
+        d.min_rate,
+        d.max_rate,
+
+        dr.id AS rate_id,
+        dr.deposit_id AS rate_deposit_id,
+        dr.min_term AS rate_min_term,
+        dr.max_term AS rate_max_term,
+        dr.base_rate
+<!--        dr.created_at AS rate_created_at,-->
+<!--        dr.updated_at AS rate_updated_at-->
+
+        FROM product p
+
+        INNER JOIN deposit d
+        ON p.id = d.id
+
+        LEFT JOIN deposit_rate dr
+        ON d.id = dr.deposit_id
+
+        ORDER BY
+        p.id,
+        dr.min_term
+
+    </select>
+
+
+    <select id="findByType"
+            resultMap="depositProductMap">
+
+        SELECT
+        p.id AS product_id,
+        p.product_name,
+        p.description,
+        p.url,
+        p.company_name,
+
+        d.type AS deposit_type,
+        d.min_term AS deposit_min_term,
+        d.max_term AS deposit_max_term,
+        d.saving_min,
+        d.saving_max,
+        d.min_rate,
+        d.max_rate,
+
+        dr.id AS rate_id,
+        dr.deposit_id AS rate_deposit_id,
+        dr.min_term AS rate_min_term,
+        dr.max_term AS rate_max_term,
+        dr.base_rate
+<!--        dr.created_at AS rate_created_at,-->
+<!--        dr.updated_at AS rate_updated_at-->
+
+        FROM product p
+
+        INNER JOIN deposit d
+        ON p.id = d.id
+
+        LEFT JOIN deposit_rate dr
+        ON d.id = dr.deposit_id
+
+        WHERE d.type = #{type}
+
+        ORDER BY
+        p.id,
+        dr.min_term
+
+    </select>
+
+
+    <select id="findByProductId"
+            resultMap="depositProductMap">
+
+        SELECT
+        p.id AS product_id,
+        p.product_name,
+        p.description,
+        p.url,
+        p.company_name,
+
+        d.type AS deposit_type,
+        d.min_term AS deposit_min_term,
+        d.max_term AS deposit_max_term,
+        d.saving_min,
+        d.saving_max,
+        d.min_rate,
+        d.max_rate,
+
+        dr.id AS rate_id,
+        dr.deposit_id AS rate_deposit_id,
+        dr.min_term AS rate_min_term,
+        dr.max_term AS rate_max_term,
+        dr.base_rate
+<!--        dr.created_at AS rate_created_at,-->
+<!--        dr.updated_at AS rate_updated_at-->
+
+        FROM product p
+
+        INNER JOIN deposit d
+        ON p.id = d.id
+
+        LEFT JOIN deposit_rate dr
+        ON d.id = dr.deposit_id
+
+        WHERE p.id = #{productId}
+
+        ORDER BY dr.min_term
+
+    </select>
+
+    <select id="findApplicableRate"
+            resultType="com.financematch.product.domain.DepositRate">
+
+        SELECT
+        dr.id,
+        dr.deposit_id,
+        dr.min_term,
+        dr.max_term,
+        dr.base_rate
+
+        FROM deposit_rate dr
+
+        INNER JOIN deposit d
+        ON dr.deposit_id = d.id
+
+        WHERE dr.deposit_id = #{productId}
+
+        AND #{term} >= dr.min_term
+
+        AND (
+        dr.max_term IS NULL
+        OR #{term} &lt;= dr.max_term
+        )
+
+        AND #{term} >= d.min_term
+        AND #{term} &lt;= d.max_term
+
+        ORDER BY dr.min_term DESC
+
+        LIMIT 1
+
+    </select>
+
+</mapper>
