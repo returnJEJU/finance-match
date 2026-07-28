@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.product.mapper.ProductMapper">
+    <select id="findAll"
+            resultType="com.financematch.product.domain.Product">
+        SELECT
+            id,
+            product_type,
+            product_name,
+            description,
+            url,
+            company_name,
+            created_at,
+            updated_at
+        FROM product
+        ORDER BY id
+    </select>
+
+    <select id="findById"
+            resultType="com.financematch.product.domain.Product">
+        SELECT
+            id,
+            product_type,
+            product_name,
+            description,
+            url,
+            company_name,
+            created_at,
+            updated_at
+        FROM product
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByProductType"
+            resultType="com.financematch.product.domain.Product">
+        SELECT
+            id,
+            product_type,
+            product_name,
+            description,
+            url,
+            company_name,
+            created_at,
+            updated_at
+        FROM product
+        WHERE product_type = #{productType}
+        ORDER BY id
+    </select>
+</mapper>
