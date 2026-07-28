@@ -105,11 +105,6 @@ const routes = [
         name: 'match-calculating',
         component: () => import('@/pages/MatchCalculatingPage.vue'),
       },
-      {
-        path: 'dashboard/waiting',
-        name: 'dashboard-waiting',
-        component: () => import('@/pages/DashboardWaitingPage.vue'),
-      },
     ],
   },
 
@@ -122,6 +117,16 @@ const routes = [
         path: 'dashboard',
         name: 'dashboard',
         component: () => import('@/pages/DashboardPage.vue'),
+      },
+      {
+        path: 'dashboard/waiting',
+        name: 'dashboard-waiting',
+        component: () => import('@/pages/DashboardWaitingPage.vue'),
+        meta: {
+          showBack: true,
+          activeTab: 'dashboard',
+          navLocked: true,
+        },
       },
       {
         path: 'report',

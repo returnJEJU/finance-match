@@ -21,7 +21,10 @@ const tabs = [
   { name: 'my', label: '마이페이지', to: '/my', empty: personEmpty, filled: personFilled },
 ]
 
-const isActive = (name) => route.name === name
+// const isActive = (name) => route.name === name
+const isActive = (name) => {
+  return route.name === name || route.meta.activeTab === name
+}
 </script>
 
 <template>
@@ -33,6 +36,11 @@ const isActive = (name) => route.name === name
       :key="tab.name"
       :to="tab.to"
       class="flex flex-col items-center gap-[3px]"
+      :class="{
+        'pointer-events-none cursor-default': route.meta.navLocked,
+      }"
+      :aria-disabled="route.meta.navLocked ? 'true' : undefined"
+      :tabindex="route.meta.navLocked ? -1 : 0"
     >
       <img
         :src="isActive(tab.name) ? tab.filled : tab.empty"
