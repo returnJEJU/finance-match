@@ -5,12 +5,10 @@
 @import 'pretendard/dist/web/variable/pretendardvariable.css';
 
 /*
- * 디자인 토큰 — Claude 디자인 시스템 「찰떡귱합 온보딩 UI」의 값을 옮긴 것.
- *
  * 여기 선언한 값은 Tailwind v4 가 자동으로 유틸 클래스로 만들어 준다.
  *   --color-brand  → bg-brand / text-brand / border-brand
  *   --radius-card  → rounded-card
- * 화면에서 #FDF46E 같은 값을 직접 쓰지 말고 반드시 이 토큰(유틸)을 쓴다.
+ * 화면에서 #FFF44F 같은 값을 직접 쓰지 말고 반드시 이 토큰(유틸)을 쓴다.
  * 색을 바꿀 일이 생기면 이 파일 한 곳만 고치면 전체에 반영된다.
  */
 @theme {
@@ -18,7 +16,7 @@
   --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* ===== 브랜드 (옐로 3단계) ===== */
-  --color-brand: #fdf46e; /* 기본 버튼, 선택된 칩 */
+  --color-brand: #fff44f; /* 기본 버튼, 선택된 칩 */
   --color-brand-deep: #fae64d; /* 진행바, 체크, 토글 ON, 선택된 카드 테두리 */
   --color-brand-soft: #faf7cf; /* 콜아웃 배경 */
   --color-brand-ink: #5a551e; /* 콜아웃 위 텍스트 */
@@ -53,7 +51,10 @@
   --radius-card: 14px; /* 카드, 기본 버튼 */
 }
 
-/* 전역 폰트 고정 */
+/* 전역 기본값 — 화면마다 따로 지정하지 않아도 여기서 상속된다.
+   글자색을 비워 두면 브라우저 기본값 #000 이 적용돼 제목이 미묘하게 더 진해진다. */
 body {
   font-family: var(--font-sans);
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
 }
