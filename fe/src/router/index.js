@@ -42,6 +42,12 @@ const routes = [
         meta: { public: true },
       },
       {
+        path: 'signup/cert',
+        name: 'signup-cert',
+        component: () => import('@/pages/SignupCertPage.vue'),
+        meta: { public: true },
+      },
+      {
         path: 'signup/asset',
         name: 'signup-asset',
         component: () => import('@/pages/AssetLinkPage.vue'),
