@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.product.mapper.LoanMapper">
+
+    <resultMap id="loanProductMap"
+               type="com.financematch.product.dto.LoanProduct">
+
+        <id property="productId"
+            column="product_id"/>
+
+        <result property="productName"
+                column="product_name"/>
+
+        <result property="description"
+                column="description"/>
+
+        <result property="url"
+                column="url"/>
+
+        <result property="companyName"
+                column="company_name"/>
+
+        <result property="loanPurpose"
+                column="loan_purpose"
+                javaType="com.financematch.product.type.LoanPurpose"/>
+
+        <result property="targetGroup"
+                column="target_group"
+                javaType="com.financematch.product.type.LoanTargetGroup"/>
+
+        <result property="minAge"
+                column="min_age"/>
+
+        <result property="maxAge"
+                column="max_age"/>
+
+        <result property="incomeBasis"
+                column="income_basis"
+                javaType="com.financematch.product.type.IncomeBasis"/>
+
+        <result property="maxIncome"
+                column="max_income"/>
+
+        <result property="applicationChannel"
+                column="application_channel"
+                javaType="com.financematch.product.type.ApplicationChannel"/>
+
+        <result property="maxRate"
+                column="max_rate"/>
+
+    </resultMap>
+
+
+    <select id="findAll"
+            resultMap="loanProductMap">
+
+        SELECT
+        p.id AS product_id,
+        p.product_name,
+        p.description,
+        p.url,
+        p.company_name,
+
+        l.loan_purpose,
+        l.target_group,
+        l.min_age,
+        l.max_age,
+        l.income_basis,
+        l.max_income,
+        l.application_channel,
+        l.max_rate
+
+        FROM product p
+
+        INNER JOIN loan l
+        ON p.id = l.id
+
+        WHERE p.product_type = 'LOAN'
+
+        ORDER BY p.id
+
+    </select>
+
+
+    <select id="findByProductId"
+            resultMap="loanProductMap">
+
+        SELECT
+        p.id AS product_id,
+        p.product_name,
+        p.description,
+        p.url,
+        p.company_name,
+
+        l.loan_purpose,
+        l.target_group,
+        l.min_age,
+        l.max_age,
+        l.income_basis,
+        l.max_income,
+        l.application_channel,
+        l.max_rate
+
+        FROM product p
+
+        INNER JOIN loan l
+        ON p.id = l.id
+
+        WHERE p.id = #{productId}
+        AND p.product_type = 'LOAN'
+
+    </select>
+
+
+    <select id="findByPurpose"
+            resultMap="loanProductMap">
+
+        SELECT
+        p.id AS product_id,
+        p.product_name,
+        p.description,
+        p.url,
+        p.company_name,
+
+        l.loan_purpose,
+        l.target_group,
+        l.min_age,
+        l.max_age,
+        l.income_basis,
+        l.max_income,
+        l.application_channel,
+        l.max_rate
+
+        FROM product p
+
+        INNER JOIN loan l
+        ON p.id = l.id
+
+        WHERE p.product_type = 'LOAN'
+        AND l.loan_purpose = #{loanPurpose}
+
+        ORDER BY
+        l.max_rate,
+        p.id
+
+    </select>
+
+
+    <select id="findByTargetGroup"
+            resultMap="loanProductMap">
+
+        SELECT
+        p.id AS product_id,
+        p.product_name,
+        p.description,
+        p.url,
+        p.company_name,
+
+        l.loan_purpose,
+        l.target_group,
+        l.min_age,
+        l.max_age,
+        l.income_basis,
+        l.max_income,
+        l.application_channel,
+        l.max_rate
+
+        FROM product p
+
+        INNER JOIN loan l
+        ON p.id = l.id
+
+        WHERE p.product_type = 'LOAN'
+        AND l.target_group = #{targetGroup}
+
+        ORDER BY
+        l.max_rate,
+        p.id
+
+    </select>
+
+</mapper>
