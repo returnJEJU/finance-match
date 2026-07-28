@@ -25,8 +25,8 @@ const routes = [
     children: [
       {
         path: '',
-        name: 'start',
-        component: () => import('@/pages/StartPage.vue'),
+        name: 'onboarding',
+        component: () => import('@/pages/OnboardingPage.vue'),
         meta: { public: true },
       },
       {

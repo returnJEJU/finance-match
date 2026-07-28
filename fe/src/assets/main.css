@@ -22,6 +22,10 @@
   --color-brand-ink: #5a551e; /* 콜아웃 위 텍스트 */
   --color-mint: #d4f6f5; /* 보조 포인트 */
 
+  /* ===== 외부 브랜드 (임의로 바꾸면 안 되는 값) ===== */
+  --color-kakao: #fee500; /* 카카오 공식 노랑 */
+  --color-kakao-ink: #191919; /* 카카오 버튼 위 글자 */
+
   /* ===== 배경 ===== */
   --color-canvas: #f9f9f9; /* 화면 배경 */
   --color-surface-muted: #fafafa; /* 약관 펼침 등 옅은 블록 */
