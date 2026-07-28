@@ -32,12 +32,16 @@ finance-match/
 │       ├── pages/          라우트 화면 (XxxPage.vue)
 │       ├── router/         Vue Router
 │       └── assets/         전역 CSS 등
-├── be/                 백엔드 (Spring Legacy, Gradle)
-│   └── src/main/java/com/financematch/
-│       ├── common/         ApiResponse, ErrorCode (공통 응답)
-│       ├── config/         Java Config (Root·Web·Redis·Initializer)
-│       ├── exception/      ApiException, GlobalExceptionHandler
-│       └── <도메인>/        회원·자산·상품 등 (각 담당자가 추가)
+├── be/                 백엔드 (Spring Legacy, Gradle) — 구조 상세는 be/README.md
+│   ├── src/main/java/com/financematch/
+│   │   ├── common/         ApiResponse, ErrorCode (공통 응답)
+│   │   ├── config/         Java Config (Root·Web·Redis·Initializer)
+│   │   ├── exception/      ApiException, GlobalExceptionHandler
+│   │   └── <도메인>/        member·couple·asset 등 (각 담당자가 추가)
+│   │       └── controller/ · service/ · mapper/ · dto/ · domain/
+│   └── src/main/resources/
+│       ├── db/             Flyway 마이그레이션·시드
+│       └── mappers/        매퍼 XML (도메인별 하위 폴더)
 ├── docker-compose.yml  로컬 인프라 (MySQL·Redis)
 └── lefthook.yml        Git 훅 (커밋 시 FE 린트·포맷 자동)
 ```
@@ -55,7 +59,7 @@ finance-match/
 
 ## BE 작업 규칙
 
-- 베이스 패키지 `com.financematch`. 도메인별 하위 패키지로 추가.
+- 베이스 패키지 `com.financematch`. **도메인별 하위 패키지 안에 계층 폴더를 둔다** — `<도메인>/controller·service·mapper·dto·domain`. 빈 폴더는 만들지 않는다. 패키지·클래스·테이블은 **단수**, URL은 컬렉션일 때만 복수. Service는 구현이 하나면 인터페이스 없이 클래스로. 상세는 [`be/README.md`](./be/README.md).
 - **MyBatis는 XML 설정 파일 없이 Java Config**(`SqlSessionFactoryBean`). `snake_case → camelCase` 자동 매핑 켜져 있음.
 - **컨트롤러 경로는 `/v1`로 시작한다.** DispatcherServlet 이 `/api/*`에 매핑돼 있어(`WebAppInitializer`) 톰캣이 `/api`를 떼고 넘긴다. 버전은 컨트롤러가 직접 쓴다 — `@RequestMapping("/v1/auth")` + `@PostMapping("/login")` = `/api/v1/auth/login`. **클래스 레벨에 `/v1`을 두어** 메서드마다 빠뜨리는 일을 막는다. `/api`를 직접 쓰면 404(`No mapping for ...`)가 난다. 단 **헬스체크(`/api/health`)는 예외** — 로드밸런서·모니터링이 쓰는 인프라 엔드포인트라 버전을 붙이지 않는다.
 - **개인 리소스는 `/v1/members/me/` 아래에 둔다.** 회원 식별자를 경로에 노출하지 않아 남의 리소스를 지목할 수 없게 한다(IDOR 차단). 인증(`/v1/auth/*`)과 공용 리소스(`/v1/products/{productId}`)는 예외. 경로에 `{id}`가 있으면 조회 쿼리에 소유 조건을 넣어 "내 것 중에서" 찾는다.
