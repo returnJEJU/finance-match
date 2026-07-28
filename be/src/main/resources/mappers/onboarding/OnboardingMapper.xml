@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.onboarding.mapper.OnboardingMapper">
+
+    <select id="findOnboardingStatus" resultType="com.financematch.onboarding.dto.OnboardingStatusResponse">
+        WITH member_couple AS (
+            SELECT
+                c.id AS couple_id,
+                CASE
+                    WHEN c.inviter_id = #{memberId} THEN c.invitee_id
+                    ELSE c.inviter_id
+                END AS partner_member_id
+            FROM couple c
+            WHERE c.inviter_id = #{memberId}
+               OR c.invitee_id = #{memberId}
+        )
+        SELECT
+            EXISTS (
+                SELECT 1
+                FROM member_couple
+            ) AS couple_connected,
+
+            EXISTS (
+                SELECT 1
+                FROM common_survey cs
+                    INNER JOIN invitation_code ic
+                    ON ic.common_survey_id = cs.id
+                WHERE cs.member_id = m.id
+                    AND ic.status = 'ACTIVE'
+            ) AS has_invitation,
+
+            EXISTS (
+                SELECT 1
+                FROM personal_survey ps
+                WHERE ps.member_id = m.id
+            ) AS personal_survey_completed,
+
+            CASE
+                WHEN NOT EXISTS (
+                    SELECT 1
+                    FROM member_couple
+                ) THEN NULL
+                ELSE EXISTS (
+                    SELECT 1
+                    FROM member_couple mc
+                        INNER JOIN personal_survey partner_ps
+                        ON partner_ps.member_id = mc.partner_member_id
+                )
+            END AS partner_personal_survey_completed
+
+        FROM member m
+        WHERE m.id = #{memberId}
+
+    </select>
+</mapper>
