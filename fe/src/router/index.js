@@ -54,6 +54,12 @@ const routes = [
         meta: { public: true },
       },
       {
+        path: 'signup/asset/institutions',
+        name: 'signup-asset-institutions',
+        component: () => import('@/pages/InstitutionsPage.vue'),
+        meta: { public: true },
+      },
+      {
         path: 'signup/asset/linking',
         name: 'signup-asset-linking',
         component: () => import('@/pages/AssetLinkingPage.vue'),
