@@ -23,7 +23,7 @@ public enum ErrorCode {
 
     // ===== 인증 토큰 (JWT — 공통 인프라) =====
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
-    EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 토큰입니다.");
+    EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 토큰입니다."),
 
     // ===================================================================
     //  ⚠️ 도메인별 에러 코드는 여기에 추가한다 — 【API 명세 확정 후】
@@ -33,6 +33,10 @@ public enum ErrorCode {
     //       // ===== 커플 (강현지) =====
     //       INVITE_CODE_INVALID(HttpStatus.BAD_REQUEST, "유효하지 않은 초대코드입니다."),
     // ===================================================================
+
+    // ===== 초대 (강현지) =====
+    INVITATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 사용 가능한 초대 코드가 존재합니다."),
+    COUPLE_ALREADY_CONNECTED(HttpStatus.CONFLICT, "이미 파트너와 연결된 회원입니다.");
 
     private final HttpStatus status;
     private final String message;
