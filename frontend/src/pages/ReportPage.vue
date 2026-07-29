@@ -49,6 +49,21 @@ const {
   queryFn: getReport,
 })
 
+// 목표 달성 가능성 카드의 진행 현황 — 계산 엔진(백엔드)이 아직 없어 목데이터.
+// isAchieved=false(부족)면 마젠타(warn 토큰), true(초과)면 초록(good 토큰)으로 갈린다.
+// API 붙으면 이 객체를 report.scoreAxes 의 GOAL_FEASIBILITY 응답으로 교체한다.
+const goalProgress = ref({
+  isAchieved: false,
+  amountLabel: '-8,000만원',
+  barLabel: '8,000만원 부족',
+  availableAsset: '1억 2,000만원',
+  achievementRate: '60%',
+})
+
+const goalDifferenceLabel = computed(() =>
+  goalProgress.value.isAchieved ? '목표를 넘어선 예상액' : '목표까지 부족한 금액',
+)
+
 const coupleTypeLabel = computed(() => investmentTypeMeta[report.value.investmentProfile.we].label)
 
 const me = computed(() => ({
@@ -162,9 +177,60 @@ const toggleCard = (key) => {
               </span>
             </button>
 
-            <p v-if="isOpen(axis.key)" class="mt-3 text-[12px] leading-[1.6] text-ink-sub">
-              {{ axis.reason }}
-            </p>
+            <div v-if="isOpen(axis.key)" class="mt-3">
+              <p class="text-[12px] leading-[1.6] text-ink-sub">{{ axis.reason }}</p>
+
+              <!-- 목표 달성 가능성 카드 전용: 초과/부족 진행 현황 (목데이터) -->
+              <div v-if="axis.key === 'GOAL_FEASIBILITY'" class="mt-3">
+                <p
+                  class="text-[12px] font-medium"
+                  :class="goalProgress.isAchieved ? 'text-good' : 'text-warn'"
+                >
+                  {{ goalDifferenceLabel }}
+                </p>
+                <p
+                  class="mt-1 text-[26px] font-extrabold"
+                  :class="goalProgress.isAchieved ? 'text-good' : 'text-warn'"
+                >
+                  {{ goalProgress.amountLabel }}
+                </p>
+
+                <div class="relative mt-3 h-10 overflow-hidden rounded-full bg-line-card">
+                  <div
+                    class="absolute inset-y-0 left-0 rounded-full"
+                    :class="goalProgress.isAchieved ? 'bg-good' : 'bg-warn'"
+                    :style="{
+                      width: goalProgress.isAchieved ? '100%' : goalProgress.achievementRate,
+                    }"
+                  />
+                  <div class="relative flex h-full items-center justify-end px-4">
+                    <span
+                      class="text-[12px] font-semibold"
+                      :class="goalProgress.isAchieved ? 'text-white' : 'text-ink'"
+                      >{{ goalProgress.barLabel }}</span
+                    >
+                  </div>
+                </div>
+
+                <div class="mt-4 flex items-center justify-between">
+                  <div>
+                    <p class="text-[11px] text-muted">예상 가용자산</p>
+                    <p class="mt-1 text-[16px] font-bold text-ink">
+                      {{ goalProgress.availableAsset }}
+                    </p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-[11px] text-muted">달성률</p>
+                    <p
+                      class="mt-1 text-[16px] font-bold"
+                      :class="goalProgress.isAchieved ? 'text-good' : 'text-warn'"
+                    >
+                      {{ goalProgress.achievementRate }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
