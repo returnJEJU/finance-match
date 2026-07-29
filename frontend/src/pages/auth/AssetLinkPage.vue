@@ -3,9 +3,11 @@
 //
 // 어떤 자산을 불러올지 고르는 화면. 실제 마이데이터 연동은 붙이지 않는다.
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { ChevronLeft, CreditCard, Info, Landmark, TrendingUp } from 'lucide-vue-next'
+import { CreditCard, Info, Landmark, TrendingUp } from 'lucide-vue-next'
 import characterWorking from '@/assets/images/characters/character-working.png'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import PageTitle from '@/components/ui/PageTitle.vue'
+import FunnelHeader from '@/components/layout/FunnelHeader.vue'
 
 // 불러올 자산 종류. icon 은 lucide 컴포넌트, tint 는 아이콘 칩 배경색.
 const ASSET_TYPES = [
@@ -13,8 +15,6 @@ const ASSET_TYPES = [
   { key: 'stock', name: '증권', desc: '주식 · 펀드', icon: TrendingUp, tint: '#FFE9E9' },
   { key: 'loan', name: '대출', desc: '대출내역', icon: CreditCard, tint: '#E8EEFF' },
 ]
-
-const router = useRouter()
 
 // 기본값은 모두 켬 — 디자인 기준
 const selected = ref(Object.fromEntries(ASSET_TYPES.map((type) => [type.key, true])))
@@ -29,44 +29,16 @@ function toggleAll() {
 function toggle(key) {
   selected.value = { ...selected.value, [key]: !selected.value[key] }
 }
-
-/**
- * 뒤로 가기.
- *
- * 주소를 직접 열거나 새로고침하면 앱 안에 돌아갈 기록이 없어서
- * router.back() 이 앱 밖(브라우저 이전 페이지)으로 나가버린다.
- * 그래서 기록이 없으면 퍼널의 이전 단계로 보낸다.
- */
-function goBack() {
-  if (window.history.state?.back) router.back()
-  else router.replace({ name: 'signup-cert' })
-}
 </script>
 
 <template>
   <div class="flex min-h-screen flex-col">
-    <!-- 상단 진행바 — 4단계 중 4단계 -->
-    <div class="flex flex-none items-center gap-2.5 px-7 pt-3.5 pb-1.5">
-      <button
-        type="button"
-        class="w-6 flex-none cursor-pointer"
-        aria-label="뒤로 가기"
-        @click="goBack"
-      >
-        <ChevronLeft class="h-5 w-5" />
-      </button>
-      <div class="bg-line-card h-1 flex-1 overflow-hidden rounded-full">
-        <i class="bg-brand-deep block h-full w-full rounded-full"></i>
-      </div>
-      <span class="text-muted-soft flex-none text-[12px] font-medium">4/4</span>
-    </div>
+    <FunnelHeader :step="4" :fallback-to="{ name: 'signup-cert' }" />
 
     <div class="flex flex-1 flex-col px-7">
       <img :src="characterWorking" alt="" class="mt-1.5 w-32 self-center" />
 
-      <h1 class="mt-2 text-center text-[26px] leading-[1.38] font-extrabold tracking-[-0.4px]">
-        임민지님의 자산<br />한 번에 찾아볼게요
-      </h1>
+      <PageTitle class="mt-2" align="center">임민지님의 자산<br />한 번에 찾아볼게요</PageTitle>
       <p class="text-muted mt-2 text-center text-[13px] leading-[1.5]">
         흩어져 있는 금융 정보를 하나로 합쳐<br />완벽한 찰떡귱합 리포트를 만들어요.
       </p>
@@ -134,19 +106,11 @@ function goBack() {
     </div>
 
     <div class="flex flex-none flex-col gap-2.5 px-7 pb-14">
-      <RouterLink
-        :to="{ name: 'signup-asset-linking' }"
-        class="bg-brand rounded-card flex h-[54px] cursor-pointer items-center justify-center gap-[7px] text-[16px] font-bold transition-transform duration-100 active:scale-[0.98]"
-      >
-        자산 불러오기
-      </RouterLink>
+      <BaseButton :to="{ name: 'signup-asset-linking' }"> 자산 불러오기 </BaseButton>
 
-      <RouterLink
-        :to="{ name: 'signup-asset-institutions' }"
-        class="border-line-field rounded-card flex h-[54px] cursor-pointer items-center justify-center border bg-white text-[16px] font-semibold text-[#444] transition-transform duration-100 active:scale-[0.98]"
-      >
+      <BaseButton :to="{ name: 'signup-asset-institutions' }" variant="ghost">
         기관 직접 선택
-      </RouterLink>
+      </BaseButton>
     </div>
   </div>
 </template>
