@@ -4,6 +4,15 @@
 
 <mapper namespace="com.financematch.invitation.mapper.InvitationMapper">
 
+    <select id="findActiveInviteCodeByMemberId" resultType="string">
+        SELECT ic.code_value
+        FROM common_survey cs
+            INNER JOIN invitation_code ic
+            ON ic.common_survey_id = cs.id
+        WHERE cs.member_id = #{memberId}
+            AND ic.status = 'ACTIVE'
+    </select>
+
     <select id="lockMemberById" resultType="long">
         SELECT id
         FROM member
