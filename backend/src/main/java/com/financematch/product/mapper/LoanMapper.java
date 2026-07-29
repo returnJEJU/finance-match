@@ -4,8 +4,11 @@ import com.financematch.product.dto.LoanProduct;
 import com.financematch.product.type.LoanPurpose;
 import com.financematch.product.type.LoanTargetGroup;
 import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+@Mapper
 public interface LoanMapper {
 
     List<LoanProduct> findAll();

@@ -4,8 +4,11 @@ import com.financematch.product.dto.TaxSavingProduct;
 import com.financematch.product.type.IsaType;
 import com.financematch.product.type.TaxAccountType;
 import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+@Mapper
 public interface TaxSavingMapper {
 
     List<TaxSavingProduct> findAll();

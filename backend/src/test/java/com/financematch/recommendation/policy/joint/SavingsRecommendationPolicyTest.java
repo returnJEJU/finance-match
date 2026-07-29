@@ -1,0 +1,82 @@
+package com.financematch.recommendation.policy.joint;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.financematch.config.RootConfig;
+import com.financematch.recommendation.domain.RecommendationContext;
+import com.financematch.recommendation.policy.RecommendedProduct;
+import java.math.BigDecimal;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.web.WebAppConfiguration;
+
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = RootConfig.class)
+@WebAppConfiguration
+class SavingsRecommendationPolicyTest {
+
+    @Autowired
+    private SavingsRecommendationPolicy policy;
+
+    @Test
+    void 목표기간이_36개월이면_금리가_높은_적금부터_추천한다() {
+
+        // given
+        RecommendationContext context = new RecommendationContext();
+
+        context.setTargetPeriodMonths(36);
+
+        context.setInviterMonthlyAvailableAmount(
+                BigDecimal.valueOf(300000));
+
+        context.setInviteeMonthlyAvailableAmount(
+                BigDecimal.valueOf(500000));
+
+        // when
+        List<RecommendedProduct> result =
+                policy.recommend(context);
+
+        // then
+        assertEquals(2, result.size());
+
+        RecommendedProduct first = result.get(0);
+
+        assertEquals(6L, first.productId());
+        assertEquals(1, first.rank());
+        assertTrue(first.selected());
+
+        RecommendedProduct second = result.get(1);
+
+        assertEquals(7L, second.productId());
+        assertEquals(2, second.rank());
+        assertFalse(second.selected());
+    }
+
+    @Test
+    void 월가용금액이_최소납입금액보다_작으면_추천하지_않는다() {
+
+        // given
+        RecommendationContext context = new RecommendationContext();
+
+        context.setTargetPeriodMonths(3);
+
+        context.setInviterMonthlyAvailableAmount(
+                BigDecimal.valueOf(200));
+
+        context.setInviteeMonthlyAvailableAmount(
+                BigDecimal.valueOf(300));
+
+        // when
+        List<RecommendedProduct> result =
+                policy.recommend(context);
+
+        // then
+        assertTrue(result.isEmpty());
+    }
+}
