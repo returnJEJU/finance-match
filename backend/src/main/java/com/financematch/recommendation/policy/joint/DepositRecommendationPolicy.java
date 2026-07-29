@@ -9,7 +9,6 @@ import com.financematch.product.mapper.DepositMapper;
 import com.financematch.product.type.DepositType;
 import com.financematch.recommendation.domain.RecommendationContext;
 import com.financematch.recommendation.policy.RecommendedProduct;
-import com.financematch.recommendation.policy.JointRecommendationPolicy;
 import com.financematch.recommendation.type.RecommendationSlotType;
 import java.util.List;
 import org.springframework.stereotype.Component;
