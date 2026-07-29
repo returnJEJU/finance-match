@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.match.mapper.MatchMapper">
+
+    <select
+            id="findCoupleDataByMemberId"
+            resultType="com.financematch.match.domain.MatchCoupleData">
+
+        SELECT
+            c.id AS couple_id,
+            c.inviter_id,
+            c.invitee_id,
+            cs.first_goal_type,
+            cs.target_amount,
+            cs.target_period_months
+        FROM couple c
+                 INNER JOIN invitation_code ic
+                            ON ic.id = c.invitation_code_id
+                 INNER JOIN common_survey cs
+                            ON cs.id = ic.common_survey_id
+        WHERE c.inviter_id = #{memberId}
+           OR c.invitee_id = #{memberId}
+
+    </select>
+
+    <select
+            id="findMemberDataByMemberId"
+            resultType="com.financematch.match.domain.MatchMemberData">
+
+        SELECT
+        m.id AS member_id,
+        m.name AS member_name,
+        m.birth_date,
+
+        agm.median_financial_asset AS age_group_asset_median,
+
+        ps.annual_income,
+        ps.monthly_available_amount,
+        ps.financial_asset_ratio,
+        ps.financial_knowledge,
+        ps.capital_preservation_attitude,
+
+        COALESCE(
+        (
+        SELECT MAX(
+        CASE psie.investment_experience
+        WHEN 'LOW_RISK' THEN 1
+        WHEN 'MODERATE_LOW_RISK' THEN 2
+        WHEN 'MODERATE_RISK' THEN 3
+        WHEN 'MODERATE_HIGH_RISK' THEN 4
+        WHEN 'HIGH_RISK' THEN 5
+        ELSE 0
+        END
+        )
+        FROM personal_survey_investment_experience psie
+        WHERE psie.personal_survey_id = ps.id
+        ),
+        0
+        ) AS investment_experience_score,
+
+        fs.financial_asset,
+        fs.total_debt,
+        fs.annual_debt_payment,
+
+        pia.pension_saving_balance,
+        pia.irp_balance,
+        pia.pension_annual_payment,
+        pia.irp_annual_payment,
+        pia.dc_annual_payment,
+        pia.isa_annual_deposit,
+        pia.tax_eligibility_status,
+        pia.isa_eligibility_status
+
+        FROM member m
+
+        LEFT JOIN personal_survey ps
+        ON ps.member_id = m.id
+
+        LEFT JOIN financial_summary fs
+        ON fs.member_id = m.id
+
+        LEFT JOIN pension_isa_account pia
+        ON pia.member_id = m.id
+
+        LEFT JOIN age_group_asset_median agm
+        ON agm.age_min
+        &lt;= TIMESTAMPDIFF(YEAR, m.birth_date, CURDATE())
+        AND (
+        agm.age_max IS NULL
+        OR agm.age_max
+        >= TIMESTAMPDIFF(YEAR, m.birth_date, CURDATE())
+        )
+        AND agm.base_year = (
+        SELECT MAX(latest_agm.base_year)
+        FROM age_group_asset_median latest_agm
+        )
+
+        WHERE m.id = #{memberId}
+        AND m.deleted_at IS NULL
+
+    </select>
+
+
+    <!-- 궁합도 계산 결과 조회 -->
+    <select
+            id="findCompatibilityResultByCoupleId"
+            resultType="com.financematch.match.domain.CompatibilityResult">
+
+        SELECT
+            id,
+            couple_id,
+            asset_stability_score,
+            debt_repayment_score,
+            financial_value_score,
+            goal_feasibility_score,
+            tax_strategy_score,
+            tax_strategy_calculated,
+            total_score,
+            result_summary
+        FROM compatibility_result
+        WHERE couple_id = #{coupleId}
+
+    </select>
+
+    <!-- 궁합도 계산 결과 최초 저장 -->
+    <insert id="insertCompatibilityResult">
+
+        INSERT INTO compatibility_result (
+            couple_id,
+            asset_stability_score,
+            debt_repayment_score,
+            financial_value_score,
+            goal_feasibility_score,
+            tax_strategy_score,
+            tax_strategy_calculated,
+            total_score
+        )
+        VALUES (
+                   #{coupleId},
+                   #{result.assetStabilityScore},
+                   #{result.debtRepaymentScore},
+                   #{result.financialValueScore},
+                   #{result.goalFeasibilityScore},
+                   #{result.taxStrategyScore},
+                   #{result.taxStrategyCalculated},
+                   #{result.totalScore}
+               )
+
+    </insert>
+
+</mapper>
