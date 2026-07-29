@@ -26,6 +26,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.apache.ibatis.annotations.Mapper;
+
 /**
  * 루트 컨텍스트 설정: DataSource, MyBatis, 트랜잭션, 서비스 빈.
  *
@@ -37,7 +39,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  */
 @Configuration
 @PropertySource("classpath:application-${spring.profiles.active:local}.properties")
-@MapperScan(basePackages = "com.financematch")
+@MapperScan(
+        basePackages = "com.financematch",
+        annotationClass = Mapper.class
+)
 @ComponentScan(
         basePackages = "com.financematch",
         // 컨트롤러와 예외 처리기는 서블릿 컨텍스트(WebConfig)에서 스캔하므로 루트에서는 제외한다.

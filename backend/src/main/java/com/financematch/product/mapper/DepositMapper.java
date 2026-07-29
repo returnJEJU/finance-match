@@ -4,8 +4,11 @@ import com.financematch.product.domain.DepositRate;
 import com.financematch.product.dto.DepositProduct;
 import com.financematch.product.type.DepositType;
 import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+@Mapper
 public interface DepositMapper {
 
     List<DepositProduct> findAll();
