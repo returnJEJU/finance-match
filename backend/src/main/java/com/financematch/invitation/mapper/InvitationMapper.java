@@ -1,8 +1,10 @@
 package com.financematch.invitation.mapper;
 
 import com.financematch.invitation.domain.CommonSurvey;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+@Mapper
 public interface InvitationMapper {
 
     Long lockMemberById(Long memberId);
