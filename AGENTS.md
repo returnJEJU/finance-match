@@ -26,13 +26,13 @@
 
 ```
 finance-match/
-├── fe/                 프론트엔드 (Vue 앱, npm)
+├── frontend/           프론트엔드 (Vue 앱, npm)
 │   └── src/
 │       ├── api/client.js   공통 API 클라이언트 (아래 FE 규칙 참고)
 │       ├── pages/          라우트 화면 (XxxPage.vue)
 │       ├── router/         Vue Router
 │       └── assets/         전역 CSS 등
-├── be/                 백엔드 (Spring Legacy, Gradle) — 구조 상세는 be/README.md
+├── backend/            백엔드 (Spring Legacy, Gradle) — 구조 상세는 backend/README.md
 │   ├── src/main/java/com/financematch/
 │   │   ├── common/         ApiResponse, ErrorCode (공통 응답)
 │   │   ├── config/         Java Config (Root·Web·Redis·Initializer)
@@ -59,14 +59,14 @@ finance-match/
 
 ## BE 작업 규칙
 
-- 베이스 패키지 `com.financematch`. **도메인별 하위 패키지 안에 계층 폴더를 둔다** — `<도메인>/controller·service·mapper·dto·domain`. 빈 폴더는 만들지 않는다. 패키지·클래스·테이블은 **단수**, URL은 컬렉션일 때만 복수. Service는 구현이 하나면 인터페이스 없이 클래스로. 상세는 [`be/README.md`](./be/README.md).
+- 베이스 패키지 `com.financematch`. **도메인별 하위 패키지 안에 계층 폴더를 둔다** — `<도메인>/controller·service·mapper·dto·domain`. 빈 폴더는 만들지 않는다. 패키지·클래스·테이블은 **단수**, URL은 컬렉션일 때만 복수. Service는 구현이 하나면 인터페이스 없이 클래스로. 상세는 [`backend/README.md`](./backend/README.md).
 - **MyBatis는 XML 설정 파일 없이 Java Config**(`SqlSessionFactoryBean`). `snake_case → camelCase` 자동 매핑 켜져 있음.
 - **컨트롤러 경로는 `/v1`로 시작한다.** DispatcherServlet 이 `/api/*`에 매핑돼 있어(`WebAppInitializer`) 톰캣이 `/api`를 떼고 넘긴다. 버전은 컨트롤러가 직접 쓴다 — `@RequestMapping("/v1/auth")` + `@PostMapping("/login")` = `/api/v1/auth/login`. **클래스 레벨에 `/v1`을 두어** 메서드마다 빠뜨리는 일을 막는다. `/api`를 직접 쓰면 404(`No mapping for ...`)가 난다. 단 **헬스체크(`/api/health`)는 예외** — 로드밸런서·모니터링이 쓰는 인프라 엔드포인트라 버전을 붙이지 않는다.
 - **개인 리소스는 `/v1/members/me/` 아래에 둔다.** 회원 식별자를 경로에 노출하지 않아 남의 리소스를 지목할 수 없게 한다(IDOR 차단). 인증(`/v1/auth/*`)과 공용 리소스(`/v1/products/{productId}`)는 예외. 경로에 `{id}`가 있으면 조회 쿼리에 소유 조건을 넣어 "내 것 중에서" 찾는다.
 - **컨트롤러 성공 응답은 `ApiResponse.ok(data)`로 감싼다.** 실패는 `ApiException`을 던지면 `GlobalExceptionHandler`가 `ApiResponse.fail(...)`로 변환 — 컨트롤러에서 직접 실패 응답 만들지 말 것.
 - 새 에러는 `ErrorCode`에 추가 후 사용. Lombok 사용 가능.
 - `application-local.properties`는 로컬 더미값이라 **커밋한다**. 실제 비밀값(`application-secret.properties`)은 커밋 금지(.gitignore됨).
-- **DB 스키마 변경은 반드시 새 마이그레이션 파일로.** `be/src/main/resources/db/migration/`에 `V<YYYYMMDD>_<HHmm>__<영문설명>.sql`(밑줄 2개)을 추가한다. **이미 올라간 `V` 파일은 수정 금지** — 남이 만든 것도 마찬가지다. 이미 적용한 팀원 DB에서 체크섬 오류가 난다. 잘못됐으면 되돌리는 **새 파일**을 추가한다. 시드(`R__`)는 직접 수정해도 된다(내용이 바뀌면 자동 재적용). 상세는 [`be/src/main/resources/db/README.md`](./be/src/main/resources/db/README.md).
+- **DB 스키마 변경은 반드시 새 마이그레이션 파일로.** `backend/src/main/resources/db/migration/`에 `V<YYYYMMDD>_<HHmm>__<영문설명>.sql`(밑줄 2개)을 추가한다. **이미 올라간 `V` 파일은 수정 금지** — 남이 만든 것도 마찬가지다. 이미 적용한 팀원 DB에서 체크섬 오류가 난다. 잘못됐으면 되돌리는 **새 파일**을 추가한다. 시드(`R__`)는 직접 수정해도 된다(내용이 바뀌면 자동 재적용). 상세는 [`backend/src/main/resources/db/README.md`](./backend/src/main/resources/db/README.md).
 
 ## 명령어
 
@@ -76,13 +76,13 @@ docker compose up -d          # MySQL·Redis 띄우기 (빈 DB — 스키마는 
 docker compose down           # 정지 (데이터 유지)
 
 # 백엔드
-cd be && ./gradlew flywayMigrate   # DB 스키마·시드 최신화 (git pull 후에도 이것만)
-cd be && ./gradlew flywayInfo      # 적용 상태 확인
-cd be && ./gradlew build           # 빌드
+cd backend && ./gradlew flywayMigrate   # DB 스키마·시드 최신화 (git pull 후에도 이것만)
+cd backend && ./gradlew flywayInfo      # 적용 상태 확인
+cd backend && ./gradlew build           # 빌드
                                    # 실행은 Tomcat(8080)에 배포 / IDE에서 실행 (기동 시 자동 마이그레이션)
 
 # 프론트엔드
-cd fe && npm install          # 의존성 설치 (+ lefthook 훅 자동 설치)
+cd frontend && npm install          # 의존성 설치 (+ lefthook 훅 자동 설치)
 npm run dev                   # 개발 서버 (5173, /api → 8080 프록시)
 npm run lint                  # 전체 ESLint --fix
 npm run format                # 전체 Prettier

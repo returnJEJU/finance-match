@@ -46,7 +46,7 @@ DB 이력은 "지나간 것을 고치는" 게 아니라 **"위에 계속 쌓는"
 ## 1. 파일 구성
 
 ```
-be/src/main/resources/db/
+backend/src/main/resources/db/
 ├── migration/                              운영 포함
 │   ├── V20260726_1640__init_schema.sql     24테이블 구조(DDL)
 │   └── R__01_seed_product.sql              KB 상품 38 + 연령대별 금융자산 중앙값
@@ -85,7 +85,7 @@ MySQL은 DDL이 트랜잭션이 아니라, 마이그레이션이 중간에 실�
 
 ```bash
 docker compose up -d              # 프로젝트 루트에서. MySQL·Redis 기동 (빈 DB 로 뜬다)
-cd be && ./gradlew flywayMigrate  # 스키마·시드 적용
+cd backend && ./gradlew flywayMigrate  # 스키마·시드 적용
 ```
 
 - 컨테이너에는 **스키마가 들어있지 않다.** Flyway가 채운다.
@@ -97,7 +97,7 @@ cd be && ./gradlew flywayMigrate  # 스키마·시드 적용
 
 ```bash
 git pull
-cd be && ./gradlew flywayMigrate
+cd backend && ./gradlew flywayMigrate
 ```
 
 `down -v` 불필요. **내 데이터는 유지된다.**
@@ -128,7 +128,7 @@ cd be && ./gradlew flywayMigrate
 2. 내 DB에 적용해 본다
 
    ```bash
-   cd be && ./gradlew flywayMigrate
+   cd backend && ./gradlew flywayMigrate
    ```
 
 3. 확인
@@ -151,7 +151,7 @@ cd be && ./gradlew flywayMigrate
 >
 > ```bash
 > docker exec -i finance-match-mysql mysql -uroot -proot finance_match \
->   < be/src/main/resources/db/dev-seed/R__02_seed_demo.sql
+>   < backend/src/main/resources/db/dev-seed/R__02_seed_demo.sql
 > ```
 
 ---
@@ -162,7 +162,7 @@ DB가 심하게 꼬였을 때만.
 
 ```bash
 docker compose down -v && docker compose up -d
-cd be && ./gradlew flywayMigrate
+cd backend && ./gradlew flywayMigrate
 ```
 
 `-v`는 볼륨 삭제(데이터 완전 소멸)다. 평소 스키마 변경에는 **필요 없다.**
@@ -172,7 +172,7 @@ cd be && ./gradlew flywayMigrate
 ## 6. 운영 배포
 
 ```bash
-cd be && ./gradlew flywayMigrate -Pprod
+cd backend && ./gradlew flywayMigrate -Pprod
 ```
 
 `-Pprod`를 붙이면 `dev-seed`(데모 커플)를 **제외**하고 `migration`만 적용한다. WAR 빌드 시에도 `dev-seed` 파일이 물리적으로 포함되지 않는다.
@@ -192,7 +192,7 @@ cd be && ./gradlew flywayMigrate -Pprod
 `git pull` 후 "내 DB가 최신인가?" 가 궁금하면 이것부터 돌린다.
 
 ```bash
-cd be && ./gradlew flywayInfo
+cd backend && ./gradlew flywayInfo
 ```
 
 ```
@@ -228,7 +228,7 @@ SELECT installed_rank, version, description, success FROM flyway_schema_history 
 ### 자주 쓰는 명령
 
 ```bash
-cd be
+cd backend
 ./gradlew flywayInfo       # 현재 상태 · 대기중 목록
 ./gradlew flywayMigrate    # 적용
 ./gradlew flywayValidate   # 변조 검사만

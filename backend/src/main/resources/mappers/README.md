@@ -1,13 +1,13 @@
 # 매퍼 XML
 
-MyBatis 매퍼 XML을 두는 곳. 구조 전반은 [`be/README.md`](../../../../README.md).
+MyBatis 매퍼 XML을 두는 곳. 구조 전반은 [`backend/README.md`](../../../../README.md).
 
 ---
 
 ## 1. 위치
 
 ```
-be/src/main/resources/mappers/<도메인>/XxxMapper.xml
+backend/src/main/resources/mappers/<도메인>/XxxMapper.xml
 ```
 
 ```
@@ -40,7 +40,7 @@ mappers/
 `namespace`는 **자바 인터페이스의 전체 경로**와 정확히 같아야 한다. **XML이 놓인 폴더 위치와는 무관하다.**
 
 ```java
-// be/src/main/java/com/financematch/member/mapper/MemberMapper.java
+// backend/src/main/java/com/financematch/member/mapper/MemberMapper.java
 package com.financematch.member.mapper;
 
 public interface MemberMapper {
@@ -49,7 +49,7 @@ public interface MemberMapper {
 ```
 
 ```xml
-<!-- be/src/main/resources/mappers/member/MemberMapper.xml -->
+<!-- backend/src/main/resources/mappers/member/MemberMapper.xml -->
 <mapper namespace="com.financematch.member.mapper.MemberMapper">
 ```
 
@@ -101,7 +101,7 @@ public interface MemberMapper {
 2. 확장자가 `.xml`인가
 3. `namespace`가 **인터페이스 전체 경로**와 글자 하나까지 같은가
 4. `<select id="...">`가 **메서드 이름**과 같은가
-5. 빌드 결과물에 XML이 들어갔는가 — `be/build/resources/main/mappers/` 확인
+5. 빌드 결과물에 XML이 들어갔는가 — `backend/build/resources/main/mappers/` 확인
 
 ### `There is no getter for property named 'xxx' in class ...`
 
@@ -139,5 +139,5 @@ XML은 리소스라 **다시 빌드해야** 반영된다. IDE에서 톰캣을 �
 
 | 문서 | 내용 |
 |---|---|
-| [`be/README.md`](../../../../README.md) | 백엔드 폴더 구조 · 계층 규칙 |
+| [`backend/README.md`](../../../../README.md) | 백엔드 폴더 구조 · 계층 규칙 |
 | [`db/README.md`](../db/README.md) | Flyway 마이그레이션 · 테이블 구조 |

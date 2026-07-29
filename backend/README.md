@@ -7,7 +7,7 @@
 ## 1. 폴더 구조
 
 ```
-be/src/main/java/com/financematch/
+backend/src/main/java/com/financematch/
 ├── common/                   ApiResponse, ErrorCode, HealthController
 ├── config/                   RootConfig, WebConfig, RedisConfig, WebAppInitializer
 ├── exception/                ApiException, GlobalExceptionHandler
@@ -18,7 +18,7 @@ be/src/main/java/com/financematch/
     ├── dto/                  요청 · 응답 객체
     └── domain/               VO
 
-be/src/main/resources/
+backend/src/main/resources/
 ├── db/                       Flyway 마이그레이션 · 시드 (README 참고)
 └── mappers/                  매퍼 XML (README 참고)
 ```
