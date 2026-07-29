@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.report.mapper.ReportMapper">
+
+    <select id="findReportRowByMemberId" resultType="com.financematch.report.mapper.ReportRow">
+        SELECT
+            me.name      AS member_name,
+            partner.name AS partner_name,
+
+            cr.total_score,
+
+            cr.asset_stability_score,
+            r.asset_stability_reason,
+
+            cr.debt_repayment_score,
+            r.debt_repayment_reason,
+
+            cr.financial_value_score,
+            r.financial_value_reason,
+
+            cr.goal_feasibility_score,
+            r.goal_feasibility_reason,
+
+            cr.tax_strategy_score,
+            r.tax_strategy_reason,
+
+            cs.target_period_months  AS target_months,
+            cs.loan_purpose,
+
+            me.investment_type       AS investment_profile_me,
+            partner.investment_type  AS investment_profile_you,
+            c.investment_type        AS investment_profile_we
+
+        FROM member me
+            INNER JOIN couple c
+                ON c.inviter_id = me.id
+                OR c.invitee_id = me.id
+            INNER JOIN member partner
+                ON partner.id = CASE WHEN c.inviter_id = me.id THEN c.invitee_id ELSE c.inviter_id END
+            INNER JOIN compatibility_result cr
+                ON cr.couple_id = c.id
+            INNER JOIN report r
+                ON r.compatibility_result_id = cr.id
+            INNER JOIN invitation_code ic
+                ON ic.id = c.invitation_code_id
+            INNER JOIN common_survey cs
+                ON cs.id = ic.common_survey_id
+        WHERE me.id = #{memberId}
+    </select>
+</mapper>
