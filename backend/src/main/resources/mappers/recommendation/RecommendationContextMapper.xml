@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.financematch.recommendation.mapper.RecommendationContextMapper">
+
+    <select id="findByMemberId"
+            resultType="com.financematch.recommendation.domain.RecommendationContext">
+        SELECT
+            c.id AS couple_id,
+            inviter.id AS inviter_id,
+            invitee.id AS invitee_id,
+            inviter.investment_type AS inviter_investment_type,
+            invitee.investment_type AS invitee_investment_type,
+            inviter.birth_date AS inviter_birth_date,
+            invitee.birth_date AS invitee_birth_date,
+            inviter.kb_star_savings_eligible AS inviter_kb_star_savings_eligible,
+            invitee.kb_star_savings_eligible AS invitee_kb_star_savings_eligible,
+            inviter_survey.annual_income AS inviter_annual_income,
+            invitee_survey.annual_income AS invitee_annual_income,
+            inviter_survey.monthly_available_amount AS inviter_monthly_available_amount,
+            invitee_survey.monthly_available_amount AS invitee_monthly_available_amount,
+            inviter_survey.financial_knowledge AS inviter_financial_knowledge,
+            invitee_survey.financial_knowledge AS invitee_financial_knowledge,
+            common_survey.first_goal_type,
+            common_survey.second_goal_type,
+            common_survey.target_period_months,
+            common_survey.loan_purpose,
+            common_survey.has_loan_within_one_month,
+            COALESCE(inviter_finance.available_balance, 0)
+                + COALESCE(invitee_finance.available_balance, 0) AS available_balance,
+            (
+                COALESCE(inviter_finance.has_high_rate_debt, 0) = 1
+                OR COALESCE(invitee_finance.has_high_rate_debt, 0) = 1
+            ) AS has_high_rate_debt,
+            COALESCE(inviter_pension.has_pension_saving, 0) AS inviter_has_pension_saving,
+            COALESCE(inviter_pension.has_irp, 0) AS inviter_has_irp,
+            COALESCE(inviter_pension.has_isa, 0) AS inviter_has_isa,
+            COALESCE(invitee_pension.has_pension_saving, 0) AS invitee_has_pension_saving,
+            COALESCE(invitee_pension.has_irp, 0) AS invitee_has_irp,
+            COALESCE(invitee_pension.has_isa, 0) AS invitee_has_isa
+        FROM couple c
+        JOIN member inviter ON inviter.id = c.inviter_id
+        JOIN member invitee ON invitee.id = c.invitee_id
+        JOIN personal_survey inviter_survey ON inviter_survey.member_id = inviter.id
+        JOIN personal_survey invitee_survey ON invitee_survey.member_id = invitee.id
+        JOIN invitation_code invitation ON invitation.id = c.invitation_code_id
+        JOIN common_survey ON common_survey.id = invitation.common_survey_id
+        LEFT JOIN financial_summary inviter_finance ON inviter_finance.member_id = inviter.id
+        LEFT JOIN financial_summary invitee_finance ON invitee_finance.member_id = invitee.id
+        LEFT JOIN pension_isa_account inviter_pension ON inviter_pension.member_id = inviter.id
+        LEFT JOIN pension_isa_account invitee_pension ON invitee_pension.member_id = invitee.id
+        WHERE (c.inviter_id = #{memberId} OR c.invitee_id = #{memberId})
+          AND inviter.status = 'ACTIVE'
+          AND invitee.status = 'ACTIVE'
+    </select>
+</mapper>
