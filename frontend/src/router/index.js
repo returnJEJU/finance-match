@@ -134,8 +134,9 @@ const routes = [
         path: 'dashboard/waiting',
         name: 'dashboard-waiting',
         component: () => import('@/pages/DashboardWaitingPage.vue'),
+        // 상대방이 설문을 마치기 전까지는 갈 수 있는 화면이 없다.
+        // 하단 탭(navLocked)과 마찬가지로 상단바 뒤로가기도 두지 않는다.
         meta: {
-          showBack: true,
           activeTab: 'dashboard',
           navLocked: true,
         },
@@ -144,13 +145,13 @@ const routes = [
         path: 'report',
         name: 'report',
         component: () => import('@/pages/ReportPage.vue'),
-        meta: { title: '리포트', showBack: true },
+        meta: { title: '리포트' },
       },
       {
         path: 'recommend',
         name: 'recommend',
         component: () => import('@/pages/RecommendPage.vue'),
-        meta: { title: '상품 추천', showBack: true },
+        meta: { title: '상품 추천' },
       },
       {
         path: 'recommend/products',
