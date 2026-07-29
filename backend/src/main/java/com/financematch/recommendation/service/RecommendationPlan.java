@@ -1,5 +1,6 @@
-package com.financematch.recommendation.domain;
+package com.financematch.recommendation.service;
 
+import com.financematch.recommendation.policy.RecommendedProduct;
 import com.financematch.recommendation.type.PersonalRecommendationType;
 import com.financematch.recommendation.type.RecommendationSlotType;
 import java.util.List;

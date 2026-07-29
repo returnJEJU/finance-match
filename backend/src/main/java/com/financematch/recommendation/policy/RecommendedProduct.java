@@ -1,4 +1,4 @@
-package com.financematch.recommendation.domain;
+package com.financematch.recommendation.policy;
 
 public record RecommendedProduct(Long productId, int rank, boolean selected) {
 
