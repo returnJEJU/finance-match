@@ -27,6 +27,13 @@ PR에서 수정하지 않는다.
 
 공통 계약을 변경해야 한다면 정책 구현 PR과 섞지 않고 별도 PR로 먼저 합의하고 병합한다.
 
+### 공통 모델 위치
+
+- `domain/RecommendationContext`: MyBatis가 조회한 추천 입력 VO
+- `policy/RecommendedProduct`: 각 추천 정책이 반환하는 출력 계약
+- `service/RecommendationPlan`: `RecommendationPlanner`가 조립한 서비스 결과
+- `service/RecommendationPlanner`: 정책 실행과 결과 조립을 담당하는 Spring `@Service`
+
 ## 구현 규칙
 
 - 기존 `product` 도메인의 유형별 Mapper와 DTO를 재사용한다.
@@ -63,10 +70,3 @@ feature/recommendation-integration
 - 후보가 없을 때 빈 목록을 반환하는지
 - 개인 추천이 각 회원 ID에 맞게 분리되는지
 - 대표 상품이 유형별로 하나만 선택되는지
-
-PR을 올리기 전에 다음 명령으로 전체 백엔드를 검증한다.
-
-```powershell
-cd backend
-.\gradlew.bat clean build
-```

@@ -1,18 +1,17 @@
 package com.financematch.recommendation.service;
 
 import com.financematch.recommendation.domain.RecommendationContext;
-import com.financematch.recommendation.domain.RecommendationPlan;
-import com.financematch.recommendation.domain.RecommendedProduct;
 import com.financematch.recommendation.policy.JointRecommendationPolicy;
 import com.financematch.recommendation.policy.PersonalRecommendationPolicy;
+import com.financematch.recommendation.policy.RecommendedProduct;
 import com.financematch.recommendation.type.PersonalRecommendationType;
 import com.financematch.recommendation.type.RecommendationSlotType;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+@Service
 public class RecommendationPlanner {
 
     private final List<JointRecommendationPolicy> jointPolicies;
