@@ -5,6 +5,9 @@
 // 첫 단계라 상단에 뒤로가기를 두지 않는다.
 import { nextTick, ref } from 'vue'
 import { ChevronDown, Eye, EyeOff, X } from 'lucide-vue-next'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import PageTitle from '@/components/ui/PageTitle.vue'
+import FunnelHeader from '@/components/layout/FunnelHeader.vue'
 
 const form = ref({
   name: '',
@@ -54,19 +57,10 @@ function formatBirth(event) {
 
 <template>
   <div class="flex min-h-screen flex-col">
-    <!-- 상단 진행바 — 4단계 중 1단계 -->
-    <div class="flex flex-none items-center gap-2.5 px-7 pt-3.5 pb-1.5">
-      <div class="w-6"></div>
-      <div class="bg-line-card h-1 flex-1 overflow-hidden rounded-full">
-        <i class="bg-brand-deep block h-full w-1/4 rounded-full"></i>
-      </div>
-      <span class="text-muted-soft flex-none text-[12px] font-medium">1/4</span>
-    </div>
+    <FunnelHeader :step="1" :show-back="false" />
 
     <div class="flex flex-1 flex-col px-7">
-      <h1 class="mt-3.5 text-[26px] leading-[1.38] font-extrabold tracking-[-0.4px]">
-        금융 궁합을 보기 위한<br />첫 단계예요
-      </h1>
+      <PageTitle class="mt-3.5">금융 궁합을 보기 위한<br />첫 단계예요</PageTitle>
       <p class="text-muted mt-2 text-[13px] leading-[1.5]">
         두 사람에게 맞는 금융상품까지 찾아드려요
       </p>
@@ -201,12 +195,7 @@ function formatBirth(event) {
     </div>
 
     <div class="flex flex-none flex-col px-7 pb-14">
-      <RouterLink
-        :to="{ name: 'signup-agree' }"
-        class="bg-brand rounded-card flex h-[54px] items-center justify-center text-[16px] font-bold cursor-pointer transition-transform duration-100 active:scale-[0.98]"
-      >
-        다음
-      </RouterLink>
+      <BaseButton :to="{ name: 'signup-agree' }"> 다음 </BaseButton>
     </div>
   </div>
 </template>
