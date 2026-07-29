@@ -4,6 +4,7 @@ package com.financematch.invitation.service;
 import com.financematch.common.ErrorCode;
 import com.financematch.exception.ApiException;
 import com.financematch.invitation.domain.CommonSurvey;
+import com.financematch.invitation.dto.CommonSurveyResponse;
 import com.financematch.invitation.dto.CreateInvitationRequest;
 import com.financematch.invitation.dto.CreateInvitationResponse;
 import com.financematch.invitation.dto.GetInvitationResponse;
@@ -97,5 +98,16 @@ public class InvitationService {
 
         // 생성한 초대 코드 있음
         return new GetInvitationResponse(true, inviteCode);
+    }
+
+    public CommonSurveyResponse getCommonSurvey(Long memberId) {
+
+        CommonSurveyResponse response = invitationMapper.findCommonSurveyByAccessibleMemberId(memberId);
+
+        if (response == null) {
+            throw new ApiException(ErrorCode.COMMON_SURVEY_NOT_FOUND);
+        }
+
+        return response;
     }
 }

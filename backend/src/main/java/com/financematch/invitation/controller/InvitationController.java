@@ -1,6 +1,7 @@
 package com.financematch.invitation.controller;
 
 import com.financematch.common.ApiResponse;
+import com.financematch.invitation.dto.CommonSurveyResponse;
 import com.financematch.invitation.dto.CreateInvitationRequest;
 import com.financematch.invitation.dto.CreateInvitationResponse;
 import com.financematch.invitation.dto.GetInvitationResponse;
@@ -52,6 +53,17 @@ public class InvitationController {
         Long memberId = TEMP_MEMBER_ID;
 
         GetInvitationResponse response = invitationService.getInvitation(memberId);
+
+        return ApiResponse.ok(response);
+    }
+
+    @GetMapping("/common-survey")
+    public ApiResponse<CommonSurveyResponse> getCommonSurvey() {
+        // TODO: JWT 구현 후 임시 ID 대신 인증된 회원 ID를 주입받는다.
+        // 예: getCommonSurvey(@LoginMember Long memberId)
+        Long memberId = TEMP_MEMBER_ID;
+
+        CommonSurveyResponse response = invitationService.getCommonSurvey(memberId);
 
         return ApiResponse.ok(response);
     }
