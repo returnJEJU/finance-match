@@ -6,6 +6,7 @@ import com.financematch.exception.ApiException;
 import com.financematch.invitation.domain.CommonSurvey;
 import com.financematch.invitation.dto.CreateInvitationRequest;
 import com.financematch.invitation.dto.CreateInvitationResponse;
+import com.financematch.invitation.dto.GetInvitationResponse;
 import com.financematch.invitation.mapper.InvitationMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -84,5 +85,17 @@ public class InvitationService {
         }
 
         return inviteCode.toString();
+    }
+
+    public GetInvitationResponse getInvitation(Long memberId) {
+        String inviteCode = invitationMapper.findActiveInviteCodeByMemberId(memberId);
+
+        // 생성한 초대 코드 없음
+        if (inviteCode == null) {
+            return new GetInvitationResponse(false, null);
+        }
+
+        // 생성한 초대 코드 있음
+        return new GetInvitationResponse(true, inviteCode);
     }
 }

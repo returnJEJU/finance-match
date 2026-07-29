@@ -7,6 +7,8 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface InvitationMapper {
 
+    String findActiveInviteCodeByMemberId(Long memberId);
+
     Long lockMemberById(Long memberId);
 
     boolean existsCoupleByMemberId(Long memberId);
