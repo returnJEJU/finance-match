@@ -17,6 +17,7 @@ const router = useRouter()
 const result = ref(null)
 const loading = ref(true)
 const errorMessage = ref('')
+const openedHelpKey = ref(null)
 
 const totalScore = computed(() => Math.round(result.value?.totalScore ?? 0))
 
@@ -73,6 +74,7 @@ const scoreCards = computed(() => {
     {
       key: 'asset',
       title: '금융자산',
+      description: '또래 평균 금융자산과 비교해 현재 자산 수준을 평가했어요.',
       score: Math.round(result.value.assetStabilityScore),
       maxScore: 30,
       icon: markRaw(BadgeDollarSign),
@@ -82,6 +84,7 @@ const scoreCards = computed(() => {
     {
       key: 'debt',
       title: '부채 관리',
+      description: '소득 대비 상환 능력과 금융자산 대비 부채 부담을 함께 평가했어요.',
       score: Math.round(result.value.debtRepaymentScore),
       maxScore: 20,
       icon: markRaw(Landmark),
@@ -91,6 +94,7 @@ const scoreCards = computed(() => {
     {
       key: 'value',
       title: '투자 가치관 일치도',
+      description: '투자 성향과 위험 선호가 얼마나 비슷한지 분석했어요.',
       score: Math.round(result.value.financialValueScore),
       maxScore: 25,
       icon: markRaw(HeartHandshake),
@@ -100,6 +104,7 @@ const scoreCards = computed(() => {
     {
       key: 'goal',
       title: '목표 달성률',
+      description: '현재 자산과 저축 계획을 바탕으로 목표 달성 가능성을 계산했어요.',
       score: Math.round(result.value.goalFeasibilityScore),
       maxScore: 15,
       icon: markRaw(Target),
@@ -110,6 +115,7 @@ const scoreCards = computed(() => {
     {
       key: 'tax',
       title: '절세 활용도',
+      description: '연금계좌와 ISA의 절세 혜택 활용 정도를 평가했어요.',
       score: Math.round(result.value.taxStrategyScore),
       maxScore: 10,
       icon: markRaw(BadgeDollarSign),
@@ -123,6 +129,7 @@ const scoreCards = computed(() => {
 const loadDashboard = async () => {
   loading.value = true
   errorMessage.value = ''
+  openedHelpKey.value = null
 
   try {
     result.value = await getCompatibility()
@@ -136,6 +143,10 @@ const loadDashboard = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const toggleHelp = (key) => {
+  openedHelpKey.value = openedHelpKey.value === key ? null : key
 }
 
 const moveToReport = () => {
@@ -197,7 +208,7 @@ onMounted(() => {
                 {{ totalScore }}
               </span>
 
-              <span class="mt-2 text-[12px] text-brand-deep"> ♥ </span>
+              <span class="mt-2 text-[12px] text-brand-deep">♥</span>
             </div>
           </div>
 
@@ -255,14 +266,43 @@ onMounted(() => {
                 <component :is="card.icon" :size="19" :stroke-width="2" />
               </div>
 
-              <button
-                type="button"
-                class="text-[#d2ccb5]"
-                :aria-label="`${card.title} 도움말`"
-                @click="moveToReport"
-              >
-                <CircleHelp :size="15" :stroke-width="2" />
-              </button>
+              <!-- 두 칸 카드 도움말 -->
+              <div class="relative z-40">
+                <button
+                  type="button"
+                  class="block text-[#d2ccb5]"
+                  :aria-label="`${card.title} 도움말`"
+                  :aria-expanded="openedHelpKey === card.key"
+                  @click="toggleHelp(card.key)"
+                >
+                  <CircleHelp :size="15" :stroke-width="2" />
+                </button>
+
+                <div
+                  v-if="openedHelpKey === card.key"
+                  role="tooltip"
+                  class="absolute top-full z-50 mt-2 w-[300px] rounded-[12px] bg-[#d5fae7] px-4 py-3 text-left text-[12px] leading-[1.45] font-medium text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
+                  :class="
+                    card.key === 'debt' || card.key === 'tax'
+                      ? 'right-0'
+                      : 'left-1/2 -translate-x-1/2'
+                  "
+                >
+                  <!-- 말풍선 꼬리 -->
+                  <span
+                    class="absolute -top-1.5 h-3 w-3 rotate-45 bg-[#d5fae7]"
+                    :class="
+                      card.key === 'debt' || card.key === 'tax'
+                        ? 'right-0.5'
+                        : 'left-1/2 -translate-x-1/2'
+                    "
+                  />
+
+                  <span class="relative">
+                    {{ card.description }}
+                  </span>
+                </div>
+              </div>
             </div>
 
             <p class="mt-2 text-[12px] leading-none text-ink-sub">
@@ -292,15 +332,30 @@ onMounted(() => {
           </template>
 
           <!-- 전체 너비 카드 도움말 -->
-          <button
-            v-if="card.fullWidth"
-            type="button"
-            class="absolute top-3 right-3 text-[#d2ccb5]"
-            :aria-label="`${card.title} 도움말`"
-            @click="moveToReport"
-          >
-            <CircleHelp :size="15" :stroke-width="2" />
-          </button>
+          <div v-if="card.fullWidth" class="absolute top-3 right-3 z-40">
+            <button
+              type="button"
+              class="block text-[#d2ccb5]"
+              :aria-label="`${card.title} 도움말`"
+              :aria-expanded="openedHelpKey === card.key"
+              @click="toggleHelp(card.key)"
+            >
+              <CircleHelp :size="15" :stroke-width="2" />
+            </button>
+
+            <div
+              v-if="openedHelpKey === card.key"
+              role="tooltip"
+              class="absolute top-full right-0 z-50 mt-2 w-[300px] rounded-[12px] bg-[#d5fae7] px-4 py-3 text-left text-[12px] leading-[1.45] font-medium text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
+            >
+              <!-- 말풍선 꼬리 -->
+              <span class="absolute -top-1.5 right-0.5 h-3 w-3 rotate-45 bg-[#d5fae7]" />
+
+              <span class="relative">
+                {{ card.description }}
+              </span>
+            </div>
+          </div>
         </article>
       </div>
 
