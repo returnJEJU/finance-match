@@ -3,6 +3,7 @@ package com.financematch.recommendation.policy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.financematch.product.dto.InvestmentProduct;
@@ -21,7 +22,7 @@ class PersonalInvestmentRecommendationPolicyTest {
     @Mock private InvestmentMapper investmentMapper;
 
     @Test
-    void recommendsProductsForEachMembersRiskLevel() {
+    void recommendsProductsOnlyForMoreAggressiveMember() {
         when(investmentMapper.findAll())
                 .thenReturn(
                         List.of(
@@ -40,16 +41,14 @@ class PersonalInvestmentRecommendationPolicyTest {
 
         var result = policy.recommend(context);
 
-        assertEquals(List.of(1L), productIds(result.get(10L)));
+        assertFalse(result.containsKey(10L));
         assertEquals(List.of(2L, 4L, 3L, 1L), productIds(result.get(20L)));
-        assertTrue(result.get(10L).get(0).selected());
         assertTrue(result.get(20L).get(0).selected());
         assertFalse(result.get(20L).get(1).selected());
     }
 
     @Test
-    void returnsEmptyListsWhenNoProductMatchesEitherMember() {
-        when(investmentMapper.findAll()).thenReturn(List.of(product(1L, 3, 100, false)));
+    void returnsEmptyMapWhenInvestmentTypesAreSame() {
         PersonalInvestmentRecommendationPolicy policy =
                 new PersonalInvestmentRecommendationPolicy(
                         investmentMapper, new InvestmentRiskLevelCalculator());
@@ -61,8 +60,22 @@ class PersonalInvestmentRecommendationPolicyTest {
 
         var result = policy.recommend(context);
 
-        assertTrue(result.get(10L).isEmpty());
-        assertTrue(result.get(20L).isEmpty());
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(investmentMapper);
+    }
+
+    @Test
+    void returnsEmptyMapWhenCouplePlansLoanWithinOneMonth() {
+        PersonalInvestmentRecommendationPolicy policy =
+                new PersonalInvestmentRecommendationPolicy(
+                        investmentMapper, new InvestmentRiskLevelCalculator());
+        RecommendationContext context = new RecommendationContext();
+        context.setHasLoanWithinOneMonth(true);
+
+        var result = policy.recommend(context);
+
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(investmentMapper);
     }
 
     @Test
@@ -86,7 +99,7 @@ class PersonalInvestmentRecommendationPolicyTest {
         var result = policy.recommend(context);
 
         assertEquals(List.of(2L, 3L, 1L), productIds(result.get(10L)));
-        assertEquals(List.of(3L), productIds(result.get(20L)));
+        assertFalse(result.containsKey(20L));
     }
 
     private InvestmentProduct product(
