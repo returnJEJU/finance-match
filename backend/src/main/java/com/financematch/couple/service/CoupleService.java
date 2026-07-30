@@ -1,18 +1,17 @@
 package com.financematch.couple.service;
 
 import com.financematch.common.ErrorCode;
+import com.financematch.couple.domain.InvitationTarget;
 import com.financematch.couple.domain.CoupleProfile;
 import com.financematch.couple.dto.CoupleProfileMessageResponse;
-import com.financematch.couple.domain.InvitationTarget;
 import com.financematch.couple.dto.CreateCoupleRequest;
 import com.financematch.couple.dto.CreateCoupleResponse;
 import com.financematch.couple.mapper.CoupleMapper;
 import com.financematch.exception.ApiException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
