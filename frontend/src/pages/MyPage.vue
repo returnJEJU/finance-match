@@ -2,9 +2,10 @@
 // TODO(담당자): 이 화면을 구현하세요. (기준: 찰떡궁합_UI.pdf)
 // 화면: 마이페이지 · 레이아웃: DefaultLayout
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useMutation, useQuery } from '@tanstack/vue-query'
 import stableImage from '@/assets/images/characters/types/type-stable.png'
-import { getCoupleProfileMessage, updateCoupleProfileMessage } from '@/api/couple'
+import { disconnectCouple, getCoupleProfileMessage, updateCoupleProfileMessage } from '@/api/couple'
 
 import {
   UserRound,
@@ -29,6 +30,8 @@ import {
   // 탈퇴하기
   TriangleAlert,
 } from 'lucide-vue-next'
+
+const router = useRouter()
 
 // 실제 화면에 표시되는 소개 문구
 const profileMessage = ref('우리의 금융 여정')
@@ -258,25 +261,42 @@ const endSheetDrag = () => {
 // 0 = 닫힘
 // 1~3 = 확인 단계
 const disconnectStep = ref(0)
+const disconnectError = ref('')
+
+const disconnectCoupleMutation = useMutation({
+  mutationFn: disconnectCouple,
+  onSuccess: () => {
+    disconnectStep.value = 0
+    disconnectError.value = ''
+    router.push({ name: 'couple-start' })
+  },
+  onError: (error) => {
+    disconnectError.value = error.message || '커플 연결을 끊지 못했어요.'
+  },
+})
+
+const isDisconnectingCouple = computed(() => disconnectCoupleMutation.isPending.value)
 
 const openDisconnectSheet = () => {
+  disconnectError.value = ''
   disconnectStep.value = 1
 }
 
 const closeDisconnectSheet = () => {
+  if (isDisconnectingCouple.value) return
   disconnectStep.value = 0
+  disconnectError.value = ''
 }
 
 const nextDisconnectStep = () => {
   if (disconnectStep.value < 3) {
+    disconnectError.value = ''
     disconnectStep.value++
   }
 }
 
-// 지금은 백엔드 연결 전이라 실제 삭제는 하지 않음
 const finishDisconnect = () => {
-  console.log('커플 연결 끊기 - 추후 API 연결')
-  disconnectStep.value = 0
+  disconnectCoupleMutation.mutate()
 }
 
 // ========================================
@@ -943,15 +963,16 @@ const confirmWithdraw = () => {
         </h2>
 
         <p class="mt-3 text-center text-[12px] leading-[1.7] text-gray-500">
-          연결을 끊으면 서로의 금융 정보와<br />
-          궁합 데이터가 모두 초기화돼요.
+          연결을 끊으면 함께 만든 리포트와<br />
+          추천 결과가 삭제돼요.
         </p>
 
         <!-- 버튼 -->
         <div class="mt-8 flex gap-3">
           <button
             type="button"
-            class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[13px] font-bold text-gray-600"
+            class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[13px] font-bold text-gray-600 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="isDisconnectingCouple"
             @click="closeDisconnectSheet"
           >
             취소
@@ -959,7 +980,8 @@ const confirmWithdraw = () => {
 
           <button
             type="button"
-            class="h-12 flex-1 cursor-pointer rounded-xl bg-yellow-300 text-[13px] font-bold text-gray-900"
+            class="h-12 flex-1 cursor-pointer rounded-xl bg-yellow-300 text-[13px] font-bold text-gray-900 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="isDisconnectingCouple"
             @click="nextDisconnectStep"
           >
             다음
@@ -987,13 +1009,14 @@ const confirmWithdraw = () => {
 
         <p class="mt-3 text-center text-[12px] leading-[1.7] text-gray-500">
           이 작업은 되돌릴 수 없어요.<br />
-          모든 데이터가 삭제됩니다.
+          다시 연결하려면 공동 설문부터 진행해야 해요.
         </p>
 
         <div class="mt-8 flex gap-3">
           <button
             type="button"
-            class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[13px] font-bold text-gray-600"
+            class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[13px] font-bold text-gray-600 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="isDisconnectingCouple"
             @click="closeDisconnectSheet"
           >
             취소
@@ -1001,7 +1024,8 @@ const confirmWithdraw = () => {
 
           <button
             type="button"
-            class="h-12 flex-1 cursor-pointer rounded-xl bg-yellow-300 text-[13px] font-bold text-gray-900"
+            class="h-12 flex-1 cursor-pointer rounded-xl bg-yellow-300 text-[13px] font-bold text-gray-900 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="isDisconnectingCouple"
             @click="nextDisconnectStep"
           >
             다음
@@ -1028,13 +1052,18 @@ const confirmWithdraw = () => {
 
         <p class="mt-3 text-center text-[12px] font-semibold leading-[1.7] text-red-500">
           커플 연결을 끊으면<br />
-          모든 정보가 완전히 삭제돼요.
+          연결 정보와 리포트/추천 결과가 삭제돼요.
+        </p>
+
+        <p v-if="disconnectError" class="mt-3 text-center text-[11px] text-red-500">
+          {{ disconnectError }}
         </p>
 
         <div class="mt-8 flex gap-3">
           <button
             type="button"
-            class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[13px] font-bold text-gray-600"
+            class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[13px] font-bold text-gray-600 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="isDisconnectingCouple"
             @click="closeDisconnectSheet"
           >
             취소
@@ -1042,10 +1071,11 @@ const confirmWithdraw = () => {
 
           <button
             type="button"
-            class="h-12 flex-1 cursor-pointer rounded-xl bg-red-500 text-[13px] font-bold text-white hover:bg-red-600"
+            class="h-12 flex-1 cursor-pointer rounded-xl bg-red-500 text-[13px] font-bold text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="isDisconnectingCouple"
             @click="finishDisconnect"
           >
-            다음
+            {{ isDisconnectingCouple ? '연결 해제 중' : '연결 끊기' }}
           </button>
         </div>
 

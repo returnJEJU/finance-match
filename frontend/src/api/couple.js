@@ -16,3 +16,7 @@ export async function updateCoupleProfileMessage(profileMessage) {
   })
   return coupleProfileMessageSchema.parse(data)
 }
+
+export async function disconnectCouple() {
+  await api.delete('/v1/members/me/couple')
+}
