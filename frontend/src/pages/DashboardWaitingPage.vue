@@ -89,7 +89,7 @@ const handleRefresh = async () => {
 
         <p class="mt-3 text-[15px] leading-6 text-ink-sub">
           상대방이 개인 설문을 완료하면<br />
-          금융 궁합도가 자동으로 생성됩니다.
+          새로고침 버튼을 눌러 확인해주세요.
         </p>
       </div>
 
@@ -111,7 +111,7 @@ const handleRefresh = async () => {
         role="alert"
         class="mt-4 text-center text-[12px] leading-5 font-semibold text-red-500"
       >
-        **{{ refreshMessage }}**<br />
+        {{ refreshMessage }}<br />
         잠시만 기다려주세요.
       </p>
     </div>
