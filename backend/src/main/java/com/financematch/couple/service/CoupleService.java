@@ -3,11 +3,16 @@ package com.financematch.couple.service;
 import com.financematch.common.ErrorCode;
 import com.financematch.couple.domain.CoupleProfile;
 import com.financematch.couple.dto.CoupleProfileMessageResponse;
+import com.financematch.couple.domain.InvitationTarget;
+import com.financematch.couple.dto.CreateCoupleRequest;
+import com.financematch.couple.dto.CreateCoupleResponse;
 import com.financematch.couple.mapper.CoupleMapper;
 import com.financematch.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -54,5 +59,71 @@ public class CoupleService {
             throw new ApiException(ErrorCode.COUPLE_NOT_CONNECTED);
         }
         return profile;
+
+    @Transactional
+    public CreateCoupleResponse createCouple(Long memberId, CreateCoupleRequest request) {
+
+        // 초대코드 조회 및 검증
+        InvitationTarget target = coupleMapper.findInvitationTargetForUpdate(request.getInviteCode());
+        if (target == null) {
+            throw new ApiException(ErrorCode.INVITATION_NOT_FOUND);
+        }
+
+        // 자기 자신과 커플 연동 불가
+        Long inviterId = target.getInviterId();
+        if (memberId.equals(inviterId)) {
+            throw new ApiException(ErrorCode.SELF_INVITATION_NOT_ALLOWED);
+        }
+
+        // A, B 회원 잠금 + 검증
+        Long firstMemberId = Math.min(memberId, inviterId);
+        Long secondMemberId = Math.max(memberId, inviterId);
+        List<Long> lockedMemberIds = coupleMapper.lockMembersForUpdate(firstMemberId, secondMemberId);
+        if (!lockedMemberIds.contains(memberId)) {
+            // 현재 사용자(초대코드 입력자) A가 유효하지 않음
+            throw new ApiException(ErrorCode.UNAUTHORIZED);
+        }
+        if (!lockedMemberIds.contains(inviterId)) {
+            // 초대코드 생성자가 유효하지 않음 -> 사용할 수 없는 초대 코드
+            throw new ApiException(ErrorCode.INVITATION_NOT_AVAILABLE);
+        }
+
+        // A 커플 여부 검증
+        if (coupleMapper.existsCoupleByMemberId(memberId)) {
+            throw new ApiException(ErrorCode.COUPLE_ALREADY_CONNECTED);
+        }
+
+        // 초대코드 ACTIVE 여부 및 B 커플 여부 검증
+        if (!"ACTIVE".equals(target.getStatus())
+                || coupleMapper.existsCoupleByMemberId(inviterId)) {
+            throw new ApiException(ErrorCode.INVITATION_NOT_AVAILABLE);
+        }
+
+        // A의 정보 삭제
+        coupleMapper.deleteInvitationByMemberId(memberId);
+        coupleMapper.deleteCommonSurveyByMemberId(memberId);
+        coupleMapper.deleteInvestmentExperiencesByMemberId(memberId);
+        coupleMapper.deletePersonalSurveyByMemberId(memberId);
+        coupleMapper.clearInvestmentType(memberId);
+
+        // 커플 생성
+        Long invitationCodeId = target.getInvitationCodeId();
+        int insertedRows = coupleMapper.insertCouple(inviterId, memberId, invitationCodeId);
+        if (insertedRows != 1) {
+            // 예상치 못한 커플 생성 실패
+            throw new ApiException(ErrorCode.INTERNAL_ERROR);
+        }
+
+        // 초대 코드 사용 표시
+        int updatedRows = coupleMapper.markInvitationUsed(target.getInvitationCodeId());
+        if (updatedRows != 1) {
+            // 사용할 수 없는 초대 코드 (상태가 ACTIVE가 아님)
+            throw new ApiException(ErrorCode.INVITATION_NOT_AVAILABLE);
+        }
+
+        // 파트너 이름
+        String partnerName = coupleMapper.findMemberNameById(inviterId);
+
+        return new CreateCoupleResponse(partnerName);
     }
 }

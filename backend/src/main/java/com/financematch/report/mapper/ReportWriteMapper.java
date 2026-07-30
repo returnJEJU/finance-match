@@ -14,4 +14,9 @@ public interface ReportWriteMapper {
     void upsertGoalFeasibilityReason(
             @Param("compatibilityResultId") Long compatibilityResultId, @Param("reason") String reason);
 
+
+    /** {@code report} 행이 없으면 새로 만들고, 있으면 asset_stability_reason 만 갱신한다. */
+    void upsertAssetStabilityReason(
+            @Param("compatibilityResultId") Long compatibilityResultId, @Param("reason") String reason);
+
 }
