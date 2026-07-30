@@ -1,14 +1,10 @@
 package com.financematch.couple.mapper;
 
 import com.financematch.couple.domain.CoupleProfile;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-
 import com.financematch.couple.domain.InvitationTarget;
+import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-
-import java.util.List;
 
 @Mapper
 public interface CoupleMapper {
@@ -38,9 +34,13 @@ public interface CoupleMapper {
 
     // A(초대코드 입력자)의 기생성 정보 삭제 (초대코드, 공동설문, 개인설문, 투자성향)
     int deleteInvitationByMemberId(@Param("memberId") Long memberId);
+
     int deleteCommonSurveyByMemberId(@Param("memberId") Long memberId);
+
     int deleteInvestmentExperiencesByMemberId(@Param("memberId") Long memberId);
+
     int deletePersonalSurveyByMemberId(@Param("memberId") Long memberId);
+
     int clearInvestmentType(@Param("memberId") Long memberId);
 
     // 커플 생성
