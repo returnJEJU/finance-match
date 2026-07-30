@@ -1,7 +1,7 @@
 package com.financematch.recommendation.service;
 
 import com.financematch.recommendation.domain.RecommendationContext;
-import com.financematch.recommendation.policy.JointRecommendationPolicy;
+import com.financematch.recommendation.policy.joint.JointRecommendationPolicy;
 import com.financematch.recommendation.policy.PersonalRecommendationPolicy;
 import com.financematch.recommendation.policy.RecommendedProduct;
 import com.financematch.recommendation.type.PersonalRecommendationType;

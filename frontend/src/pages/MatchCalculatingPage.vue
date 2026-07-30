@@ -1,32 +1,83 @@
 <script setup>
-// TODO(담당자): 이 화면을 구현하세요. (기준: 찰떡궁합_UI.pdf)
-// 화면: 궁합도 계산 중 · 레이아웃: BlankLayout
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+
+import { calculateCompatibility } from '@/api/match'
 import waitingCharacter from '@/assets/images/characters/character-waiting.png'
 
 const router = useRouter()
-//진행률 0에서 시작해서 100%까지
+
 const progress = ref(0)
+const calculating = ref(false)
+const errorMessage = ref('')
 
 let progressTimer
 let navigationTimer
+let destroyed = false
+
+const clearTimers = () => {
+  window.clearInterval(progressTimer)
+  window.clearTimeout(navigationTimer)
+}
+
+const wait = (milliseconds) =>
+  new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds)
+  })
+
+const startCalculation = async () => {
+  if (calculating.value) {
+    return
+  }
+
+  clearTimers()
+
+  progress.value = 0
+  calculating.value = true
+  errorMessage.value = ''
+
+  // API 응답을 기다리는 동안 진행률은 최대 90%까지만 표시
+  progressTimer = window.setInterval(() => {
+    if (progress.value < 90) {
+      progress.value += 5
+    }
+  }, 150)
+
+  try {
+    // 실제 궁합도 계산 API 호출
+    // 화면이 너무 빠르게 사라지지 않도록 최소 2.5초 동안 표시
+    await Promise.all([calculateCompatibility(), wait(2500)])
+
+    if (destroyed) {
+      return
+    }
+
+    window.clearInterval(progressTimer)
+    progress.value = 100
+
+    navigationTimer = window.setTimeout(() => {
+      router.replace('/dashboard')
+    }, 500)
+  } catch (error) {
+    if (destroyed) {
+      return
+    }
+
+    window.clearInterval(progressTimer)
+
+    errorMessage.value = error?.message || '금융 궁합도 계산 중 오류가 발생했습니다.'
+  } finally {
+    calculating.value = false
+  }
+}
 
 onMounted(() => {
-  progressTimer = window.setInterval(() => {
-    if (progress.value < 100) {
-      progress.value += 20
-    }
-  }, 1000)
-
-  navigationTimer = window.setTimeout(() => {
-    router.replace('/dashboard')
-  }, 5200)
+  startCalculation()
 })
 
 onUnmounted(() => {
-  window.clearInterval(progressTimer)
-  window.clearTimeout(navigationTimer)
+  destroyed = true
+  clearTimers()
 })
 </script>
 
@@ -50,6 +101,22 @@ onUnmounted(() => {
       두 분의 성향을 찰떡같이 분석 중입니다.<br />
       조금만 기다려주세요!!
     </p>
+
+    <!-- 오류 메시지 및 재시도 -->
+    <div v-if="errorMessage" class="mt-6 text-center">
+      <p class="text-[14px] font-medium text-red-600">
+        {{ errorMessage }}
+      </p>
+
+      <button
+        type="button"
+        class="mt-4 rounded-full bg-brand-ink px-6 py-3 text-[14px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+        :disabled="calculating"
+        @click="startCalculation"
+      >
+        다시 시도하기
+      </button>
+    </div>
 
     <!-- 진행률 -->
     <div class="mt-10 w-full max-w-[300px]">

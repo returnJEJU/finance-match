@@ -1,6 +1,7 @@
 package com.financematch.report.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
+
 import org.apache.ibatis.annotations.Param;
 
 @Mapper
@@ -12,4 +13,5 @@ public interface ReportWriteMapper {
      */
     void upsertGoalFeasibilityReason(
             @Param("compatibilityResultId") Long compatibilityResultId, @Param("reason") String reason);
+
 }

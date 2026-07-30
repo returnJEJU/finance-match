@@ -30,7 +30,15 @@ class RecommendationPlannerTest {
 
         // given
         RecommendationContext context = new RecommendationContext();
+        context.setInviterId(1L);
+        context.setInviteeId(2L);
+        context.setInviterInvestmentType("STABLE");
+        context.setInviteeInvestmentType("STABLE");
+        context.setInviterFinancialKnowledge("LOW");
+        context.setInviteeFinancialKnowledge("LOW");
         context.setTargetPeriodMonths(12);
+        context.setAvailableBalance(
+                java.math.BigDecimal.valueOf(6_000_000L));
 
         // when
         RecommendationPlan plan =

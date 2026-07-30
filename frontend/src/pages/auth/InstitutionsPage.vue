@@ -6,6 +6,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Check, ChevronLeft } from 'lucide-vue-next'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 // 기관 목록. mark 는 로고 대신 쓰는 머리글자, color 는 각 사의 브랜드 색.
 const GROUPS = [
@@ -161,13 +162,7 @@ function goBack() {
         <b class="text-ink font-bold">{{ selectedCount }}개 기관</b> 선택됨
       </p>
 
-      <button
-        type="button"
-        class="bg-brand rounded-card flex h-[54px] cursor-pointer items-center justify-center text-[16px] font-bold transition-transform duration-100 active:scale-[0.98]"
-        @click="goBack"
-      >
-        선택하기
-      </button>
+      <BaseButton @click="goBack"> 선택하기 </BaseButton>
     </div>
   </div>
 </template>

@@ -4,6 +4,15 @@
 
 <mapper namespace="com.financematch.invitation.mapper.InvitationMapper">
 
+    <select id="findActiveInviteCodeByMemberId" resultType="string">
+        SELECT ic.code_value
+        FROM common_survey cs
+            INNER JOIN invitation_code ic
+            ON ic.common_survey_id = cs.id
+        WHERE cs.member_id = #{memberId}
+            AND ic.status = 'ACTIVE'
+    </select>
+
     <select id="lockMemberById" resultType="long">
         SELECT id
         FROM member
@@ -31,6 +40,27 @@
             WHERE cs.member_id = #{memberId}
                 AND ic.status = 'ACTIVE'
         )
+    </select>
+
+    <select id="findCommonSurveyByAccessibleMemberId"
+            resultType="com.financematch.invitation.dto.CommonSurveyResponse">
+        SELECT
+            cs.first_goal_type AS goal_type1,
+            cs.second_goal_type AS goal_type2,
+            cs.target_amount,
+            cs.target_period_months,
+            cs.loan_purpose,
+            cs.has_loan_within_one_month
+        FROM common_survey cs
+        WHERE cs.member_id = #{memberId}
+            OR EXISTS (
+                SELECT 1
+                FROM couple c
+                    INNER JOIN invitation_code ic
+                    ON ic.id = c.invitation_code_id
+                WHERE c.invitee_id = #{memberId}
+                    AND ic.common_survey_id = cs.id
+            )
     </select>
 
     <insert id="insertCommonSurvey"

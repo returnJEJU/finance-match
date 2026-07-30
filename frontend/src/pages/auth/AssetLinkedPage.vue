@@ -5,6 +5,7 @@
 import { ChevronRight, CreditCard, Landmark, Lock, TrendingUp, Wallet } from 'lucide-vue-next'
 import logoWordmark from '@/assets/images/logo/logo-wordmark.png'
 import characterExcited from '@/assets/images/characters/character-excited.png'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 // 자산 구성 막대와 범례. percent 합은 100.
 const COMPOSITION = [
@@ -140,13 +141,10 @@ const ITEMS = [
     </div>
 
     <div class="flex flex-none flex-col px-7 pb-14">
-      <RouterLink
-        :to="{ name: 'couple-start' }"
-        class="bg-brand rounded-card flex h-[54px] cursor-pointer items-center justify-center gap-[7px] text-[16px] font-bold transition-transform duration-100 active:scale-[0.98]"
-      >
+      <BaseButton :to="{ name: 'couple-start' }">
         찰떡귱합 시작하기
         <ChevronRight class="h-[18px] w-[18px]" />
-      </RouterLink>
+      </BaseButton>
     </div>
   </div>
 </template>

@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.financematch.config.RootConfig;
 import com.financematch.recommendation.domain.RecommendationContext;
 import com.financematch.recommendation.policy.RecommendedProduct;
+
+import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +31,8 @@ class DepositRecommendationPolicyTest {
         // given
         RecommendationContext context = new RecommendationContext();
         context.setTargetPeriodMonths(12);
+        context.setAvailableBalance(
+                BigDecimal.valueOf(6_000_000L));
 
         // when
         List<RecommendedProduct> result =
@@ -54,6 +58,8 @@ class DepositRecommendationPolicyTest {
         // given
         RecommendationContext context = new RecommendationContext();
         context.setTargetPeriodMonths(2);
+        context.setAvailableBalance(
+                BigDecimal.valueOf(6_000_000L));
 
         // when
         List<RecommendedProduct> result =
@@ -67,5 +73,39 @@ class DepositRecommendationPolicyTest {
         assertEquals(1L, first.productId());
         assertEquals(1, first.rank());
         assertTrue(first.selected());
+    }
+
+    @Test
+    void 입출금잔액합계가_600만원_미만이면_예금을_추천하지_않는다() {
+
+        // given
+        RecommendationContext context = new RecommendationContext();
+        context.setTargetPeriodMonths(12);
+        context.setAvailableBalance(
+                BigDecimal.valueOf(5_999_999L));
+
+        // when
+        List<RecommendedProduct> result =
+                policy.recommend(context);
+
+        // then
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void 입출금잔액합계가_정확히_600만원이면_예금을_추천한다() {
+
+        // given
+        RecommendationContext context = new RecommendationContext();
+        context.setTargetPeriodMonths(12);
+        context.setAvailableBalance(
+                BigDecimal.valueOf(6_000_000L));
+
+        // when
+        List<RecommendedProduct> result =
+                policy.recommend(context);
+
+        // then
+        assertFalse(result.isEmpty());
     }
 }

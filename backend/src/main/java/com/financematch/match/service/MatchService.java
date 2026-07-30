@@ -15,6 +15,9 @@ import com.financematch.report.service.GoalFeasibilityScoreService;
 
 import lombok.RequiredArgsConstructor;
 
+import com.financematch.common.ErrorCode;
+import com.financematch.exception.ApiException;
+
 @Service
 @RequiredArgsConstructor
 public class MatchService {
@@ -111,5 +114,38 @@ public class MatchService {
         );
 
         return savedResult;
+    }
+
+    @Transactional(readOnly = true)
+    public CompatibilityResult getCompatibilityResult(
+            Long memberId
+    ) {
+        if (memberId == null) {
+            throw new ApiException(ErrorCode.INVALID_INPUT);
+        }
+
+        MatchCoupleData couple =
+                matchMapper.findCoupleDataByMemberId(memberId);
+
+        if (couple == null) {
+            throw new ApiException(
+                    ErrorCode.NOT_FOUND,
+                    "연결된 커플 정보를 찾을 수 없습니다."
+            );
+        }
+
+        CompatibilityResult result =
+                matchMapper.findCompatibilityResultByCoupleId(
+                        couple.getCoupleId()
+                );
+
+        if (result == null) {
+            throw new ApiException(
+                    ErrorCode.NOT_FOUND,
+                    "금융 궁합도 계산 결과를 찾을 수 없습니다."
+            );
+        }
+
+        return result;
     }
 }
