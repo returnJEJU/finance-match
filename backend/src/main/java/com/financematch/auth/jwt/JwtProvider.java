@@ -1,5 +1,9 @@
 package com.financematch.auth.jwt;
 
+import com.financematch.common.ErrorCode;
+import com.financematch.exception.ApiException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -49,5 +53,34 @@ public class JwtProvider {
                 .setExpiration(expiration)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    /**
+     * 토큰의 서명·만료를 검증하고 회원 ID 를 꺼낸다.
+     *
+     * @throws ApiException 만료된 토큰이면 {@code EXPIRED_TOKEN}, 서명이 맞지 않거나 형태가 잘못됐으면
+     *     {@code INVALID_TOKEN}
+     */
+    public Long getMemberId(String token) {
+        try {
+            String subject =
+                    Jwts.parserBuilder()
+                            .setSigningKey(key)
+                            .build()
+                            .parseClaimsJws(token)
+                            .getBody()
+                            .getSubject();
+
+            return Long.valueOf(subject);
+
+            // ExpiredJwtException 은 JwtException 의 하위 타입이라 반드시 먼저 잡는다.
+        } catch (ExpiredJwtException e) {
+            throw new ApiException(ErrorCode.EXPIRED_TOKEN);
+
+            // JwtException: 서명 불일치·형식 오류.
+            // IllegalArgumentException: 토큰이 null·빈 문자열이거나 subject 가 숫자가 아닌 경우.
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new ApiException(ErrorCode.INVALID_TOKEN);
+        }
     }
 }

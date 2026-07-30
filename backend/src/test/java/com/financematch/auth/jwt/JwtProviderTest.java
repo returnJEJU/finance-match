@@ -3,10 +3,11 @@ package com.financematch.auth.jwt;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.financematch.common.ErrorCode;
+import com.financematch.exception.ApiException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SignatureException;
 import io.jsonwebtoken.security.WeakKeyException;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
@@ -44,14 +45,55 @@ class JwtProviderTest {
     }
 
     @Test
-    void 다른_비밀키로_서명한_토큰은_검증을_통과하지_못한다() {
-        // 서명이 위조를 막는다는 전제를 문서화한다. 이 전제가 깨지면 인증 전체가 무의미해진다.
+    void 발급한_토큰에서_회원_ID_를_꺼낸다() {
+        String token = jwtProvider.createAccessToken(7L);
+
+        assertEquals(7L, jwtProvider.getMemberId(token));
+    }
+
+    @Test
+    void 다른_비밀키로_서명한_토큰은_INVALID_TOKEN_이다() {
+        // 서명이 위조를 막는다는 전제. 이 전제가 깨지면 인증 전체가 무의미해진다.
         JwtProvider other =
                 new JwtProvider("another-secret-key-that-is-long-enough-for-hs256-000", VALIDITY_MS);
 
         String tokenFromOtherKey = other.createAccessToken(7L);
 
-        assertThrows(SignatureException.class, () -> parse(tokenFromOtherKey));
+        assertEquals(
+                ErrorCode.INVALID_TOKEN,
+                assertThrows(ApiException.class, () -> jwtProvider.getMemberId(tokenFromOtherKey))
+                        .getErrorCode());
+    }
+
+    @Test
+    void 만료된_토큰은_EXPIRED_TOKEN_이다() {
+        // 유효기간을 음수로 두면 발급 즉시 만료된 토큰이 나온다.
+        String expiredToken = new JwtProvider(SECRET, -1_000L).createAccessToken(7L);
+
+        assertEquals(
+                ErrorCode.EXPIRED_TOKEN,
+                assertThrows(ApiException.class, () -> jwtProvider.getMemberId(expiredToken))
+                        .getErrorCode());
+    }
+
+    @Test
+    void 토큰_형태가_아닌_문자열은_INVALID_TOKEN_이다() {
+        assertEquals(
+                ErrorCode.INVALID_TOKEN,
+                assertThrows(ApiException.class, () -> jwtProvider.getMemberId("not-a-token"))
+                        .getErrorCode());
+    }
+
+    @Test
+    void 토큰이_null_이거나_비어_있으면_INVALID_TOKEN_이다() {
+        assertEquals(
+                ErrorCode.INVALID_TOKEN,
+                assertThrows(ApiException.class, () -> jwtProvider.getMemberId(null))
+                        .getErrorCode());
+        assertEquals(
+                ErrorCode.INVALID_TOKEN,
+                assertThrows(ApiException.class, () -> jwtProvider.getMemberId(""))
+                        .getErrorCode());
     }
 
     @Test
