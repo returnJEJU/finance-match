@@ -29,10 +29,16 @@ public enum ErrorCode {
     //  ⚠️ 도메인별 에러 코드는 여기에 추가한다 — 【API 명세 확정 후】
     //     각 담당자가 자기 도메인 구획을 만들어 추가한다. 예:
     //       // ===== 인증 (임민지) =====
-    //       EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
+    //       EMAIL_EXISTS(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
     //       // ===== 커플 (강현지) =====
     //       INVITE_CODE_INVALID(HttpStatus.BAD_REQUEST, "유효하지 않은 초대코드입니다."),
     // ===================================================================
+
+    // ===== 인증 (임민지) =====
+    EMAIL_EXISTS(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
+    CONSENT_REQUIRED(HttpStatus.BAD_REQUEST, "필수 약관(4종)에 모두 동의해야 합니다."),
+    // 계정 열거를 막기 위해 "없는 이메일"·"비밀번호 불일치"·"탈퇴 회원"을 하나의 코드로 통합한다.
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 일치하지 않습니다."),
 
     // ===== 초대 (강현지) =====
     INVITATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 사용 가능한 초대 코드가 존재합니다."),
