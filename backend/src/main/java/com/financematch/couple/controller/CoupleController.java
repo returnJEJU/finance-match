@@ -10,6 +10,7 @@ import com.financematch.couple.service.CoupleService;
 import java.net.URI;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -36,6 +37,13 @@ public class CoupleController {
 
         return ResponseEntity.created(COUPLE_LOCATION)
                 .body(ApiResponse.ok(response));
+    }
+
+    @DeleteMapping("")
+    public ApiResponse<Void> disconnectCouple(
+            @LoginMember Long memberId) {
+        coupleService.disconnectCouple(memberId);
+        return ApiResponse.ok();
     }
 
     @GetMapping("/profile-message")

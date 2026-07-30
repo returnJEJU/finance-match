@@ -7,9 +7,11 @@ import com.financematch.common.ErrorCode;
 import com.financematch.config.RootConfig;
 import com.financematch.couple.dto.CoupleProfileMessageResponse;
 import com.financematch.exception.ApiException;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
@@ -23,6 +25,9 @@ class CoupleServiceTest {
 
     @Autowired
     private CoupleService coupleService;
+
+    @Autowired
+    private DataSource dataSource;
 
     @Test
     void 한_명이_수정한_커플_한줄소개를_파트너도_조회한다() {
@@ -54,5 +59,49 @@ class CoupleServiceTest {
 
         // then
         assertEquals(ErrorCode.COUPLE_NOT_CONNECTED, exception.getErrorCode());
+    }
+
+    @Test
+    void 커플_연결을_끊으면_연결_결과와_추천_리포트가_삭제된다() {
+
+        // when
+        coupleService.disconnectCouple(1L);
+
+        // then
+        assertEquals(0, count("SELECT COUNT(*) FROM couple WHERE id = 1"));
+        assertEquals(0, count("SELECT COUNT(*) FROM compatibility_result WHERE couple_id = 1"));
+        assertEquals(0, count("SELECT COUNT(*) FROM report WHERE compatibility_result_id = 1"));
+        assertEquals(0, count("SELECT COUNT(*) FROM recommendation WHERE couple_id = 1"));
+        assertEquals(
+                0,
+                count(
+                        "SELECT COUNT(*) FROM personal_recommendation_tax_saving "
+                                + "WHERE member_id IN (1, 2)"));
+        assertEquals(
+                0,
+                count(
+                        "SELECT COUNT(*) FROM personal_recommendation_investment "
+                                + "WHERE member_id IN (1, 2)"));
+        assertEquals(0, count("SELECT COUNT(*) FROM invitation_code WHERE id = 1"));
+        assertEquals(0, count("SELECT COUNT(*) FROM common_survey WHERE id = 1"));
+    }
+
+    @Test
+    void 연결된_커플이_없으면_커플_연결을_끊을_수_없다() {
+
+        // when
+        ApiException exception =
+                assertThrows(
+                        ApiException.class,
+                        () -> coupleService.disconnectCouple(9999L));
+
+        // then
+        assertEquals(ErrorCode.COUPLE_NOT_CONNECTED, exception.getErrorCode());
+    }
+
+    private int count(String sql) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
+        return count == null ? 0 : count;
     }
 }
