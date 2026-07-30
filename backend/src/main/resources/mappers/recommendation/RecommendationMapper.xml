@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.recommendation.mapper.RecommendationMapper">
+
+    <!-- 커플별 최신 추천 부모 row를 조회한다. -->
+    <select id="findRecommendationIdByCoupleId" resultType="long">
+        SELECT id
+        FROM recommendation
+        WHERE couple_id = #{coupleId}
+    </select>
+
+    <!-- 로그인 회원이 속한 커플의 추천 결과만 조회한다. -->
+    <select id="findRecommendationIdByMemberId" resultType="long">
+        SELECT r.id
+        FROM recommendation r
+            INNER JOIN couple c
+                ON c.id = r.couple_id
+        WHERE c.inviter_id = #{memberId}
+           OR c.invitee_id = #{memberId}
+    </select>
+
+    <!-- 커플 ID를 직접 받을 때도 회원 소유 조건을 함께 걸어 IDOR를 막는다. -->
+    <select id="findRecommendationIdByCoupleIdAndMemberId" resultType="long">
+        SELECT r.id
+        FROM recommendation r
+            INNER JOIN couple c
+                ON c.id = r.couple_id
+        WHERE r.couple_id = #{coupleId}
+          AND (c.inviter_id = #{memberId} OR c.invitee_id = #{memberId})
+    </select>
+
+    <!-- couple_id UNIQUE를 이용해 커플별 최신 추천 부모 row를 생성하거나 갱신한다. -->
+    <insert id="upsertRecommendation"
+            parameterType="com.financematch.recommendation.domain.Recommendation"
+            useGeneratedKeys="true"
+            keyProperty="id"
+            keyColumn="id">
+        INSERT INTO recommendation (couple_id)
+        VALUES (#{coupleId})
+        ON DUPLICATE KEY UPDATE
+            id = LAST_INSERT_ID(id),
+            updated_at = CURRENT_TIMESTAMP
+    </insert>
+
+    <!-- 슬롯 삭제 시 recommendation_product는 FK ON DELETE CASCADE로 함께 삭제된다. -->
+    <delete id="deleteSlotsByRecommendationId">
+        DELETE FROM recommendation_slot
+        WHERE recommendation_id = #{recommendationId}
+    </delete>
+
+    <!-- 공동 추천 대분류 슬롯을 저장하고 생성된 slot ID를 객체에 채운다. -->
+    <insert id="insertRecommendationSlot"
+            parameterType="com.financematch.recommendation.domain.RecommendationSlot"
+            useGeneratedKeys="true"
+            keyProperty="id"
+            keyColumn="id">
+        INSERT INTO recommendation_slot (
+            recommendation_id,
+            slot_type
+        ) VALUES (
+            #{recommendationId},
+            #{slotType}
+        )
+    </insert>
+
+    <!-- 슬롯별 후보 상품과 대표 상품 여부를 저장한다. -->
+    <insert id="insertRecommendationProduct">
+        INSERT INTO recommendation_product (
+            recommendation_slot_id,
+            product_id,
+            rank_no,
+            is_selected
+        ) VALUES (
+            #{slotId},
+            #{product.productId},
+            #{product.rank},
+            #{product.selected}
+        )
+    </insert>
+
+    <!-- 개인 절세 추천은 회원별 최신 결과만 유지한다. -->
+    <delete id="deletePersonalTaxSavingByMemberId">
+        DELETE FROM personal_recommendation_tax_saving
+        WHERE member_id = #{memberId}
+    </delete>
+
+    <insert id="insertPersonalTaxSaving">
+        INSERT INTO personal_recommendation_tax_saving (
+            member_id,
+            product_id,
+            rank_no
+        ) VALUES (
+            #{memberId},
+            #{product.productId},
+            #{product.rank}
+        )
+    </insert>
+
+    <!-- 개인 투자 추천은 회원별 최신 결과만 유지한다. -->
+    <delete id="deletePersonalInvestmentByMemberId">
+        DELETE FROM personal_recommendation_investment
+        WHERE member_id = #{memberId}
+    </delete>
+
+    <insert id="insertPersonalInvestment">
+        INSERT INTO personal_recommendation_investment (
+            member_id,
+            product_id,
+            rank_no
+        ) VALUES (
+            #{memberId},
+            #{product.productId},
+            #{product.rank}
+        )
+    </insert>
+
+    <!-- 아래 count 쿼리는 저장 결과 검증용이다. -->
+    <select id="countRecommendationsByCoupleId" resultType="int">
+        SELECT COUNT(*)
+        FROM recommendation
+        WHERE couple_id = #{coupleId}
+    </select>
+
+    <select id="countSlotsByRecommendationId" resultType="int">
+        SELECT COUNT(*)
+        FROM recommendation_slot
+        WHERE recommendation_id = #{recommendationId}
+    </select>
+
+    <select id="countProductsByRecommendationId" resultType="int">
+        SELECT COUNT(*)
+        FROM recommendation_product rp
+            INNER JOIN recommendation_slot rs
+                ON rs.id = rp.recommendation_slot_id
+        WHERE rs.recommendation_id = #{recommendationId}
+    </select>
+
+    <select id="countSelectedProductsByRecommendationId" resultType="int">
+        SELECT COUNT(*)
+        FROM recommendation_product rp
+            INNER JOIN recommendation_slot rs
+                ON rs.id = rp.recommendation_slot_id
+        WHERE rs.recommendation_id = #{recommendationId}
+          AND rp.is_selected = 1
+    </select>
+
+    <select id="countSlotsByType" resultType="int">
+        SELECT COUNT(*)
+        FROM recommendation_slot
+        WHERE recommendation_id = #{recommendationId}
+          AND slot_type = #{slotType}
+    </select>
+
+    <select id="countPersonalTaxSavingByMemberId" resultType="int">
+        SELECT COUNT(*)
+        FROM personal_recommendation_tax_saving
+        WHERE member_id = #{memberId}
+    </select>
+
+    <select id="countPersonalInvestmentByMemberId" resultType="int">
+        SELECT COUNT(*)
+        FROM personal_recommendation_investment
+        WHERE member_id = #{memberId}
+    </select>
+</mapper>
