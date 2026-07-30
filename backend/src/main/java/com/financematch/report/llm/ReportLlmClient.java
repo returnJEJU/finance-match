@@ -1,4 +1,92 @@
 package com.financematch.report.llm;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+/**
+ * OpenAI Chat Completions 호출 래퍼. 프롬프트 문자열 하나를 넣으면 모델 응답 텍스트 하나를 반환한다.
+ *
+ * <p>report_llm_case_practice 프로젝트의 {@code OpenAiClient}와 동일한 역할 — SDK 없이 순수
+ * {@code HttpClient} + Jackson으로 직접 호출한다. 그 프로젝트에서 gpt-4o-mini로 검증된 방식을
+ * 그대로 가져왔고, 기본 모델만 gpt-5-nano로 바꿨다.
+ *
+ * <p>주의: gpt-5 계열은 chat completions 파라미터 지원 범위가 gpt-4o 계열과 다를 수 있다(예:
+ * temperature 미지원 가능성). 실제 키로 첫 호출 테스트 시 확인이 필요하다.
+ */
+@Component
 public class ReportLlmClient {
+
+    private static final String ENDPOINT = "https://api.openai.com/v1/chat/completions";
+
+    private final String apiKey;
+    private final String model;
+    private final HttpClient http =
+            HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build();
+    private final ObjectMapper mapper = new ObjectMapper();
+
+    public ReportLlmClient(
+            @Value("${openai.api.key}") String apiKey, @Value("${openai.model}") String model) {
+        this.apiKey = apiKey;
+        this.model = model;
+    }
+
+    public String generateReason(String prompt) {
+        Map<String, Object> body =
+                Map.of(
+                        "model", model,
+                        "messages", List.of(Map.of("role", "user", "content", prompt)),
+                        "temperature", 0.7);
+
+        try {
+            String requestJson = mapper.writeValueAsString(body);
+
+            HttpRequest request =
+                    HttpRequest.newBuilder()
+                            .uri(URI.create(ENDPOINT))
+                            .timeout(Duration.ofSeconds(60))
+                            .header("Content-Type", "application/json")
+                            .header("Authorization", "Bearer " + apiKey)
+                            .POST(HttpRequest.BodyPublishers.ofString(requestJson))
+                            .build();
+
+            HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                throw new LlmCallException(
+                        "OpenAI API 호출 실패 (HTTP " + response.statusCode() + "): " + response.body());
+            }
+
+            JsonNode root = mapper.readTree(response.body());
+            JsonNode content = root.path("choices").path(0).path("message").path("content");
+            if (content.isMissingNode()) {
+                throw new LlmCallException("응답에서 content 를 찾을 수 없음: " + response.body());
+            }
+            return content.asText().trim();
+        } catch (IOException | InterruptedException e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            throw new LlmCallException("OpenAI 호출 중 오류", e);
+        }
+    }
+
+    public static class LlmCallException extends RuntimeException {
+        public LlmCallException(String message) {
+            super(message);
+        }
+
+        public LlmCallException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
 }
