@@ -11,6 +11,7 @@ import com.financematch.match.domain.CompatibilityResult;
 import com.financematch.match.domain.MatchCoupleData;
 import com.financematch.match.domain.MatchMemberData;
 import com.financematch.match.mapper.MatchMapper;
+import com.financematch.report.service.AssetStabilityScoreService;
 import com.financematch.report.service.GoalFeasibilityScoreService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class MatchService {
     private final MatchCalculationInputConverter converter;
     private final MatchCalculator calculator;
     private final GoalFeasibilityScoreService goalFeasibilityScoreService;
+    private final AssetStabilityScoreService assetStabilityScoreService;
 
     @Transactional
     public CompatibilityResult getOrCalculateCompatibilityResult(
@@ -108,6 +110,12 @@ public class MatchService {
                 calculationResult.getExpectedAsset(),
                 calculationInput.getTargetAmount(),
                 calculationInput.getTargetPeriodMonths()
+        );
+
+        // 9. 금융 자산 축 reason 생성·저장 (LLM 미사용 · 결정론적)
+        assetStabilityScoreService.generateAndSave(
+                savedResult.getId(),
+                calculationResult.getCoupleAssetRatio()
         );
 
         return savedResult;
