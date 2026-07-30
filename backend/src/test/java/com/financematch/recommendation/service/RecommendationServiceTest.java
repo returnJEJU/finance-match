@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.financematch.config.RootConfig;
+import com.financematch.recommendation.dto.PackageSlotResponse;
+import com.financematch.recommendation.dto.RecommendationResponse;
 import com.financematch.recommendation.mapper.RecommendationMapper;
 import com.financematch.recommendation.policy.RecommendedProduct;
 import com.financematch.recommendation.type.PersonalRecommendationType;
@@ -107,6 +109,98 @@ class RecommendationServiceTest {
         assertJointRecommendationsSaved(
                 firstRecommendationId,
                 firstPlan);
+    }
+
+    @Test
+    void 저장한_추천결과를_상품상세정보와_함께_조회한다() {
+
+        // given
+        Long memberId = 1L;
+        recommendationService.recommend(memberId);
+
+        // when
+        RecommendationResponse response =
+                recommendationService.getRecommendation(memberId);
+
+        // then
+        assertNotNull(response);
+        assertNotNull(response.recommendationId());
+        assertFalse(response.packageSlots().isEmpty());
+
+        PackageSlotResponse depositSlot =
+                response.packageSlots().stream()
+                        .filter(slot -> slot.slotType() == RecommendationSlotType.DEPOSIT)
+                        .findFirst()
+                        .orElseThrow();
+
+        assertFalse(depositSlot.products().isEmpty());
+        assertTrue(
+                depositSlot.products().stream()
+                        .anyMatch(
+                                product ->
+                                        product.productId()
+                                                .equals(depositSlot.selectedProductId())));
+        assertTrue(
+                depositSlot.products().stream()
+                        .allMatch(
+                                product ->
+                                        product.productUrl() != null
+                                                && !product.productUrl().isBlank()));
+        assertTrue(
+                depositSlot.products().stream()
+                        .allMatch(
+                                product ->
+                                        "기본금리".equals(product.comparisonLabel())
+                                                && product.comparisonValue().startsWith("연 ")));
+    }
+
+    @Test
+    void 커플_두회원은_같은_공동추천과_각자의_개인추천만_조회한다() {
+
+        // given
+        Long inviterId = 1L;
+        Long inviteeId = 2L;
+        recommendationService.recommend(inviterId);
+
+        // when
+        RecommendationResponse inviterResponse =
+                recommendationService.getRecommendation(inviterId);
+        RecommendationResponse inviteeResponse =
+                recommendationService.getRecommendation(inviteeId);
+
+        // then
+        assertEquals(
+                inviterResponse.recommendationId(),
+                inviteeResponse.recommendationId());
+        assertEquals(
+                inviterResponse.packageSlots().size(),
+                inviteeResponse.packageSlots().size());
+
+        if (inviterResponse.personalTaxSavingRecommendation() != null) {
+            assertEquals(
+                    inviterId,
+                    inviterResponse.personalTaxSavingRecommendation().targetMemberId());
+        }
+        if (inviteeResponse.personalTaxSavingRecommendation() != null) {
+            assertEquals(
+                    inviteeId,
+                    inviteeResponse.personalTaxSavingRecommendation().targetMemberId());
+        }
+        if (inviterResponse.personalInvestmentRecommendation() != null) {
+            assertEquals(
+                    inviterId,
+                    inviterResponse.personalInvestmentRecommendation().targetMemberId());
+        }
+        if (inviteeResponse.personalInvestmentRecommendation() != null) {
+            assertEquals(
+                    inviteeId,
+                    inviteeResponse.personalInvestmentRecommendation().targetMemberId());
+        }
+
+        int personalInvestmentOwnerCount =
+                (inviterResponse.personalInvestmentRecommendation() == null ? 0 : 1)
+                        + (inviteeResponse.personalInvestmentRecommendation() == null ? 0 : 1);
+        assertTrue(personalInvestmentOwnerCount <= 1);
     }
 
     private void assertJointRecommendationsSaved(

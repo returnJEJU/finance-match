@@ -1,9 +1,14 @@
 package com.financematch.recommendation.mapper;
 
 import com.financematch.recommendation.domain.Recommendation;
+import com.financematch.recommendation.domain.JointRecommendationProduct;
+import com.financematch.recommendation.domain.PersonalInvestmentProduct;
+import com.financematch.recommendation.domain.PersonalTaxSavingProduct;
+import com.financematch.recommendation.domain.RecommendationResult;
 import com.financematch.recommendation.domain.RecommendationSlot;
 import com.financematch.recommendation.policy.RecommendedProduct;
 import com.financematch.recommendation.type.RecommendationSlotType;
+import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -20,6 +25,25 @@ public interface RecommendationMapper {
     Long findRecommendationIdByCoupleIdAndMemberId(
             @Param("coupleId") Long coupleId,
             @Param("memberId") Long memberId);
+
+    // 로그인 회원이 소유한 추천 부모와 현재 커플의 고금리 부채 여부를 조회한다.
+    RecommendationResult findRecommendationResultByMemberId(@Param("memberId") Long memberId);
+
+    // 로그인 회원이 소유한 추천의 공동 슬롯 상품을 저장 순위대로 조회한다.
+    List<JointRecommendationProduct> findJointProductsByRecommendationIdAndMemberId(
+            @Param("recommendationId") Long recommendationId,
+            @Param("memberId") Long memberId);
+
+    // 로그인 회원 본인의 개인 절세 추천만 조회한다.
+    List<PersonalTaxSavingProduct> findPersonalTaxSavingByMemberId(
+            @Param("memberId") Long memberId);
+
+    // 로그인 회원 본인의 개인 투자 추천만 조회한다.
+    List<PersonalInvestmentProduct> findPersonalInvestmentByMemberId(
+            @Param("memberId") Long memberId);
+
+    // 추천 입력이나 상품 정보가 추천 저장 시점 이후 변경되지 않았는지 확인한다.
+    boolean isRecommendationCurrentByMemberId(@Param("memberId") Long memberId);
 
     // recommendation 부모 row를 생성하거나 기존 row의 updated_at만 갱신한다.
     int upsertRecommendation(Recommendation recommendation);

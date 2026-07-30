@@ -5,6 +5,8 @@ import com.financematch.product.type.TaxAccountType;
 public record TaxSavingProductResponse(
         Long productId,
         String productName,
+        String description,
+        String productUrl,
         TaxAccountType accountType) {
 
     public TaxSavingProductResponse {
@@ -13,6 +15,9 @@ public record TaxSavingProductResponse(
         }
         if (productName == null || productName.isBlank()) {
             throw new IllegalArgumentException("절세 추천 상품명은 필수입니다.");
+        }
+        if (productUrl == null || productUrl.isBlank()) {
+            throw new IllegalArgumentException("절세 추천 상품 공식 URL은 필수입니다.");
         }
     }
 }
