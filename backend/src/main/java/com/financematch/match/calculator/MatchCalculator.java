@@ -297,6 +297,27 @@ public class MatchCalculator {
 
     //4. 목표 달성률
     public BigDecimal calculateGoalFeasibilityScore(MatchCalculationInput input) {
+        double futureAsset = calculateFutureAsset(input);
+        double targetAmount = input.getTargetAmount().doubleValue();
+
+        double achievementRate = Math.min(futureAsset / targetAmount, 1.0);
+
+        double finalScore = GOAL_MAX_SCORE * achievementRate;
+
+        return round(finalScore);
+    }
+
+    /**
+     * 목표기간 후 예상 자산(futureAsset). report 도메인의 목표 달성 가능성 축 reason 문구
+     * ({@code GoalFeasibilityReasonFormatter})가 이 값을 그대로 쓴다 — 점수 계산과 같은 공식을
+     * 재사용해야 점수·문구가 어긋나지 않는다.
+     */
+    public BigDecimal calculateExpectedAsset(MatchCalculationInput input) {
+        return BigDecimal.valueOf(calculateFutureAsset(input))
+                .setScale(0, RoundingMode.HALF_UP);
+    }
+
+    private double calculateFutureAsset(MatchCalculationInput input) {
         validateGoalInput(input);
 
         MemberCalculationInput memberA = input.getMemberA();
@@ -325,18 +346,9 @@ public class MatchCalculator {
         double growthFactor =
                 Math.pow(1.0 + monthlyReturnRate, targetPeriodMonths);
 
-        double futureAsset =
-                currentAvailableAsset * growthFactor
-                        + monthlyAvailableAmount
-                        * ((growthFactor - 1.0) / monthlyReturnRate);
-
-        double targetAmount = input.getTargetAmount().doubleValue();
-
-        double achievementRate = Math.min(futureAsset / targetAmount, 1.0);
-
-        double finalScore = GOAL_MAX_SCORE * achievementRate;
-
-        return round(finalScore);
+        return currentAvailableAsset * growthFactor
+                + monthlyAvailableAmount
+                * ((growthFactor - 1.0) / monthlyReturnRate);
     }
 
     private double calculateCurrentAvailableAsset(
@@ -612,6 +624,9 @@ public class MatchCalculator {
         BigDecimal goalFeasibilityScore =
                 calculateGoalFeasibilityScore(input);
 
+        BigDecimal expectedAsset =
+                calculateExpectedAsset(input);
+
         BigDecimal taxStrategyScore =
                 calculateTaxStrategyScore(input);
 
@@ -644,6 +659,7 @@ public class MatchCalculator {
                 .debtRepaymentScore(debtRepaymentScore)
                 .financialValueScore(financialValueScore)
                 .goalFeasibilityScore(goalFeasibilityScore)
+                .expectedAsset(expectedAsset)
                 .taxStrategyScore(taxStrategyScore)
                 .taxStrategyCalculated(taxStrategyCalculated)
                 .totalScore(totalScore)

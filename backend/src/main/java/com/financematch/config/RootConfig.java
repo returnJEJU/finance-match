@@ -39,6 +39,8 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Configuration
 @PropertySource("classpath:application-${spring.profiles.active:local}.properties")
+// 실제 비밀값(OpenAI API 키 등). git 제외 대상이라 없는 로컬에서도 기동은 되게 ignoreResourceNotFound.
+@PropertySource(value = "classpath:application-secret.properties", ignoreResourceNotFound = true)
 @MapperScan(
         basePackages = "com.financematch",
         annotationClass = Mapper.class
