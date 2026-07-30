@@ -28,40 +28,32 @@ const compatibilityMessage = computed(() => {
 
   if (score >= 90) {
     return {
-      first: '천생연분! 우리 부부의',
-      second: '금융 조화는 ',
+      first: '환상의 찰떡귱합! 우리 부부는',
+      second: '금융 호흡까지 ',
       accent: '완벽해요.',
     }
   }
 
   if (score >= 80) {
     return {
-      first: '찰떡궁합! 우리 부부의',
+      first: '찰떡귱합! 우리 부부의',
       second: '금융 조화는 ',
-      accent: '완벽해요.',
-    }
-  }
-
-  if (score >= 70) {
-    return {
-      first: '좋은 궁합! 우리 부부의',
-      second: '금융 조화는 ',
-      accent: '안정적이에요.',
+      accent: '아주 좋아요.',
     }
   }
 
   if (score >= 60) {
     return {
-      first: '우리 부부의 금융 조화는',
-      second: '조금씩 ',
-      accent: '맞춰가고 있어요.',
+      first: '제법 잘 맞는 우리 부부!',
+      second: '조금만 더 맞추면 더욱 든든해져요.',
+      accent: '',
     }
   }
 
   return {
-    first: '함께할수록 좋아지는',
-    second: '우리 부부의 ',
-    accent: '금융 궁합이에요.',
+    first: '우리, 이제 맞춰가는 중!',
+    second: '부부의 금융 습관을 하나씩 맞춰봐요.',
+    accent: '',
   }
 })
 
@@ -218,10 +210,15 @@ onMounted(() => {
 
         <!-- 궁합 문구 -->
         <div class="mt-2 w-full px-3">
-          <p class="text-[19px] leading-[1.3] font-extrabold tracking-[-0.7px] text-ink">
+          <p
+            class="text-center text-[19px] leading-[1.3] font-extrabold tracking-[-0.7px] text-ink"
+          >
             {{ compatibilityMessage.first }}<br />
             {{ compatibilityMessage.second }}
-            <span class="border-b-2 border-brand-deep pb-0.5 text-brand-ink">
+            <span
+              v-if="compatibilityMessage.accent"
+              class="border-b-2 border-brand-deep pb-0.5 text-brand-ink"
+            >
               {{ compatibilityMessage.accent }}
             </span>
           </p>
