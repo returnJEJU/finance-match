@@ -75,6 +75,15 @@ public class MatchCalculator {
             BigDecimal financialAsset,
             BigDecimal medianFinancialAsset
     ) {
+        double ratio = calculateAssetRatio(financialAsset, medianFinancialAsset);
+
+        return 100.0 * (1.0 - Math.pow(2.0, -ratio));
+    }
+
+    private double calculateAssetRatio(
+            BigDecimal financialAsset,
+            BigDecimal medianFinancialAsset
+    ) {
         if (financialAsset == null) {
             throw new IllegalArgumentException("금융자산이 필요합니다.");
         }
@@ -86,9 +95,25 @@ public class MatchCalculator {
 
         double asset = Math.max(financialAsset.doubleValue(), 0.0);
         double median = medianFinancialAsset.doubleValue();
-        double ratio = asset / median;
 
-        return 100.0 * (1.0 - Math.pow(2.0, -ratio));
+        return asset / median;
+    }
+
+    /**
+     * (A+B 금융자산) / (A+B 동연령대 자산 중앙값). report 도메인의 금융 자산 축 reason 문구
+     * ({@code AssetStabilityReasonFormatter})가 이 값을 그대로 쓴다.
+     */
+    public double calculateCoupleAssetRatio(MatchCalculationInput input) {
+        MemberCalculationInput memberA = input.getMemberA();
+        MemberCalculationInput memberB = input.getMemberB();
+
+        BigDecimal coupleFinancialAsset = memberA.getFinancialAsset()
+                .add(memberB.getFinancialAsset());
+
+        BigDecimal coupleAssetMedian = memberA.getAgeGroupAssetMedian()
+                .add(memberB.getAgeGroupAssetMedian());
+
+        return calculateAssetRatio(coupleFinancialAsset, coupleAssetMedian);
     }
 
     private BigDecimal round(double value) {
@@ -101,19 +126,8 @@ public class MatchCalculator {
         MemberCalculationInput memberA = input.getMemberA();
         MemberCalculationInput memberB = input.getMemberB();
 
-        double memberAScore = calculateDebtBaseScore(
-                memberA.getTotalDebt(),
-                memberA.getAnnualDebtPayment(),
-                memberA.getAnnualIncome(),
-                memberA.getFinancialAsset()
-        );
-
-        double memberBScore = calculateDebtBaseScore(
-                memberB.getTotalDebt(),
-                memberB.getAnnualDebtPayment(),
-                memberB.getAnnualIncome(),
-                memberB.getFinancialAsset()
-        );
+        double memberAScore = calculateMemberDebtScore(memberA);
+        double memberBScore = calculateMemberDebtScore(memberB);
 
         BigDecimal coupleTotalDebt = memberA.getTotalDebt()
                 .add(memberB.getTotalDebt());
@@ -142,6 +156,20 @@ public class MatchCalculator {
         double finalScore = weightedScore * (DEBT_MAX_SCORE / 100.0);
 
         return round(finalScore);
+    }
+
+    /**
+     * 회원 한 명의 부채 점수(0~100). report 도메인의 부채 축 reason 문구
+     * ({@code DebtRepaymentReasonService})가 두 회원의 점수를 비교해 "누가 감점에 더 큰 영향을
+     * 끼쳤는지" 판단하는 데 그대로 쓴다.
+     */
+    public double calculateMemberDebtScore(MemberCalculationInput member) {
+        return calculateDebtBaseScore(
+                member.getTotalDebt(),
+                member.getAnnualDebtPayment(),
+                member.getAnnualIncome(),
+                member.getFinancialAsset()
+        );
     }
 
     private double calculateDebtBaseScore(
@@ -615,8 +643,17 @@ public class MatchCalculator {
         BigDecimal assetStabilityScore =
                 calculateAssetStabilityScore(input);
 
+        double coupleAssetRatio =
+                calculateCoupleAssetRatio(input);
+
         BigDecimal debtRepaymentScore =
                 calculateDebtRepaymentScore(input);
+
+        BigDecimal memberADebtScore =
+                round(calculateMemberDebtScore(input.getMemberA()));
+
+        BigDecimal memberBDebtScore =
+                round(calculateMemberDebtScore(input.getMemberB()));
 
         BigDecimal financialValueScore =
                 calculateFinancialValueScore(input);
@@ -656,7 +693,10 @@ public class MatchCalculator {
 
         return MatchCalculationResult.builder()
                 .assetStabilityScore(assetStabilityScore)
+                .coupleAssetRatio(coupleAssetRatio)
                 .debtRepaymentScore(debtRepaymentScore)
+                .memberADebtScore(memberADebtScore)
+                .memberBDebtScore(memberBDebtScore)
                 .financialValueScore(financialValueScore)
                 .goalFeasibilityScore(goalFeasibilityScore)
                 .expectedAsset(expectedAsset)

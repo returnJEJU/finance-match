@@ -1,5 +1,6 @@
 package com.financematch.match.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -10,6 +11,7 @@ import java.math.BigDecimal;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -17,11 +19,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.financematch.match.calculator.MatchCalculationInput;
 import com.financematch.match.calculator.MatchCalculationResult;
 import com.financematch.match.calculator.MatchCalculator;
+import com.financematch.match.calculator.MemberCalculationInput;
 import com.financematch.match.converter.MatchCalculationInputConverter;
 import com.financematch.match.domain.CompatibilityResult;
 import com.financematch.match.domain.MatchCoupleData;
 import com.financematch.match.domain.MatchMemberData;
 import com.financematch.match.mapper.MatchMapper;
+import com.financematch.report.dto.reason.DebtRepaymentReasonInput;
+import com.financematch.report.service.AssetStabilityScoreService;
+import com.financematch.report.service.DebtRepaymentScoreService;
 import com.financematch.report.service.GoalFeasibilityScoreService;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +44,12 @@ class MatchServiceTest {
 
     @Mock
     private GoalFeasibilityScoreService goalFeasibilityScoreService;
+
+    @Mock
+    private AssetStabilityScoreService assetStabilityScoreService;
+
+    @Mock
+    private DebtRepaymentScoreService debtRepaymentScoreService;
 
     @InjectMocks
     private MatchService matchService;
@@ -93,6 +105,18 @@ class MatchServiceTest {
                         org.mockito.ArgumentMatchers.any(),
                         org.mockito.ArgumentMatchers.anyInt()
                 );
+
+        verify(assetStabilityScoreService, never())
+                .generateAndSave(
+                        org.mockito.ArgumentMatchers.anyLong(),
+                        org.mockito.ArgumentMatchers.anyDouble()
+                );
+
+        verify(debtRepaymentScoreService, never())
+                .generateAndSave(
+                        org.mockito.ArgumentMatchers.anyLong(),
+                        org.mockito.ArgumentMatchers.any()
+                );
     }
 
     @Test
@@ -108,12 +132,26 @@ class MatchServiceTest {
 
         MatchMemberData memberA = new MatchMemberData();
         memberA.setMemberId(1L);
+        memberA.setMemberName("김철수");
 
         MatchMemberData memberB = new MatchMemberData();
         memberB.setMemberId(2L);
+        memberB.setMemberName("이영희");
+
+        MemberCalculationInput memberACalcInput =
+                MemberCalculationInput.builder()
+                        .totalDebt(new BigDecimal("1000000"))
+                        .build();
+
+        MemberCalculationInput memberBCalcInput =
+                MemberCalculationInput.builder()
+                        .totalDebt(BigDecimal.ZERO)
+                        .build();
 
         MatchCalculationInput calculationInput =
                 MatchCalculationInput.builder()
+                        .memberA(memberACalcInput)
+                        .memberB(memberBCalcInput)
                         .targetAmount(new BigDecimal("350000000"))
                         .targetPeriodMonths(36)
                         .build();
@@ -121,7 +159,10 @@ class MatchServiceTest {
         MatchCalculationResult calculationResult =
                 MatchCalculationResult.builder()
                         .assetStabilityScore(new BigDecimal("18.62"))
+                        .coupleAssetRatio(1.1)
                         .debtRepaymentScore(new BigDecimal("14.00"))
+                        .memberADebtScore(new BigDecimal("62.50"))
+                        .memberBDebtScore(new BigDecimal("100.00"))
                         .financialValueScore(new BigDecimal("16.95"))
                         .goalFeasibilityScore(new BigDecimal("12.79"))
                         .expectedAsset(new BigDecimal("362000000"))
@@ -191,5 +232,22 @@ class MatchServiceTest {
                 new BigDecimal("350000000"),
                 36
         );
+
+        // 금융 자산 축 reason 생성도 저장된 결과의 id·ratio로 정확히 호출됐는지 확인
+        verify(assetStabilityScoreService).generateAndSave(10L, 1.1);
+
+        // 부채 축 reason 생성이 이름·부채 유무·점수를 정확히 담아 호출됐는지 확인
+        ArgumentCaptor<DebtRepaymentReasonInput> debtInputCaptor =
+                ArgumentCaptor.forClass(DebtRepaymentReasonInput.class);
+        verify(debtRepaymentScoreService).generateAndSave(
+                org.mockito.ArgumentMatchers.eq(10L), debtInputCaptor.capture());
+
+        DebtRepaymentReasonInput capturedDebtInput = debtInputCaptor.getValue();
+        assertEquals("김철수", capturedDebtInput.getMeName());
+        assertEquals("이영희", capturedDebtInput.getPartnerName());
+        assertEquals(true, capturedDebtInput.isMeHasDebt());
+        assertEquals(false, capturedDebtInput.isPartnerHasDebt());
+        assertEquals(new BigDecimal("62.50"), capturedDebtInput.getMeScore());
+        assertEquals(new BigDecimal("100.00"), capturedDebtInput.getPartnerScore());
     }
 }

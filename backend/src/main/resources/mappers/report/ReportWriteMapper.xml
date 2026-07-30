@@ -9,4 +9,16 @@
         VALUES (#{compatibilityResultId}, #{reason})
         ON DUPLICATE KEY UPDATE goal_feasibility_reason = VALUES(goal_feasibility_reason)
     </insert>
+
+    <insert id="upsertAssetStabilityReason">
+        INSERT INTO report (compatibility_result_id, asset_stability_reason)
+        VALUES (#{compatibilityResultId}, #{reason})
+        ON DUPLICATE KEY UPDATE asset_stability_reason = VALUES(asset_stability_reason)
+    </insert>
+
+    <insert id="upsertDebtRepaymentReason">
+        INSERT INTO report (compatibility_result_id, debt_repayment_reason)
+        VALUES (#{compatibilityResultId}, #{reason})
+        ON DUPLICATE KEY UPDATE debt_repayment_reason = VALUES(debt_repayment_reason)
+    </insert>
 </mapper>

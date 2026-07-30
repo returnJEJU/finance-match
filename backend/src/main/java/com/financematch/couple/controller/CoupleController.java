@@ -4,23 +4,19 @@ import com.financematch.auth.annotation.LoginMember;
 import com.financematch.common.ApiResponse;
 import com.financematch.couple.dto.CoupleProfileMessageRequest;
 import com.financematch.couple.dto.CoupleProfileMessageResponse;
-import com.financematch.couple.service.CoupleService;
-import javax.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import com.financematch.common.ApiResponse;
 import com.financematch.couple.dto.CreateCoupleRequest;
 import com.financematch.couple.dto.CreateCoupleResponse;
 import com.financematch.couple.service.CoupleService;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
 import java.net.URI;
 
 @RestController
@@ -44,6 +40,8 @@ public class CoupleController {
                 coupleService.updateProfileMessage(
                         memberId,
                         request.getProfileMessage()));
+    }
+
     private static final Long TEMP_MEMBER_ID = 4L;
     private static final URI COUPLE_LOCATION = URI.create("/api/v1/members/me/couple");
 

@@ -19,4 +19,7 @@ public interface ReportWriteMapper {
     void upsertAssetStabilityReason(
             @Param("compatibilityResultId") Long compatibilityResultId, @Param("reason") String reason);
 
+    /** {@code report} 행이 없으면 새로 만들고, 있으면 debt_repayment_reason 만 갱신한다. */
+    void upsertDebtRepaymentReason(
+            @Param("compatibilityResultId") Long compatibilityResultId, @Param("reason") String reason);
 }

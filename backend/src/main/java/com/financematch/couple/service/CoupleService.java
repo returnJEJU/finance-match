@@ -59,6 +59,7 @@ public class CoupleService {
             throw new ApiException(ErrorCode.COUPLE_NOT_CONNECTED);
         }
         return profile;
+    }
 
     @Transactional
     public CreateCoupleResponse createCouple(Long memberId, CreateCoupleRequest request) {

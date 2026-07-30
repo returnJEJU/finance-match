@@ -4,7 +4,6 @@ import com.financematch.report.dto.reason.DebtRepaymentReasonInput;
 import com.financematch.report.llm.ReasonRuleValidator;
 import com.financematch.report.llm.ReportLlmClient;
 import com.financematch.report.llm.ReportPromptBuilder;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,9 +11,12 @@ import org.springframework.stereotype.Service;
 /**
  * 부채 축 reason 문구를 LLM으로 생성한다.
  *
- * <p>규칙 위반(뷰어 종속 표현, 이름 오선택 등) 시 최대 {@value #MAX_ATTEMPTS}회 재시도하고, 그래도
- * 실패하면 {@link #fallback} 의 결정론적 문구로 대체한다 — 금융 서비스 특성상 검증 안 된 문장을
- * 그대로 노출하지 않는다.
+ * <p>GAP-02 팀 확정: "위험도 차이"는 임계값 없이 {@code meScore}/{@code partnerScore}(둘 다
+ * 부채있음 케이스에서)를 직접 비교한다 — 조금이라도 낮은 쪽(=더 위험한 쪽)을 지목하고, 정확히 같을
+ * 때만(사실상 거의 없음) 이름 없이 처리한다.
+ *
+ * <p>규칙 위반 시 최대 {@value #MAX_ATTEMPTS}회 재시도하고, 그래도 실패하면 {@link #fallback}의
+ * 결정론적 문구로 대체한다.
  */
 @Slf4j
 @Service
@@ -28,7 +30,7 @@ public class DebtRepaymentReasonService {
     private final ReasonRuleValidator ruleValidator;
 
     public String generate(DebtRepaymentReasonInput input) {
-        String prompt = promptBuilder.buildDebtRepaymentPrompt(input);
+        String prompt = promptBuilder.buildDebtRepaymentPrompt(withAbbreviatedNames(input));
 
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
             String candidate = llmClient.generateReason(prompt);
@@ -42,51 +44,64 @@ public class DebtRepaymentReasonService {
         return fallback(input);
     }
 
+    private DebtRepaymentReasonInput withAbbreviatedNames(DebtRepaymentReasonInput input) {
+        return new DebtRepaymentReasonInput(
+                KoreanNameFormatter.abbreviate(input.getMeName()),
+                KoreanNameFormatter.abbreviate(input.getPartnerName()),
+                input.isMeHasDebt(),
+                input.isPartnerHasDebt(),
+                input.getMeScore(),
+                input.getPartnerScore());
+    }
+
     private boolean isValid(String reason, DebtRepaymentReasonInput input) {
         if (!ruleValidator.validateCommon(reason).valid()) {
             return false;
         }
-        return matchesExpectedNameUsage(reason, input);
-    }
 
-    // R4: 위험도 차이가 있을 때만 "더 위험한 쪽" 이름 하나만 등장해야 하고, 그 외 케이스는 이름이 아예 없어야 한다.
-    private boolean matchesExpectedNameUsage(String reason, DebtRepaymentReasonInput input) {
-        boolean meNamed = reason.contains(input.getMeName());
-        boolean partnerNamed = reason.contains(input.getPartnerName());
+        String meDisplay = KoreanNameFormatter.abbreviate(input.getMeName());
+        String partnerDisplay = KoreanNameFormatter.abbreviate(input.getPartnerName());
+        boolean meMentioned = reason.contains(meDisplay);
+        boolean partnerMentioned = reason.contains(partnerDisplay);
 
-        String expectedHigherRiskName = higherRiskName(input);
-        if (expectedHigherRiskName == null) {
-            return !meNamed && !partnerNamed;
+        if (!input.isMeHasDebt() && !input.isPartnerHasDebt()) {
+            return !meMentioned && !partnerMentioned;
         }
 
-        boolean expectMeNamed = expectedHigherRiskName.equals(input.getMeName());
-        return meNamed == expectMeNamed && partnerNamed != expectMeNamed;
-    }
+        int scoreCompare = input.getMeScore().compareTo(input.getPartnerScore());
+        if (input.isMeHasDebt() && input.isPartnerHasDebt() && scoreCompare == 0) {
+            return !meMentioned && !partnerMentioned;
+        }
 
-    /** 둘 다 부채 있고 위험도가 다를 때만 이름을 반환한다. 그 외엔 null. */
-    private String higherRiskName(DebtRepaymentReasonInput input) {
-        if (!input.isMeHasDebt() || !input.isPartnerHasDebt()) {
-            return null;
-        }
-        if (Objects.equals(input.getMeRiskLevel(), input.getPartnerRiskLevel())) {
-            return null;
-        }
-        return input.getMeRiskLevel() > input.getPartnerRiskLevel()
-                ? input.getMeName()
-                : input.getPartnerName();
+        // score 가 더 낮은 쪽(=더 큰 영향을 준 쪽)만 언급돼야 한다.
+        boolean expectMeMentioned = scoreCompare < 0;
+        return meMentioned == expectMeMentioned && partnerMentioned != expectMeMentioned;
     }
 
     String fallback(DebtRepaymentReasonInput input) {
-        if (!input.isMeHasDebt() && !input.isPartnerHasDebt()) {
+        boolean meHasDebt = input.isMeHasDebt();
+        boolean partnerHasDebt = input.isPartnerHasDebt();
+
+        if (!meHasDebt && !partnerHasDebt) {
             return "두 분 모두 부채가 없어 높은 점수가 나왔어요.";
         }
-        if (input.isMeHasDebt() && input.isPartnerHasDebt()) {
-            String higherRiskName = higherRiskName(input);
-            if (higherRiskName == null) {
+
+        int scoreCompare = input.getMeScore().compareTo(input.getPartnerScore());
+
+        if (meHasDebt && partnerHasDebt) {
+            if (scoreCompare == 0) {
                 return "두 분 모두 부채 위험도가 높아요.";
             }
-            return "두 분 모두 부채가 있어요. 하지만 부채 위험도는 " + higherRiskName + "님이 더 높아요.";
+            String riskierName =
+                    KoreanNameFormatter.abbreviate(
+                            scoreCompare < 0 ? input.getMeName() : input.getPartnerName());
+            return "두 분 모두 부채가 있어요. 하지만 부채 위험도는 " + riskierName + "님이 더 높아요.";
         }
-        return "두 분 중 부채가 있는 분이 있어요.";
+
+        // 정확히 한 명만 부채 있음 — score 가 더 낮은 쪽(=부채 있는 쪽)을 지목.
+        String affectedName =
+                KoreanNameFormatter.abbreviate(
+                        scoreCompare < 0 ? input.getMeName() : input.getPartnerName());
+        return "부채 점수 감점에 " + affectedName + "님이 더 큰 영향을 끼쳤어요.";
     }
 }

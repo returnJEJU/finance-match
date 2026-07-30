@@ -41,11 +41,12 @@ public class ReportLlmClient {
     }
 
     public String generateReason(String prompt) {
+        // gpt-5 계열(gpt-5-nano 포함)은 기본값(1) 외의 temperature 를 거부한다(HTTP 400) —
+        // 모델 종류를 가리지 않는 공통 클라이언트이므로 temperature 는 아예 지정하지 않는다.
         Map<String, Object> body =
                 Map.of(
                         "model", model,
-                        "messages", List.of(Map.of("role", "user", "content", prompt)),
-                        "temperature", 0.7);
+                        "messages", List.of(Map.of("role", "user", "content", prompt)));
 
         try {
             String requestJson = mapper.writeValueAsString(body);

@@ -13,12 +13,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * 절세 축 reason 문구를 LLM으로 생성한다. 팀 확정(GAP-07·GAP-09·GAP-11) 반영:
+ * 절세 축 reason 문구를 LLM으로 생성한다. 팀 확정(GAP-07·GAP-08·GAP-09·GAP-11) 반영:
  *
  * <ul>
  *   <li>GAP-07: 세 계좌 다 미개설이면 개별 나열 대신 뭉뚱그린 문구
+ *   <li>GAP-08: 이름은 성을 뗀 축약형으로만 노출 ({@link KoreanNameFormatter})
  *   <li>GAP-09: 이 축만 길이 상한을 {@value ReportPromptBuilder#TAX_STRATEGY_MAX_LENGTH}자로 확장
- *   <li>GAP-11: 두 사람 다 언급할 때는 이름 가나다순
+ *   <li>GAP-11: 두 사람 다 언급할 때는 이름 가나다순 — 정렬은 반드시 원래 전체 이름 기준으로 한다
+ *       (축약형끼리 비교하면 가나다 순서가 뒤바뀔 수 있다)
  * </ul>
  */
 @Slf4j
@@ -34,7 +36,7 @@ public class TaxStrategyReasonService {
     private final ReasonRuleValidator ruleValidator;
 
     public String generate(TaxStrategyReasonInput input) {
-        String prompt = promptBuilder.buildTaxStrategyPrompt(input);
+        String prompt = promptBuilder.buildTaxStrategyPrompt(withAbbreviatedNames(input));
 
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
             String candidate = llmClient.generateReason(prompt);
@@ -48,6 +50,14 @@ public class TaxStrategyReasonService {
         return fallback(input);
     }
 
+    private TaxStrategyReasonInput withAbbreviatedNames(TaxStrategyReasonInput input) {
+        return new TaxStrategyReasonInput(
+                KoreanNameFormatter.abbreviate(input.getMeName()),
+                KoreanNameFormatter.abbreviate(input.getPartnerName()),
+                input.getMe(),
+                input.getPartner());
+    }
+
     private boolean isValid(String reason, TaxStrategyReasonInput input) {
         if (!ruleValidator
                 .validateCommon(reason, ReportPromptBuilder.TAX_STRATEGY_MAX_LENGTH)
@@ -55,20 +65,23 @@ public class TaxStrategyReasonService {
             return false;
         }
 
-        boolean meHasIssue = describePerson(input.getMeName(), input.getMe()) != null;
-        boolean partnerHasIssue = describePerson(input.getPartnerName(), input.getPartner()) != null;
+        String meDisplay = KoreanNameFormatter.abbreviate(input.getMeName());
+        String partnerDisplay = KoreanNameFormatter.abbreviate(input.getPartnerName());
 
-        boolean meMentioned = reason.contains(input.getMeName());
-        boolean partnerMentioned = reason.contains(input.getPartnerName());
+        boolean meHasIssue = describePerson(meDisplay, input.getMe()) != null;
+        boolean partnerHasIssue = describePerson(partnerDisplay, input.getPartner()) != null;
+
+        boolean meMentioned = reason.contains(meDisplay);
+        boolean partnerMentioned = reason.contains(partnerDisplay);
         if (meMentioned != meHasIssue || partnerMentioned != partnerHasIssue) {
             return false;
         }
 
-        // GAP-11: 둘 다 언급되면 가나다순으로 등장해야 한다.
+        // GAP-11: 둘 다 언급되면 가나다순으로 등장해야 한다. 정렬은 원래 전체 이름 기준.
         if (meMentioned && partnerMentioned) {
             boolean meFirst = input.getMeName().compareTo(input.getPartnerName()) <= 0;
-            String expectedFirst = meFirst ? input.getMeName() : input.getPartnerName();
-            String expectedSecond = meFirst ? input.getPartnerName() : input.getMeName();
+            String expectedFirst = meFirst ? meDisplay : partnerDisplay;
+            String expectedSecond = meFirst ? partnerDisplay : meDisplay;
             if (reason.indexOf(expectedFirst) > reason.indexOf(expectedSecond)) {
                 return false;
             }
@@ -87,14 +100,17 @@ public class TaxStrategyReasonService {
     }
 
     String fallback(TaxStrategyReasonInput input) {
+        // GAP-11: 등장 순서 정렬은 원래 전체 이름 기준으로 하고, 표시는 축약형으로 한다.
         boolean meFirst = input.getMeName().compareTo(input.getPartnerName()) <= 0;
-        String firstName = meFirst ? input.getMeName() : input.getPartnerName();
+        String firstDisplayName =
+                KoreanNameFormatter.abbreviate(meFirst ? input.getMeName() : input.getPartnerName());
         TaxSavingProfile firstProfile = meFirst ? input.getMe() : input.getPartner();
-        String secondName = meFirst ? input.getPartnerName() : input.getMeName();
+        String secondDisplayName =
+                KoreanNameFormatter.abbreviate(meFirst ? input.getPartnerName() : input.getMeName());
         TaxSavingProfile secondProfile = meFirst ? input.getPartner() : input.getMe();
 
-        String firstDesc = describePerson(firstName, firstProfile);
-        String secondDesc = describePerson(secondName, secondProfile);
+        String firstDesc = describePerson(firstDisplayName, firstProfile);
+        String secondDesc = describePerson(secondDisplayName, secondProfile);
 
         if (firstDesc == null && secondDesc == null) {
             return "ISA·IRP·연금저축을 모두 개설하고 한도도 다 채워 절세 혜택을 제대로 누리고 계시네요!";
@@ -105,7 +121,7 @@ public class TaxStrategyReasonService {
         return firstDesc != null ? firstDesc : secondDesc;
     }
 
-    /** 문제 없으면 null(언급 안 함). 문제 있으면 그 사람에 대한 문장 하나. */
+    /** 문제 없으면 null(언급 안 함). 문제 있으면 그 사람에 대한 문장 하나. name 은 이미 축약형이어야 한다. */
     private String describePerson(String name, TaxSavingProfile profile) {
         List<String> unopened = unopenedAccountNames(profile);
 

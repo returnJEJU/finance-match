@@ -30,8 +30,9 @@ class TaxStrategyReasonServiceTest {
 
         String reason = service.fallback(input);
 
-        assertEquals("이영희님은 ISA 계좌를 개설하지 않았어요. 추천탭에서 상품들을 만나보세요.", reason);
-        assertTrue(!reason.contains("김철수"));
+        // GAP-08: 성을 뗀 축약형("영희")으로 부른다.
+        assertEquals("영희님은 ISA 계좌를 개설하지 않았어요. 추천탭에서 상품들을 만나보세요.", reason);
+        assertTrue(!reason.contains("철수"));
     }
 
     @Test
@@ -45,8 +46,8 @@ class TaxStrategyReasonServiceTest {
 
         String reason = service.fallback(input);
 
-        assertEquals("김철수님은 ISA 한도 2000만원 중 200만원 혜택 가능 더 채우면 혜택을 더 받을 수 있어요.", reason);
-        assertTrue(!reason.contains("이영희"));
+        assertEquals("철수님은 ISA 한도 2000만원 중 200만원 혜택 가능 더 채우면 혜택을 더 받을 수 있어요.", reason);
+        assertTrue(!reason.contains("영희"));
         assertTrue(!reason.contains("추천탭")); // 규칙 3번: 한도 미달만 있을 땐 추천탭 언급 불필요
     }
 
@@ -61,7 +62,7 @@ class TaxStrategyReasonServiceTest {
 
         String reason = service.fallback(input);
 
-        assertEquals("김철수님은 ISA·IRP·연금저축 모두 개설 안 하셨어요. 추천탭에서 상품들을 만나보세요.", reason);
+        assertEquals("철수님은 ISA·IRP·연금저축 모두 개설 안 하셨어요. 추천탭에서 상품들을 만나보세요.", reason);
     }
 
     @Test
@@ -73,7 +74,7 @@ class TaxStrategyReasonServiceTest {
 
         String reason = service.fallback(input);
 
-        assertTrue(reason.indexOf("김철수") < reason.indexOf("이영희"), "가나다순(김철수 먼저)이어야 함: " + reason);
+        assertTrue(reason.indexOf("철수") < reason.indexOf("영희"), "가나다순(철수 먼저)이어야 함: " + reason);
     }
 
     @Test
@@ -85,7 +86,7 @@ class TaxStrategyReasonServiceTest {
 
         String reason = service.fallback(input);
 
-        assertTrue(reason.indexOf("김철수") < reason.indexOf("이영희"), "뷰어와 무관하게 가나다순이어야 함: " + reason);
+        assertTrue(reason.indexOf("철수") < reason.indexOf("영희"), "뷰어와 무관하게 가나다순이어야 함: " + reason);
     }
 
     @Test
@@ -97,6 +98,6 @@ class TaxStrategyReasonServiceTest {
         String reason = service.fallback(input);
 
         assertTrue(reason.contains("ISA") && reason.contains("IRP") && reason.contains("연금저축"));
-        assertTrue(!reason.contains("김철수") && !reason.contains("이영희"));
+        assertTrue(!reason.contains("철수") && !reason.contains("영희"));
     }
 }
