@@ -1,15 +1,14 @@
 package com.financematch.invitation.controller;
 
 import com.financematch.common.ApiResponse;
+import com.financematch.invitation.dto.CommonSurveyResponse;
 import com.financematch.invitation.dto.CreateInvitationRequest;
 import com.financematch.invitation.dto.CreateInvitationResponse;
+import com.financematch.invitation.dto.GetInvitationResponse;
 import com.financematch.invitation.service.InvitationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.net.URI;
@@ -45,6 +44,28 @@ public class InvitationController {
         return ResponseEntity
                 .created(INVITATION_LOCATION)
                 .body(ApiResponse.ok(response));
+    }
+
+    @GetMapping("")
+    public ApiResponse<GetInvitationResponse> getInvitation() {
+        // TODO: JWT 구현 후 임시 ID를 제거하고 인증된 회원 ID를 주입받는다.
+        // 예: getInvitation(@LoginMember Long memberId)
+        Long memberId = TEMP_MEMBER_ID;
+
+        GetInvitationResponse response = invitationService.getInvitation(memberId);
+
+        return ApiResponse.ok(response);
+    }
+
+    @GetMapping("/common-survey")
+    public ApiResponse<CommonSurveyResponse> getCommonSurvey() {
+        // TODO: JWT 구현 후 임시 ID 대신 인증된 회원 ID를 주입받는다.
+        // 예: getCommonSurvey(@LoginMember Long memberId)
+        Long memberId = TEMP_MEMBER_ID;
+
+        CommonSurveyResponse response = invitationService.getCommonSurvey(memberId);
+
+        return ApiResponse.ok(response);
     }
 
 }
