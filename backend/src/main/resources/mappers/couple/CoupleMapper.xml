@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.couple.mapper.CoupleMapper">
+
+    <!-- 로그인 회원이 속한 커플 row만 조회한다. -->
+    <select id="findProfileByMemberId"
+            resultType="com.financematch.couple.domain.CoupleProfile">
+        SELECT
+            id AS couple_id,
+            profile_message
+        FROM couple
+        WHERE inviter_id = #{memberId}
+           OR invitee_id = #{memberId}
+    </select>
+
+    <!-- 경로에 coupleId를 받지 않고 내 커플 row만 수정해 IDOR를 막는다. -->
+    <update id="updateProfileMessageByMemberId">
+        UPDATE couple
+        SET profile_message = #{profileMessage}
+        WHERE inviter_id = #{memberId}
+           OR invitee_id = #{memberId}
+    </update>
+</mapper>
