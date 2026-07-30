@@ -78,6 +78,11 @@ const routes = [
         meta: { public: true },
       },
       {
+        path: 'service-introduction',
+        name: 'service-introduction',
+        component: () => import('@/pages/ServiceIntroductionPage.vue'),
+      },
+      {
         path: 'couple',
         name: 'couple-start',
         component: () => import('@/pages/CoupleStartPage.vue'),
