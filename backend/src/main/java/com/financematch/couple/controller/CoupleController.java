@@ -60,7 +60,6 @@ public class CoupleController {
     }
 
     private static final Long TEMP_MEMBER_ID = 4L;
-    private static final URI COUPLE_LOCATION = URI.create("/api/v1/members/me/couple");
 
     @PostMapping("")
     public ResponseEntity<ApiResponse<CreateCoupleResponse>> createCouple(
