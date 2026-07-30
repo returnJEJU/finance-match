@@ -1,0 +1,49 @@
+# 백엔드 컴파일 검사.
+#
+# 컴파일되지 않는 코드가 리뷰를 통과해 develop 이 멈추는 일을 막는다.
+# 작성자 로컬에만 있는 파일(git add 를 빠뜨린 새 파일)이나, 선언되지 않은 메서드 호출은
+# 사람 눈으로는 잡기 어렵다. 깨끗한 환경에서 컴파일해보면 바로 드러난다.
+#
+# 테스트는 돌리지 않는다 — DB 연동 테스트가 MySQL 을 필요로 해서, DB 없는 환경에서는
+# 코드가 멀쩡해도 실패한다. MySQL 서비스 컨테이너 추가는 후속 작업으로 논의한다.
+
+name: backend build
+
+on:
+  # develop·main 으로 가는 PR 이 열리거나 갱신될 때
+  pull_request:
+    branches: [develop, main]
+  # develop 에 머지된 직후에도 확인한다.
+  # PR 두 개가 각각은 통과했는데 합치면 깨지는 경우는 PR 검사만으로는 잡히지 않는다.
+  push:
+    branches: [develop]
+
+# 코드를 읽는 권한만 준다.
+permissions:
+  contents: read
+
+# 같은 브랜치에 연달아 push 하면 앞선 실행을 취소해 실행 시간을 아낀다.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-compile:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: JDK 17 설치
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          # 의존성 다운로드 결과를 캐시해 두 번째 실행부터 빨라진다.
+          cache: gradle
+
+      # compileTestJava 도 함께 검사한다 — 테스트 코드도 컴파일 대상이다.
+      - name: 컴파일 검사
+        run: ./gradlew compileJava compileTestJava --no-daemon
+        working-directory: backend
