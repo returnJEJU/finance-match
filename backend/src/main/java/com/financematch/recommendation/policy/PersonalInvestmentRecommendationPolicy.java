@@ -27,19 +27,45 @@ public class PersonalInvestmentRecommendationPolicy implements PersonalRecommend
 
     @Override
     public Map<Long, List<RecommendedProduct>> recommend(RecommendationContext context) {
+        if (context.isHasLoanWithinOneMonth()) {
+            return Map.of();
+        }
+
+        Long targetMemberId = moreAggressiveMemberId(context);
+        if (targetMemberId == null) {
+            return Map.of();
+        }
+
         List<InvestmentProduct> products = investmentMapper.findAll();
+        String targetInvestmentType =
+                targetMemberId.equals(context.getInviterId())
+                        ? context.getInviterInvestmentType()
+                        : context.getInviteeInvestmentType();
 
         return Map.of(
-                context.getInviterId(),
+                targetMemberId,
                 recommendFor(
-                        context.getInviterInvestmentType(),
-                        context.getFirstGoalType(),
-                        products),
-                context.getInviteeId(),
-                recommendFor(
-                        context.getInviteeInvestmentType(),
+                        targetInvestmentType,
                         context.getFirstGoalType(),
                         products));
+    }
+
+    private Long moreAggressiveMemberId(RecommendationContext context) {
+        int inviterRiskLevel = highestAllowedRiskLevel(context.getInviterInvestmentType());
+        int inviteeRiskLevel = highestAllowedRiskLevel(context.getInviteeInvestmentType());
+
+        if (inviterRiskLevel == inviteeRiskLevel) {
+            return null;
+        }
+        return inviterRiskLevel < inviteeRiskLevel
+                ? context.getInviterId()
+                : context.getInviteeId();
+    }
+
+    private int highestAllowedRiskLevel(String investmentType) {
+        return riskLevelCalculator.allowedRiskLevels(investmentType).stream()
+                .min(Integer::compareTo)
+                .orElseThrow();
     }
 
     private List<RecommendedProduct> recommendFor(
