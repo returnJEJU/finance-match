@@ -1,14 +1,48 @@
 <script setup>
-// TODO(담당자): 이 화면을 구현하세요. (기준: 찰떡궁합_UI.pdf)
-// 화면: 미완성 대시보드(대기) · 레이아웃: BlankLayout
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { CreditCard, Heart, LockKeyhole, RefreshCw } from 'lucide-vue-next'
 
+import { getOnboardingStatus } from '@/api/onboarding'
+
 const router = useRouter()
 
-// 새로고침 버튼
-const handleRefresh = () => {
-  router.push('/match/calculating')
+const refreshing = ref(false)
+const refreshMessage = ref('')
+
+const handleRefresh = async () => {
+  if (refreshing.value) {
+    return
+  }
+
+  refreshing.value = true
+  refreshMessage.value = ''
+
+  try {
+    const status = await getOnboardingStatus()
+
+    if (!status.coupleConnected) {
+      refreshMessage.value = '아직 상대방과 연결되지 않았습니다.'
+      return
+    }
+
+    if (!status.personalSurveyCompleted) {
+      refreshMessage.value = '아직 내 개인설문이 완료되지 않았습니다.'
+      return
+    }
+
+    if (status.partnerPersonalSurveyCompleted !== true) {
+      refreshMessage.value = '상대방의 개인설문이 완료되지 않았습니다.'
+      return
+    }
+
+    router.push('/match/calculating')
+  } catch (error) {
+    refreshMessage.value =
+      error?.message || '상태를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.'
+  } finally {
+    refreshing.value = false
+  }
 }
 </script>
 
@@ -45,7 +79,6 @@ const handleRefresh = () => {
         <div
           class="relative flex h-[112px] w-[112px] items-center justify-center rounded-full bg-white shadow-[0_8px_20px_rgba(90,85,30,0.16)]"
         >
-          <!-- 자물쇠 아이콘 -->
           <LockKeyhole class="text-brand-ink" :size="54" :stroke-width="2.4" />
         </div>
       </div>
@@ -63,12 +96,24 @@ const handleRefresh = () => {
       <!-- 새로고침 버튼 -->
       <button
         type="button"
-        class="mt-12 flex h-12 w-[200px] items-center justify-center gap-2 rounded-full border-2 border-brand bg-white text-[15px] font-semibold transition active:scale-[0.98]"
+        class="mt-12 flex h-12 w-[200px] items-center justify-center gap-2 rounded-full border-2 border-brand bg-white text-[15px] font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+        :disabled="refreshing"
         @click="handleRefresh"
       >
-        <RefreshCw :size="17" :stroke-width="2.2" />
-        새로고침
+        <RefreshCw :size="17" :stroke-width="2.2" :class="{ 'animate-spin': refreshing }" />
+
+        {{ refreshing ? '확인 중...' : '새로고침' }}
       </button>
+
+      <!-- 상태 안내 문구 -->
+      <p
+        v-if="refreshMessage"
+        role="alert"
+        class="mt-4 text-center text-[12px] leading-5 font-semibold text-red-500"
+      >
+        **{{ refreshMessage }}**<br />
+        잠시만 기다려주세요.
+      </p>
     </div>
   </section>
 </template>
