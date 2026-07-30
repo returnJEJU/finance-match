@@ -1,8 +1,10 @@
 <script setup>
 // TODO(담당자): 이 화면을 구현하세요. (기준: 찰떡궁합_UI.pdf)
 // 화면: 마이페이지 · 레이아웃: DefaultLayout
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useMutation, useQuery } from '@tanstack/vue-query'
 import stableImage from '@/assets/images/characters/types/type-stable.png'
+import { getCoupleProfileMessage, updateCoupleProfileMessage } from '@/api/couple'
 
 import {
   UserRound,
@@ -36,15 +38,47 @@ const editMessage = ref('')
 
 // 모달 열림 여부
 const isEditModalOpen = ref(false)
+const profileMessageError = ref('')
+
+const { data: coupleProfileMessage, isError: isProfileMessageLoadError } = useQuery({
+  queryKey: ['coupleProfileMessage'],
+  queryFn: getCoupleProfileMessage,
+})
+
+watch(
+  coupleProfileMessage,
+  (response) => {
+    if (response?.profileMessage) {
+      profileMessage.value = response.profileMessage
+    }
+  },
+  { immediate: true },
+)
+
+const updateProfileMessageMutation = useMutation({
+  mutationFn: updateCoupleProfileMessage,
+  onSuccess: (response) => {
+    profileMessage.value = response.profileMessage
+    isEditModalOpen.value = false
+    profileMessageError.value = ''
+  },
+  onError: (error) => {
+    profileMessageError.value = error.message || '한 줄 소개를 저장하지 못했어요.'
+  },
+})
+
+const isProfileMessageSaving = computed(() => updateProfileMessageMutation.isPending.value)
 
 // 모달 열기
 const openEditModal = () => {
   editMessage.value = profileMessage.value
+  profileMessageError.value = ''
   isEditModalOpen.value = true
 }
 
 // 취소
 const closeEditModal = () => {
+  if (isProfileMessageSaving.value) return
   isEditModalOpen.value = false
 }
 
@@ -53,11 +87,11 @@ const saveProfileMessage = () => {
   const message = editMessage.value.trim()
 
   if (!message) {
+    profileMessageError.value = '한 줄 소개를 입력해 주세요.'
     return
   }
 
-  profileMessage.value = message
-  isEditModalOpen.value = false
+  updateProfileMessageMutation.mutate(message)
 }
 
 // ========================================
@@ -311,6 +345,9 @@ const confirmWithdraw = () => {
 
         <div class="mt-1 flex items-center text-[11px] text-gray-500">
           <span>{{ profileMessage }}</span>
+          <span v-if="isProfileMessageLoadError" class="ml-1 text-red-400">
+            저장된 소개를 불러오지 못했어요
+          </span>
 
           <button
             type="button"
@@ -478,17 +515,22 @@ const confirmWithdraw = () => {
       <div class="relative mt-4 rounded-xl border border-gray-200 bg-white">
         <textarea
           v-model="editMessage"
-          maxlength="30"
+          maxlength="50"
           rows="3"
           placeholder="한 줄 소개를 입력해주세요."
+          :disabled="isProfileMessageSaving"
           class="h-[86px] w-full resize-none rounded-xl bg-transparent px-3 py-3 text-[13px] font-medium text-gray-800 outline-none placeholder:text-gray-300"
         ></textarea>
 
         <!-- 글자수 -->
         <span class="absolute bottom-2 right-3 text-[9px] text-gray-300">
-          {{ editMessage.length }}/30
+          {{ editMessage.length }}/50
         </span>
       </div>
+
+      <p v-if="profileMessageError" class="mt-2 text-center text-[11px] text-red-500">
+        {{ profileMessageError }}
+      </p>
 
       <!-- 버튼 -->
       <div class="mt-5 flex gap-2">
@@ -496,6 +538,7 @@ const confirmWithdraw = () => {
         <button
           type="button"
           class="h-11 flex-1 rounded-xl bg-gray-100 text-[13px] font-semibold text-gray-600"
+          :disabled="isProfileMessageSaving"
           @click="closeEditModal"
         >
           취소
@@ -504,10 +547,11 @@ const confirmWithdraw = () => {
         <!-- 저장 -->
         <button
           type="button"
-          class="h-11 flex-1 rounded-xl bg-yellow-300 text-[13px] font-bold text-gray-900"
+          class="h-11 flex-1 rounded-xl bg-yellow-300 text-[13px] font-bold text-gray-900 disabled:opacity-60"
+          :disabled="isProfileMessageSaving"
           @click="saveProfileMessage"
         >
-          저장
+          {{ isProfileMessageSaving ? '저장 중' : '저장' }}
         </button>
       </div>
     </div>
