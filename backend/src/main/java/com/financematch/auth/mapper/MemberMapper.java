@@ -12,4 +12,9 @@ public interface MemberMapper {
     int insert(Member member);
 
     int insertAgreement(MemberAgreement memberAgreement);
+
+    /** 로그인 대상 회원. 탈퇴 회원은 조회되지 않으므로 결과가 null 이면 로그인 실패로 처리한다. */
+    Member findByEmail(String email);
+
+    int updateLastLoginAt(Long memberId);
 }

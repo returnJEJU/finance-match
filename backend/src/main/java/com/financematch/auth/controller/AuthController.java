@@ -1,5 +1,7 @@
 package com.financematch.auth.controller;
 
+import com.financematch.auth.dto.LoginRequest;
+import com.financematch.auth.dto.LoginResponse;
 import com.financematch.auth.dto.SignupRequest;
 import com.financematch.auth.dto.SignupResponse;
 import com.financematch.auth.service.AuthService;
@@ -36,5 +38,11 @@ public class AuthController {
         SignupResponse response = authService.signup(request);
 
         return ResponseEntity.created(MEMBER_LOCATION).body(ApiResponse.ok(response));
+    }
+
+    /** 로그인은 새 리소스를 만들지 않으므로 200 이고 Location 도 붙이지 않는다. */
+    @PostMapping("/login")
+    public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ApiResponse.ok(authService.login(request));
     }
 }

@@ -64,4 +64,30 @@
             #{agreedAt}
         )
     </insert>
+
+    <!--
+      탈퇴 회원은 아예 조회하지 않는다. 결과가 null 이면 서비스가 INVALID_CREDENTIALS 로 처리한다.
+      "없는 이메일"·"비밀번호 불일치"·"탈퇴 회원"을 같은 코드로 응답해 계정 열거를 막는다.
+      status 는 WITHDRAWN 만 제외한다(DORMANT 휴면 처리는 요구사항 확정 후).
+    -->
+    <select id="findByEmail" resultType="com.financematch.auth.domain.Member">
+        SELECT
+            id,
+            email,
+            password,
+            name,
+            gender,
+            birth_date,
+            last_login_at
+        FROM member
+        WHERE email = #{email}
+          AND status != 'WITHDRAWN'
+          AND deleted_at IS NULL
+    </select>
+
+    <update id="updateLastLoginAt">
+        UPDATE member
+        SET last_login_at = NOW()
+        WHERE id = #{memberId}
+    </update>
 </mapper>

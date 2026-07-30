@@ -2,6 +2,7 @@ package com.financematch.auth.domain;
 
 import com.financematch.auth.dto.SignupRequest;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +25,9 @@ public class Member {
     private String name;
     private Gender gender;
     private LocalDate birthDate;
+
+    /** 조회 시에만 채워진다. NULL 이면 아직 로그인한 적이 없다는 뜻(첫 로그인 판별용). */
+    private LocalDateTime lastLoginAt;
 
     /**
      * 회원가입 요청을 저장용 domain 객체로 변환한다.
