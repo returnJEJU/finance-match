@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.couple.mapper.CoupleMapper">
+
+    <select id="findMemberNameById" resultType="string">
+        SELECT name
+        FROM member
+        WHERE id = #{memberId}
+          AND status = 'ACTIVE'
+          AND deleted_at IS NULL
+    </select>
+
+    <select id="findInvitationTargetForUpdate"
+            resultType="com.financematch.couple.domain.InvitationTarget">
+        SELECT
+            ic.id AS invitation_code_id,
+            ic.common_survey_id,
+            cs.member_id AS inviter_id,
+            ic.status
+        FROM invitation_code ic
+            INNER JOIN common_survey cs
+            ON cs.id = ic.common_survey_id
+        WHERE ic.code_value = #{inviteCode}
+        FOR UPDATE
+    </select>
+
+    <select id="lockMembersForUpdate" resultType="long">
+        SELECT id
+        FROM member
+        WHERE id IN (#{firstMemberId}, #{secondMemberId})
+          AND status = 'ACTIVE'
+          AND deleted_at IS NULL
+        ORDER BY id
+        FOR UPDATE
+    </select>
+
+    <select id="existsCoupleByMemberId" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM couple
+            WHERE inviter_id = #{memberId}
+               OR invitee_id = #{memberId}
+        )
+    </select>
+
+    <delete id="deleteInvitationByMemberId">
+        DELETE ic
+        FROM invitation_code ic
+            INNER JOIN common_survey cs
+            ON cs.id = ic.common_survey_id
+        WHERE cs.member_id = #{memberId}
+    </delete>
+
+    <delete id="deleteCommonSurveyByMemberId">
+        DELETE FROM common_survey
+        WHERE member_id = #{memberId}
+    </delete>
+
+    <delete id="deleteInvestmentExperiencesByMemberId">
+        DELETE psie
+        FROM personal_survey_investment_experience psie
+            INNER JOIN personal_survey ps
+            ON ps.id = psie.personal_survey_id
+        WHERE ps.member_id = #{memberId}
+    </delete>
+
+    <delete id="deletePersonalSurveyByMemberId">
+        DELETE FROM personal_survey
+        WHERE member_id = #{memberId}
+    </delete>
+
+    <update id="clearInvestmentType">
+        UPDATE member
+        SET investment_type = NULL
+        WHERE id = #{memberId}
+            AND investment_type IS NOT NULL
+    </update>
+
+    <insert id="insertCouple">
+        INSERT INTO couple (
+            inviter_id,
+            invitee_id,
+            invitation_code_id
+        ) VALUES (
+            #{inviterId},
+            #{inviteeId},
+            #{invitationCodeId}
+        )
+    </insert>
+
+    <update id="markInvitationUsed">
+        UPDATE invitation_code
+        SET status = 'USED'
+        WHERE id = #{invitationCodeId}
+            AND status = 'ACTIVE'
+    </update>
+
+</mapper>
