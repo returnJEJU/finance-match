@@ -7,16 +7,21 @@ import com.financematch.product.type.DepositType;
 import com.financematch.recommendation.domain.RecommendationContext;
 import com.financematch.recommendation.policy.RecommendedProduct;
 import com.financematch.recommendation.type.RecommendationSlotType;
-import java.util.List;
-import java.util.Optional;
-import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.stereotype.Component;
 
 @Component
 public class SavingsRecommendationPolicy
         implements JointRecommendationPolicy {
+
+    private static final String KB_STAR_SAVINGS_NAME = "KB스타적금Ⅲ";
+    private static final String GENERAL_E_PLUS_SAVINGS_NAME = "KB일반 e-plus정기적금";
+    private static final BigDecimal E_PLUS_SPLIT_AMOUNT =
+            BigDecimal.valueOf(1_000_000L);
 
     private final DepositMapper depositMapper;
 
@@ -34,9 +39,6 @@ public class SavingsRecommendationPolicy
     public List<RecommendedProduct> recommend(
             RecommendationContext context) {
 
-        List<DepositProduct> candidates =
-                depositMapper.findByType(DepositType.SAVINGS);
-
         Integer targetPeriodMonths =
                 context.getTargetPeriodMonths();
 
@@ -52,6 +54,13 @@ public class SavingsRecommendationPolicy
             return List.of();
         }
 
+        List<DepositProduct> candidates =
+                depositMapper.findByType(DepositType.SAVINGS);
+
+        boolean kbStarSavingsEligible =
+                context.isInviterKbStarSavingsEligible()
+                        || context.isInviteeKbStarSavingsEligible();
+
         List<SavingsCandidate> eligibleCandidates =
                 candidates.stream()
                         .filter(product ->
@@ -59,39 +68,53 @@ public class SavingsRecommendationPolicy
                                         product,
                                         targetPeriodMonths))
                         .filter(product ->
+                                supportsKbStarSavings(
+                                        product,
+                                        kbStarSavingsEligible))
+                        .filter(product ->
+                                supportsEPlusSavings(
+                                        product,
+                                        monthlyAvailableAmount))
+                        .filter(product ->
                                 supportsSavingAmount(
                                         product,
                                         monthlyAvailableAmount))
                         .map(product ->
-                                findApplicableRate(
+                                createCandidate(
                                         product,
-                                        targetPeriodMonths)
-                                        .map(rate ->
-                                                new SavingsCandidate(
-                                                        product,
-                                                        rate)))
+                                        targetPeriodMonths))
                         .flatMap(Optional::stream)
-                        .filter(candidate ->
-                                candidate.rate().getBaseRate() != null)
                         .sorted(
                                 Comparator.comparing(
                                                 (SavingsCandidate candidate) ->
-                                                        candidate.rate().getBaseRate())
+                                                        isKbStarSavings(candidate.product()))
                                         .reversed()
+                                        .thenComparing(
+                                                Comparator.comparingInt(
+                                                                SavingsCandidate::applicableTerm)
+                                                        .reversed())
+                                        .thenComparing(
+                                                (SavingsCandidate candidate) ->
+                                                        candidate.rate().getBaseRate(),
+                                                Comparator.reverseOrder())
                                         .thenComparing(
                                                 candidate ->
                                                         candidate.product().getProductId()))
                         .toList();
 
+        return toRecommendations(eligibleCandidates);
+    }
+
+    private List<RecommendedProduct> toRecommendations(
+            List<SavingsCandidate> candidates) {
+
         List<RecommendedProduct> recommendations =
                 new ArrayList<>();
 
-        int limit = Math.min(3, eligibleCandidates.size());
-
-        for (int i = 0; i < limit; i++) {
+        for (int i = 0; i < candidates.size(); i++) {
 
             SavingsCandidate candidate =
-                    eligibleCandidates.get(i);
+                    candidates.get(i);
 
             int rank = i + 1;
             boolean selected = rank == 1;
@@ -112,18 +135,65 @@ public class SavingsRecommendationPolicy
             DepositProduct product,
             int targetPeriodMonths) {
 
-        if (product.getMinTerm() == null
-                || product.getMaxTerm() == null) {
+        if (product.getMinTerm() == null) {
             return false;
         }
 
-        return targetPeriodMonths >= product.getMinTerm()
-                && targetPeriodMonths <= product.getMaxTerm();
+        return targetPeriodMonths >= product.getMinTerm();
+    }
+
+    private boolean supportsKbStarSavings(
+            DepositProduct product,
+            boolean kbStarSavingsEligible) {
+
+        return !isKbStarSavings(product) || kbStarSavingsEligible;
+    }
+
+    private boolean supportsEPlusSavings(
+            DepositProduct product,
+            BigDecimal monthlyAvailableAmount) {
+
+        if (isGeneralEPlusSavings(product)) {
+            return monthlyAvailableAmount.compareTo(E_PLUS_SPLIT_AMOUNT) > 0;
+        }
+
+        return true;
+    }
+
+    private Optional<SavingsCandidate> createCandidate(
+            DepositProduct product,
+            int targetPeriodMonths) {
+
+        Integer applicableTerm = findApplicableTerm(
+                product,
+                targetPeriodMonths);
+
+        if (applicableTerm == null) {
+            return Optional.empty();
+        }
+
+        return findApplicableRate(product, applicableTerm)
+                .map(rate ->
+                        new SavingsCandidate(
+                                product,
+                                rate,
+                                applicableTerm));
+    }
+
+    private Integer findApplicableTerm(
+            DepositProduct product,
+            int targetPeriodMonths) {
+
+        if (product.getMaxTerm() == null) {
+            return targetPeriodMonths;
+        }
+
+        return Math.min(product.getMaxTerm(), targetPeriodMonths);
     }
 
     private Optional<DepositRate> findApplicableRate(
             DepositProduct product,
-            int targetPeriodMonths) {
+            int applicableTerm) {
 
         if (product.getRates() == null
                 || product.getRates().isEmpty()) {
@@ -133,15 +203,27 @@ public class SavingsRecommendationPolicy
         return product.getRates().stream()
                 .filter(rate ->
                         rate.getMinTerm() != null
-                                && targetPeriodMonths >= rate.getMinTerm()
+                                && rate.getBaseRate() != null
+                                && applicableTerm >= rate.getMinTerm()
                                 && (rate.getMaxTerm() == null
-                                || targetPeriodMonths <= rate.getMaxTerm()))
-                .findFirst();
+                                || applicableTerm <= rate.getMaxTerm()))
+                .max(
+                        Comparator.comparing(DepositRate::getMinTerm)
+                                .thenComparing(DepositRate::getId));
+    }
+
+    private boolean isKbStarSavings(DepositProduct product) {
+        return KB_STAR_SAVINGS_NAME.equals(product.getProductName());
+    }
+
+    private boolean isGeneralEPlusSavings(DepositProduct product) {
+        return GENERAL_E_PLUS_SAVINGS_NAME.equals(product.getProductName());
     }
 
     private record SavingsCandidate(
             DepositProduct product,
-            DepositRate rate) {
+            DepositRate rate,
+            int applicableTerm) {
     }
 
     private BigDecimal calculateCoupleMonthlyAvailableAmount(
