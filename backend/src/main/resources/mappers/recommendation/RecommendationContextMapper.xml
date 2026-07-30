@@ -36,9 +36,13 @@
             COALESCE(inviter_pension.has_pension_saving, 0) AS inviter_has_pension_saving,
             COALESCE(inviter_pension.has_irp, 0) AS inviter_has_irp,
             COALESCE(inviter_pension.has_isa, 0) AS inviter_has_isa,
+            inviter_pension.tax_eligibility_status AS inviter_tax_eligibility_status,
+            inviter_pension.isa_eligibility_status AS inviter_isa_eligibility_status,
             COALESCE(invitee_pension.has_pension_saving, 0) AS invitee_has_pension_saving,
             COALESCE(invitee_pension.has_irp, 0) AS invitee_has_irp,
-            COALESCE(invitee_pension.has_isa, 0) AS invitee_has_isa
+            COALESCE(invitee_pension.has_isa, 0) AS invitee_has_isa,
+            invitee_pension.tax_eligibility_status AS invitee_tax_eligibility_status,
+            invitee_pension.isa_eligibility_status AS invitee_isa_eligibility_status
         FROM couple c
         JOIN member inviter ON inviter.id = c.inviter_id
         JOIN member invitee ON invitee.id = c.invitee_id

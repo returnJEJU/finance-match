@@ -22,6 +22,7 @@ import com.financematch.match.domain.CompatibilityResult;
 import com.financematch.match.domain.MatchCoupleData;
 import com.financematch.match.domain.MatchMemberData;
 import com.financematch.match.mapper.MatchMapper;
+import com.financematch.report.service.GoalFeasibilityScoreService;
 
 @ExtendWith(MockitoExtension.class)
 class MatchServiceTest {
@@ -34,6 +35,9 @@ class MatchServiceTest {
 
     @Mock
     private MatchCalculator calculator;
+
+    @Mock
+    private GoalFeasibilityScoreService goalFeasibilityScoreService;
 
     @InjectMocks
     private MatchService matchService;
@@ -81,6 +85,14 @@ class MatchServiceTest {
                         org.mockito.ArgumentMatchers.anyLong(),
                         org.mockito.ArgumentMatchers.any()
                 );
+
+        verify(goalFeasibilityScoreService, never())
+                .generateAndSave(
+                        org.mockito.ArgumentMatchers.anyLong(),
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.anyInt()
+                );
     }
 
     @Test
@@ -101,7 +113,10 @@ class MatchServiceTest {
         memberB.setMemberId(2L);
 
         MatchCalculationInput calculationInput =
-                MatchCalculationInput.builder().build();
+                MatchCalculationInput.builder()
+                        .targetAmount(new BigDecimal("350000000"))
+                        .targetPeriodMonths(36)
+                        .build();
 
         MatchCalculationResult calculationResult =
                 MatchCalculationResult.builder()
@@ -109,6 +124,7 @@ class MatchServiceTest {
                         .debtRepaymentScore(new BigDecimal("14.00"))
                         .financialValueScore(new BigDecimal("16.95"))
                         .goalFeasibilityScore(new BigDecimal("12.79"))
+                        .expectedAsset(new BigDecimal("362000000"))
                         .taxStrategyScore(new BigDecimal("8.00"))
                         .taxStrategyCalculated(true)
                         .totalScore(new BigDecimal("70.36"))
@@ -117,6 +133,7 @@ class MatchServiceTest {
         CompatibilityResult savedResult =
                 new CompatibilityResult();
 
+        savedResult.setId(10L);
         savedResult.setCoupleId(1L);
         savedResult.setTotalScore(new BigDecimal("70.36"));
 
@@ -166,5 +183,13 @@ class MatchServiceTest {
                 matchMapper,
                 org.mockito.Mockito.times(2)
         ).findCompatibilityResultByCoupleId(1L);
+
+        // 목표 달성 가능성 reason 생성이 저장된 결과의 id·계산기 산출값으로 정확히 호출됐는지 확인
+        verify(goalFeasibilityScoreService).generateAndSave(
+                10L,
+                new BigDecimal("362000000"),
+                new BigDecimal("350000000"),
+                36
+        );
     }
 }

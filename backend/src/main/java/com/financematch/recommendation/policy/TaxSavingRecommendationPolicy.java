@@ -20,6 +20,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TaxSavingRecommendationPolicy implements PersonalRecommendationPolicy {
 
+    private static final String ELIGIBLE = "ELIGIBLE";
+    private static final String INELIGIBLE = "INELIGIBLE";
+
     private final TaxSavingMapper taxSavingMapper;
     private final InvestmentRiskLevelCalculator riskLevelCalculator;
 
@@ -30,6 +33,13 @@ public class TaxSavingRecommendationPolicy implements PersonalRecommendationPoli
 
     @Override
     public Map<Long, List<RecommendedProduct>> recommend(RecommendationContext context) {
+        validateEligibilityStatus(
+                context.getInviterTaxEligibilityStatus(),
+                context.getInviterIsaEligibilityStatus());
+        validateEligibilityStatus(
+                context.getInviteeTaxEligibilityStatus(),
+                context.getInviteeIsaEligibilityStatus());
+
         List<TaxSavingProduct> products = taxSavingMapper.findAll();
 
         return Map.of(
@@ -41,6 +51,8 @@ public class TaxSavingRecommendationPolicy implements PersonalRecommendationPoli
                         context.isInviterHasPensionSaving(),
                         context.isInviterHasIrp(),
                         context.isInviterHasIsa(),
+                        context.getInviterTaxEligibilityStatus(),
+                        context.getInviterIsaEligibilityStatus(),
                         context.getInviterFinancialKnowledge(),
                         context.getInviterInvestmentType()),
                 context.getInviteeId(),
@@ -51,6 +63,8 @@ public class TaxSavingRecommendationPolicy implements PersonalRecommendationPoli
                         context.isInviteeHasPensionSaving(),
                         context.isInviteeHasIrp(),
                         context.isInviteeHasIsa(),
+                        context.getInviteeTaxEligibilityStatus(),
+                        context.getInviteeIsaEligibilityStatus(),
                         context.getInviteeFinancialKnowledge(),
                         context.getInviteeInvestmentType()));
     }
@@ -62,10 +76,16 @@ public class TaxSavingRecommendationPolicy implements PersonalRecommendationPoli
             boolean hasPensionSaving,
             boolean hasIrp,
             boolean hasIsa,
+            String taxEligibilityStatus,
+            String isaEligibilityStatus,
             String financialKnowledge,
             String investmentType) {
         List<TaxSavingProduct> rankedProducts = new ArrayList<>();
         for (TaxAccountType accountType : accountOrder(firstGoalType, secondGoalType)) {
+            if (!isEligibleAccountType(
+                    accountType, taxEligibilityStatus, isaEligibilityStatus)) {
+                continue;
+            }
             if (hasAccount(accountType, hasPensionSaving, hasIrp, hasIsa)) {
                 continue;
             }
@@ -90,6 +110,28 @@ public class TaxSavingRecommendationPolicy implements PersonalRecommendationPoli
                                         index + 1,
                                         index == 0))
                 .toList();
+    }
+
+    private boolean isEligibleAccountType(
+            TaxAccountType accountType,
+            String taxEligibilityStatus,
+            String isaEligibilityStatus) {
+        return switch (accountType) {
+            case PENSION_SAVINGS, IRP -> ELIGIBLE.equals(taxEligibilityStatus);
+            case ISA -> ELIGIBLE.equals(isaEligibilityStatus);
+        };
+    }
+
+    private void validateEligibilityStatus(
+            String taxEligibilityStatus, String isaEligibilityStatus) {
+        if (!isKnownEligibilityStatus(taxEligibilityStatus)
+                || !isKnownEligibilityStatus(isaEligibilityStatus)) {
+            throw new IllegalArgumentException("절세 평가 대상 여부를 확인할 수 없습니다.");
+        }
+    }
+
+    private boolean isKnownEligibilityStatus(String status) {
+        return ELIGIBLE.equals(status) || INELIGIBLE.equals(status);
     }
 
     private List<TaxAccountType> accountOrder(String firstGoalType, String secondGoalType) {

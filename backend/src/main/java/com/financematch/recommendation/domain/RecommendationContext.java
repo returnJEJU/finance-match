@@ -40,9 +40,13 @@ public class RecommendationContext {
     private boolean inviterHasPensionSaving;
     private boolean inviterHasIrp;
     private boolean inviterHasIsa;
+    private String inviterTaxEligibilityStatus;
+    private String inviterIsaEligibilityStatus;
     private boolean inviteeHasPensionSaving;
     private boolean inviteeHasIrp;
     private boolean inviteeHasIsa;
+    private String inviteeTaxEligibilityStatus;
+    private String inviteeIsaEligibilityStatus;
 
     public List<Long> memberIds() {
         return List.of(inviterId, inviteeId);

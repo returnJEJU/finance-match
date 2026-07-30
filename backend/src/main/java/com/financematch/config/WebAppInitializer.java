@@ -11,8 +11,7 @@ public class WebAppInitializer extends AbstractAnnotationConfigDispatcherServlet
 
     @Override
     protected Class<?>[] getRootConfigClasses() {
-        // 보안 설정(SecurityConfig)은 다음 단계에서 이 배열에 추가한다.
-        return new Class<?>[] {RootConfig.class, RedisConfig.class};
+        return new Class<?>[] {RootConfig.class, RedisConfig.class, SecurityConfig.class};
     }
 
     @Override
