@@ -12,10 +12,14 @@ import com.financematch.match.domain.MatchCoupleData;
 import com.financematch.match.domain.MatchMemberData;
 import com.financematch.match.mapper.MatchMapper;
 
+import com.financematch.report.dto.reason.DebtRepaymentReasonInput;
 import com.financematch.report.service.AssetStabilityScoreService;
+import com.financematch.report.service.DebtRepaymentScoreService;
 import com.financematch.report.service.GoalFeasibilityScoreService;
 
 import lombok.RequiredArgsConstructor;
+
+import java.math.BigDecimal;
 
 import com.financematch.common.ErrorCode;
 import com.financematch.exception.ApiException;
@@ -29,6 +33,7 @@ public class MatchService {
     private final MatchCalculator calculator;
     private final GoalFeasibilityScoreService goalFeasibilityScoreService;
     private final AssetStabilityScoreService assetStabilityScoreService;
+    private final DebtRepaymentScoreService debtRepaymentScoreService;
 
 
     @Transactional
@@ -122,6 +127,17 @@ public class MatchService {
                 savedResult.getId(),
                 calculationResult.getCoupleAssetRatio()
         );
+
+        // 10. 부채 축 reason 생성·저장 (LLM 사용)
+        DebtRepaymentReasonInput debtRepaymentReasonInput = new DebtRepaymentReasonInput(
+                memberA.getMemberName(),
+                memberB.getMemberName(),
+                calculationInput.getMemberA().getTotalDebt().compareTo(BigDecimal.ZERO) > 0,
+                calculationInput.getMemberB().getTotalDebt().compareTo(BigDecimal.ZERO) > 0,
+                calculationResult.getMemberADebtScore(),
+                calculationResult.getMemberBDebtScore()
+        );
+        debtRepaymentScoreService.generateAndSave(savedResult.getId(), debtRepaymentReasonInput);
 
         return savedResult;
     }
