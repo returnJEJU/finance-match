@@ -37,7 +37,7 @@ public enum ErrorCode {
     // ===== 초대 (강현지) =====
     INVITATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 사용 가능한 초대 코드가 존재합니다."),
     COUPLE_ALREADY_CONNECTED(HttpStatus.CONFLICT, "이미 파트너와 연결된 회원입니다."),
-    COMMON_SURVEY_NOT_FOUND(HttpStatus.NOT_FOUND, "조회할 공동 설문이 존재하지 않습니다.");
+    COMMON_SURVEY_NOT_FOUND(HttpStatus.NOT_FOUND, "조회할 공동 설문이 존재하지 않습니다."),
 
     // ===== 추천 =====
     COUPLE_NOT_CONNECTED(HttpStatus.NOT_FOUND, "연결된 커플의 정보가 없습니다."),
