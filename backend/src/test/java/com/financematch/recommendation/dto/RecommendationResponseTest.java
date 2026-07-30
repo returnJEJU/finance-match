@@ -17,7 +17,15 @@ class RecommendationResponseTest {
     @Test
     void serializesApiContractFieldNames() {
         PackageProductResponse packageProduct =
-                new PackageProductResponse(101L, "KB Star 정기예금", "기본금리", "연 2.80%");
+                new PackageProductResponse(
+                        101L,
+                        "KB Star 정기예금",
+                        "목돈을 안정적으로 운용하는 정기예금",
+                        "https://obank.kbstar.com/deposit",
+                        "기본금리",
+                        "연 2.80%",
+                        null,
+                        null);
         PackageSlotResponse slot =
                 new PackageSlotResponse(
                         11L,
@@ -31,14 +39,23 @@ class RecommendationResponseTest {
                         "홍길동",
                         List.of(
                                 new TaxSavingProductResponse(
-                                        301L, "KB증권 중개형 ISA", TaxAccountType.ISA)));
+                                        301L,
+                                        "KB증권 중개형 ISA",
+                                        "직접 운용하는 절세 계좌",
+                                        "https://www.kbsec.com/isa",
+                                        TaxAccountType.ISA)));
         PersonalInvestmentRecommendationResponse investment =
                 new PersonalInvestmentRecommendationResponse(
                         1L,
                         "홍길동",
                         List.of(
                                 new PersonalInvestmentProductResponse(
-                                        401L, "RISE 미국S&P500 ETF", "AGGRESSIVE")));
+                                        401L,
+                                        "RISE 미국S&P500 ETF",
+                                        "미국 대표 기업에 분산 투자하는 상품",
+                                        "https://www.riseetf.co.kr/product",
+                                        3,
+                                        "고위험")));
         RecommendationResponse response =
                 new RecommendationResponse(
                         100L, false, List.of(slot), taxSaving, investment);
@@ -54,11 +71,19 @@ class RecommendationResponseTest {
                         .get("targetMemberId")
                         .longValue());
         assertEquals(
-                "AGGRESSIVE",
+                "고위험",
                 json.get("personalInvestmentRecommendation")
                         .get("products")
                         .get(0)
-                        .get("investmentType")
+                        .get("riskLabel")
+                        .textValue());
+        assertEquals(
+                "https://obank.kbstar.com/deposit",
+                json.get("packageSlots")
+                        .get(0)
+                        .get("products")
+                        .get(0)
+                        .get("productUrl")
                         .textValue());
     }
 
@@ -90,7 +115,15 @@ class RecommendationResponseTest {
     @Test
     void rejectsSelectedProductOutsideSlotProducts() {
         PackageProductResponse product =
-                new PackageProductResponse(101L, "KB Star 정기예금", "기본금리", "연 2.80%");
+                new PackageProductResponse(
+                        101L,
+                        "KB Star 정기예금",
+                        null,
+                        "https://obank.kbstar.com/deposit",
+                        "기본금리",
+                        "연 2.80%",
+                        null,
+                        null);
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -108,5 +141,39 @@ class RecommendationResponseTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> new PersonalInvestmentRecommendationResponse(1L, "홍길동", List.of()));
+    }
+
+    @Test
+    void allowsInvestmentProductWithoutComparisonValue() {
+        PackageProductResponse investment =
+                new PackageProductResponse(
+                        401L,
+                        "RISE 미국S&P500 ETF",
+                        "미국 대표 기업에 분산 투자하는 상품",
+                        "https://www.riseetf.co.kr/product",
+                        null,
+                        null,
+                        5,
+                        "중립");
+
+        JsonNode json = objectMapper.valueToTree(investment);
+
+        assertEquals(true, json.get("comparisonLabel").isNull());
+        assertEquals(5, json.get("riskLevel").intValue());
+        assertEquals("중립", json.get("riskLabel").textValue());
+    }
+
+    @Test
+    void rejectsMismatchedRiskLabel() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        new PersonalInvestmentProductResponse(
+                                401L,
+                                "RISE 미국S&P500 ETF",
+                                null,
+                                "https://www.riseetf.co.kr/product",
+                                4,
+                                "중립"));
     }
 }

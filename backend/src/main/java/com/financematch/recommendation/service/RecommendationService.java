@@ -1,8 +1,13 @@
 package com.financematch.recommendation.service;
 
+import com.financematch.common.ErrorCode;
+import com.financematch.couple.mapper.CoupleMapper;
+import com.financematch.exception.ApiException;
 import com.financematch.recommendation.domain.Recommendation;
 import com.financematch.recommendation.domain.RecommendationContext;
+import com.financematch.recommendation.domain.RecommendationResult;
 import com.financematch.recommendation.domain.RecommendationSlot;
+import com.financematch.recommendation.dto.RecommendationResponse;
 import com.financematch.recommendation.mapper.RecommendationContextMapper;
 import com.financematch.recommendation.mapper.RecommendationMapper;
 import com.financematch.recommendation.policy.RecommendedProduct;
@@ -19,15 +24,65 @@ public class RecommendationService {
     private final RecommendationContextMapper recommendationContextMapper;
     private final RecommendationMapper recommendationMapper;
     private final RecommendationPlanner recommendationPlanner;
+    private final CoupleMapper coupleMapper;
+    private final RecommendationResponseAssembler responseAssembler;
 
     public RecommendationService(
             RecommendationContextMapper recommendationContextMapper,
             RecommendationMapper recommendationMapper,
-            RecommendationPlanner recommendationPlanner) {
+            RecommendationPlanner recommendationPlanner,
+            CoupleMapper coupleMapper,
+            RecommendationResponseAssembler responseAssembler) {
 
         this.recommendationContextMapper = recommendationContextMapper;
         this.recommendationMapper = recommendationMapper;
         this.recommendationPlanner = recommendationPlanner;
+        this.coupleMapper = coupleMapper;
+        this.responseAssembler = responseAssembler;
+    }
+
+    @Transactional
+    public void createRecommendation(Long memberId) {
+        try {
+            recommend(memberId);
+        } catch (ApiException exception) {
+            throw exception;
+        } catch (IllegalArgumentException exception) {
+            throw new ApiException(ErrorCode.RECOMMENDATION_NOT_READY);
+        } catch (Exception exception) {
+            throw new ApiException(ErrorCode.RECOMMENDATION_FAILED);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public RecommendationResponse getRecommendation(Long memberId) {
+        try {
+            RecommendationResult result =
+                    recommendationMapper.findRecommendationResultByMemberId(memberId);
+
+            if (result == null) {
+                if (!coupleMapper.existsCoupleByMemberId(memberId)) {
+                    throw new ApiException(ErrorCode.COUPLE_NOT_CONNECTED);
+                }
+                throw new ApiException(ErrorCode.RECOMMENDATION_NOT_FOUND);
+            }
+
+            if (!recommendationMapper.isRecommendationCurrentByMemberId(memberId)) {
+                throw new ApiException(ErrorCode.RECOMMENDATION_NOT_FOUND);
+            }
+
+            return responseAssembler.assemble(
+                    result,
+                    recommendationMapper.findJointProductsByRecommendationIdAndMemberId(
+                            result.getRecommendationId(),
+                            memberId),
+                    recommendationMapper.findPersonalTaxSavingByMemberId(memberId),
+                    recommendationMapper.findPersonalInvestmentByMemberId(memberId));
+        } catch (ApiException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new ApiException(ErrorCode.RECOMMENDATION_FAILED);
+        }
     }
 
     @Transactional
@@ -41,8 +96,10 @@ public class RecommendationService {
                 recommendationContextMapper.findByMemberId(memberId);
 
         if (context == null) {
-            throw new IllegalStateException(
-                    "추천에 필요한 부부 정보를 찾을 수 없습니다. memberId=" + memberId);
+            if (!coupleMapper.existsCoupleByMemberId(memberId)) {
+                throw new ApiException(ErrorCode.COUPLE_NOT_CONNECTED);
+            }
+            throw new ApiException(ErrorCode.RECOMMENDATION_NOT_READY);
         }
 
         RecommendationPlan plan = recommendationPlanner.create(context);

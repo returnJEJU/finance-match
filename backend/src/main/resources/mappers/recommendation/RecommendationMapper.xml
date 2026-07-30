@@ -5,6 +5,55 @@
 
 <mapper namespace="com.financematch.recommendation.mapper.RecommendationMapper">
 
+    <resultMap id="recommendationResultMap"
+               type="com.financematch.recommendation.domain.RecommendationResult">
+        <id property="recommendationId" column="recommendation_id"/>
+        <result property="coupleId" column="couple_id"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="hasHighInterestDebt" column="has_high_interest_debt"/>
+    </resultMap>
+
+    <resultMap id="jointRecommendationProductMap"
+               type="com.financematch.recommendation.domain.JointRecommendationProduct">
+        <id property="productId" column="product_id"/>
+        <result property="slotId" column="slot_id"/>
+        <result property="slotType" column="slot_type"
+                javaType="com.financematch.recommendation.type.RecommendationSlotType"/>
+        <result property="rank" column="rank_no"/>
+        <result property="selected" column="is_selected"/>
+        <result property="productName" column="product_name"/>
+        <result property="description" column="description"/>
+        <result property="productUrl" column="product_url"/>
+        <result property="applicableBaseRate" column="applicable_base_rate"/>
+        <result property="riskLevel" column="risk_level"/>
+        <result property="loanMaxRate" column="loan_max_rate"/>
+    </resultMap>
+
+    <resultMap id="personalTaxSavingProductMap"
+               type="com.financematch.recommendation.domain.PersonalTaxSavingProduct">
+        <id property="productId" column="product_id"/>
+        <result property="targetMemberId" column="target_member_id"/>
+        <result property="targetMemberName" column="target_member_name"/>
+        <result property="rank" column="rank_no"/>
+        <result property="productName" column="product_name"/>
+        <result property="description" column="description"/>
+        <result property="productUrl" column="product_url"/>
+        <result property="accountType" column="account_type"
+                javaType="com.financematch.product.type.TaxAccountType"/>
+    </resultMap>
+
+    <resultMap id="personalInvestmentProductMap"
+               type="com.financematch.recommendation.domain.PersonalInvestmentProduct">
+        <id property="productId" column="product_id"/>
+        <result property="targetMemberId" column="target_member_id"/>
+        <result property="targetMemberName" column="target_member_name"/>
+        <result property="rank" column="rank_no"/>
+        <result property="productName" column="product_name"/>
+        <result property="description" column="description"/>
+        <result property="productUrl" column="product_url"/>
+        <result property="riskLevel" column="risk_level"/>
+    </resultMap>
+
     <!-- 커플별 최신 추천 부모 row를 조회한다. -->
     <select id="findRecommendationIdByCoupleId" resultType="long">
         SELECT id
@@ -30,6 +79,188 @@
                 ON c.id = r.couple_id
         WHERE r.couple_id = #{coupleId}
           AND (c.inviter_id = #{memberId} OR c.invitee_id = #{memberId})
+    </select>
+
+    <select id="findRecommendationResultByMemberId"
+            resultMap="recommendationResultMap">
+        SELECT
+            r.id AS recommendation_id,
+            r.couple_id,
+            r.updated_at,
+            (
+                COALESCE(inviter_finance.has_high_rate_debt, 0) = 1
+                OR COALESCE(invitee_finance.has_high_rate_debt, 0) = 1
+            ) AS has_high_interest_debt
+        FROM recommendation r
+            INNER JOIN couple c
+                ON c.id = r.couple_id
+            LEFT JOIN financial_summary inviter_finance
+                ON inviter_finance.member_id = c.inviter_id
+            LEFT JOIN financial_summary invitee_finance
+                ON invitee_finance.member_id = c.invitee_id
+        WHERE c.inviter_id = #{memberId}
+           OR c.invitee_id = #{memberId}
+    </select>
+
+    <select id="findJointProductsByRecommendationIdAndMemberId"
+            resultMap="jointRecommendationProductMap">
+        SELECT
+            rs.id AS slot_id,
+            rs.slot_type,
+            rp.product_id,
+            rp.rank_no,
+            rp.is_selected,
+            p.product_name,
+            p.description,
+            p.url AS product_url,
+            CASE
+                WHEN rs.slot_type IN ('DEPOSIT', 'SAVINGS') THEN (
+                    SELECT dr.base_rate
+                    FROM deposit_rate dr
+                    WHERE dr.deposit_id = rp.product_id
+                      AND LEAST(cs.target_period_months, d.max_term) &gt;= dr.min_term
+                      AND (
+                          dr.max_term IS NULL
+                          OR LEAST(cs.target_period_months, d.max_term) &lt;= dr.max_term
+                      )
+                    ORDER BY dr.min_term DESC, dr.id DESC
+                    LIMIT 1
+                )
+                ELSE NULL
+            END AS applicable_base_rate,
+            i.risk_level,
+            l.max_rate AS loan_max_rate
+        FROM recommendation r
+            INNER JOIN couple c
+                ON c.id = r.couple_id
+            INNER JOIN invitation_code invitation
+                ON invitation.id = c.invitation_code_id
+            INNER JOIN common_survey cs
+                ON cs.id = invitation.common_survey_id
+            INNER JOIN recommendation_slot rs
+                ON rs.recommendation_id = r.id
+            INNER JOIN recommendation_product rp
+                ON rp.recommendation_slot_id = rs.id
+            INNER JOIN product p
+                ON p.id = rp.product_id
+            LEFT JOIN deposit d
+                ON d.id = p.id
+            LEFT JOIN investment i
+                ON i.id = p.id
+            LEFT JOIN loan l
+                ON l.id = p.id
+        WHERE r.id = #{recommendationId}
+          AND (c.inviter_id = #{memberId} OR c.invitee_id = #{memberId})
+        ORDER BY
+            CASE rs.slot_type
+                WHEN 'DEPOSIT' THEN 1
+                WHEN 'SAVINGS' THEN 2
+                WHEN 'INVESTMENT' THEN 3
+                WHEN 'LOAN' THEN 4
+                ELSE 5
+            END,
+            rp.rank_no
+    </select>
+
+    <select id="findPersonalTaxSavingByMemberId"
+            resultMap="personalTaxSavingProductMap">
+        SELECT
+            member.id AS target_member_id,
+            member.name AS target_member_name,
+            personal.product_id,
+            personal.rank_no,
+            product.product_name,
+            product.description,
+            product.url AS product_url,
+            tax.account_type
+        FROM personal_recommendation_tax_saving personal
+            INNER JOIN member
+                ON member.id = personal.member_id
+            INNER JOIN product
+                ON product.id = personal.product_id
+            INNER JOIN tax_saving tax
+                ON tax.id = product.id
+        WHERE personal.member_id = #{memberId}
+        ORDER BY personal.rank_no
+    </select>
+
+    <select id="findPersonalInvestmentByMemberId"
+            resultMap="personalInvestmentProductMap">
+        SELECT
+            member.id AS target_member_id,
+            member.name AS target_member_name,
+            personal.product_id,
+            personal.rank_no,
+            product.product_name,
+            product.description,
+            product.url AS product_url,
+            investment.risk_level
+        FROM personal_recommendation_investment personal
+            INNER JOIN member
+                ON member.id = personal.member_id
+            INNER JOIN product
+                ON product.id = personal.product_id
+            INNER JOIN investment
+                ON investment.id = product.id
+        WHERE personal.member_id = #{memberId}
+        ORDER BY personal.rank_no
+    </select>
+
+    <select id="isRecommendationCurrentByMemberId" resultType="boolean">
+        SELECT CASE
+            WHEN NOT EXISTS (
+                SELECT 1
+                FROM recommendation r
+                    INNER JOIN couple c
+                        ON c.id = r.couple_id
+                WHERE c.inviter_id = #{memberId}
+                   OR c.invitee_id = #{memberId}
+            ) THEN FALSE
+            WHEN EXISTS (
+                SELECT 1
+                FROM recommendation r
+                    INNER JOIN couple c
+                        ON c.id = r.couple_id
+                    INNER JOIN invitation_code invitation
+                        ON invitation.id = c.invitation_code_id
+                    INNER JOIN common_survey cs
+                        ON cs.id = invitation.common_survey_id
+                WHERE (c.inviter_id = #{memberId} OR c.invitee_id = #{memberId})
+                  AND (
+                      cs.updated_at &gt; r.updated_at
+                      OR EXISTS (
+                          SELECT 1
+                          FROM member
+                          WHERE id IN (c.inviter_id, c.invitee_id)
+                            AND updated_at &gt; r.updated_at
+                      )
+                      OR EXISTS (
+                          SELECT 1
+                          FROM personal_survey
+                          WHERE member_id IN (c.inviter_id, c.invitee_id)
+                            AND updated_at &gt; r.updated_at
+                      )
+                      OR EXISTS (
+                          SELECT 1
+                          FROM financial_summary
+                          WHERE member_id IN (c.inviter_id, c.invitee_id)
+                            AND updated_at &gt; r.updated_at
+                      )
+                      OR EXISTS (
+                          SELECT 1
+                          FROM pension_isa_account
+                          WHERE member_id IN (c.inviter_id, c.invitee_id)
+                            AND updated_at &gt; r.updated_at
+                      )
+                      OR EXISTS (
+                          SELECT 1
+                          FROM product
+                          WHERE updated_at &gt; r.updated_at
+                      )
+                  )
+            ) THEN FALSE
+            ELSE TRUE
+        END
     </select>
 
     <!-- couple_id UNIQUE를 이용해 커플별 최신 추천 부모 row를 생성하거나 갱신한다. -->
