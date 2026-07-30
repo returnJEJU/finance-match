@@ -36,6 +36,12 @@ class RecommendationPlannerTest {
         context.setInviteeInvestmentType("STABLE");
         context.setInviterFinancialKnowledge("LOW");
         context.setInviteeFinancialKnowledge("LOW");
+
+        context.setInviterTaxEligibilityStatus("ELIGIBLE");
+        context.setInviterIsaEligibilityStatus("ELIGIBLE");
+        context.setInviteeTaxEligibilityStatus("ELIGIBLE");
+        context.setInviteeIsaEligibilityStatus("ELIGIBLE");
+
         context.setTargetPeriodMonths(12);
         context.setAvailableBalance(
                 java.math.BigDecimal.valueOf(6_000_000L));
