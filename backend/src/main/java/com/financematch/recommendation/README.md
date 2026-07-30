@@ -70,3 +70,39 @@ feature/recommendation-integration
 - 후보가 없을 때 빈 목록을 반환하는지
 - 개인 추천이 각 회원 ID에 맞게 분리되는지
 - 대표 상품이 유형별로 하나만 선택되는지
+
+## 조회 API 응답 계약
+
+추천 생성 API `POST /v1/members/me/recommendation`은 추천 결과를 저장하고 `data: null`을
+반환한다. 프론트는 생성 성공 후 추천 조회 API를 다시 호출한다.
+
+추천 조회 API `GET /v1/members/me/recommendation`은
+`dto/RecommendationResponse`를 반환한다.
+
+- `packageSlots`에는 추천 상품이 하나 이상인 활성 공동 슬롯만 포함한다.
+- 활성 슬롯의 `selectedProductId`는 해당 슬롯의 `products`에 반드시 포함한다.
+- `products`는 추천 순위대로 정렬하며 현재 선택 상품과 추천 순위는 별개로 관리한다.
+- 개인 절세 추천은 로그인 회원의 결과만 반환한다. 추천 상품이 없으면 객체 전체를 `null`로
+  반환한다.
+- 개인 투자 추천은 로그인 회원의 투자성향이 공동 투자 기준보다 더 적극적인 경우에만 로그인
+  회원의 결과를 반환한다.
+- 로그인 회원이 공동 투자 기준보다 적극적이지 않거나 두 회원의 투자성향이 같으면
+  `personalInvestmentRecommendation`을 `null`로 반환한다. 상대 회원의 개인 투자 추천은
+  반환하지 않는다.
+- `hasHighInterestDebt`는 조회 시점에 두 회원의 현재 `financial_summary`를 조회해 계산한다.
+
+### 추천 최신성
+
+추천 입력 데이터가 저장된 추천 결과보다 최신이면 기존 결과와 현재 금융 상태를 섞어 반환하지
+않는다.
+
+최신성 비교 대상은 회원 투자성향, 공동·개인 설문, 금융 요약, 연금·ISA 계좌와 추천에 사용하는
+상품 정보다. 이 중 최신 수정 시각이 `recommendation.updated_at`보다 뒤라면 GET은
+`RECOMMENDATION_NOT_FOUND`를 반환한다. 프론트는 POST로 전체 추천을 다시 생성한 뒤 GET을
+재호출한다.
+
+상품 서브타입 테이블에는 수정 시각이 없는 경우가 있으므로 상품 속성을 변경하는 작업은
+`product.updated_at`도 함께 갱신하거나 해당 상품을 포함할 수 있는 기존 추천을 명시적으로
+무효화해야 한다.
+
+GET 요청 자체에서는 추천 결과를 생성하거나 DB를 변경하지 않는다.

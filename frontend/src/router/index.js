@@ -32,50 +32,55 @@ const routes = [
       {
         path: 'signup',
         name: 'signup',
-        component: () => import('@/pages/SignupPage.vue'),
+        component: () => import('@/pages/auth/SignupPage.vue'),
         meta: { public: true },
       },
       {
         path: 'signup/agree',
         name: 'signup-agree',
-        component: () => import('@/pages/SignupAgreePage.vue'),
+        component: () => import('@/pages/auth/SignupAgreePage.vue'),
         meta: { public: true },
       },
       {
         path: 'signup/cert',
         name: 'signup-cert',
-        component: () => import('@/pages/SignupCertPage.vue'),
+        component: () => import('@/pages/auth/SignupCertPage.vue'),
         meta: { public: true },
       },
       {
         path: 'signup/asset',
         name: 'signup-asset',
-        component: () => import('@/pages/AssetLinkPage.vue'),
+        component: () => import('@/pages/auth/AssetLinkPage.vue'),
         meta: { public: true },
       },
       {
         path: 'signup/asset/institutions',
         name: 'signup-asset-institutions',
-        component: () => import('@/pages/InstitutionsPage.vue'),
+        component: () => import('@/pages/auth/InstitutionsPage.vue'),
         meta: { public: true },
       },
       {
         path: 'signup/asset/linking',
         name: 'signup-asset-linking',
-        component: () => import('@/pages/AssetLinkingPage.vue'),
+        component: () => import('@/pages/auth/AssetLinkingPage.vue'),
         meta: { public: true },
       },
       {
         path: 'signup/asset/done',
         name: 'signup-asset-done',
-        component: () => import('@/pages/AssetLinkedPage.vue'),
+        component: () => import('@/pages/auth/AssetLinkedPage.vue'),
         meta: { public: true },
       },
       {
         path: 'login',
         name: 'login',
-        component: () => import('@/pages/LoginPage.vue'),
+        component: () => import('@/pages/auth/LoginPage.vue'),
         meta: { public: true },
+      },
+      {
+        path: 'service-introduction',
+        name: 'service-introduction',
+        component: () => import('@/pages/ServiceIntroductionPage.vue'),
       },
       {
         path: 'couple',
@@ -134,8 +139,9 @@ const routes = [
         path: 'dashboard/waiting',
         name: 'dashboard-waiting',
         component: () => import('@/pages/DashboardWaitingPage.vue'),
+        // 상대방이 설문을 마치기 전까지는 갈 수 있는 화면이 없다.
+        // 하단 탭(navLocked)과 마찬가지로 상단바 뒤로가기도 두지 않는다.
         meta: {
-          showBack: true,
           activeTab: 'dashboard',
           navLocked: true,
         },
@@ -144,13 +150,13 @@ const routes = [
         path: 'report',
         name: 'report',
         component: () => import('@/pages/ReportPage.vue'),
-        meta: { title: '리포트', showBack: true },
+        meta: { title: '리포트' },
       },
       {
         path: 'recommend',
         name: 'recommend',
         component: () => import('@/pages/RecommendPage.vue'),
-        meta: { title: '상품 추천', showBack: true },
+        meta: { title: '상품 추천' },
       },
       {
         path: 'recommend/products',

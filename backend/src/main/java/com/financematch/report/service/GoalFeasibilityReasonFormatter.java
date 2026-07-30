@@ -23,10 +23,12 @@ public class GoalFeasibilityReasonFormatter {
                     WonAmountFormatter.format(expectedAsset),
                     WonAmountFormatter.format(targetAmount),
                     WonAmountFormatter.format(shortfall));
+
         }
 
         return String.format(
                 "%d개월 후 목표 달성 가능성이 커요. 목표 달성을 더 확실하게 도와줄 상품을 추천탭에서 만나보세요.",
                 monthsUntilGoal);
     }
+
 }

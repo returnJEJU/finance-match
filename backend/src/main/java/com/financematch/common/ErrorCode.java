@@ -29,14 +29,32 @@ public enum ErrorCode {
     //  ⚠️ 도메인별 에러 코드는 여기에 추가한다 — 【API 명세 확정 후】
     //     각 담당자가 자기 도메인 구획을 만들어 추가한다. 예:
     //       // ===== 인증 (임민지) =====
-    //       EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
+    //       EMAIL_EXISTS(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
     //       // ===== 커플 (강현지) =====
     //       INVITE_CODE_INVALID(HttpStatus.BAD_REQUEST, "유효하지 않은 초대코드입니다."),
     // ===================================================================
 
-    // ===== 초대 (강현지) =====
+    
+    // ===== 인증 (임민지) =====
+    EMAIL_EXISTS(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
+    CONSENT_REQUIRED(HttpStatus.BAD_REQUEST, "필수 약관(4종)에 모두 동의해야 합니다."),
+    // 계정 열거를 막기 위해 "없는 이메일"·"비밀번호 불일치"·"탈퇴 회원"을 하나의 코드로 통합한다.
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 일치하지 않습니다."),
+
+    // ===== 초대/커플 (강현지) =====
     INVITATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 사용 가능한 초대 코드가 존재합니다."),
-    COUPLE_ALREADY_CONNECTED(HttpStatus.CONFLICT, "이미 파트너와 연결된 회원입니다.");
+    COUPLE_ALREADY_CONNECTED(HttpStatus.CONFLICT, "이미 파트너와 연결된 회원입니다."),
+    COMMON_SURVEY_NOT_FOUND(HttpStatus.NOT_FOUND, "조회할 공동 설문이 존재하지 않습니다."),
+    INVITATION_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 초대 코드입니다."),
+    SELF_INVITATION_NOT_ALLOWED(HttpStatus.CONFLICT, "본인이 생성한 초대코드는 사용할 수 없습니다."),
+    INVITATION_NOT_AVAILABLE(HttpStatus.CONFLICT, "이미 사용되었거나 사용할 수 없는 초대 코드입니다."),
+
+    // ===== 추천 =====
+    COUPLE_NOT_CONNECTED(HttpStatus.NOT_FOUND, "연결된 커플의 정보가 없습니다."),
+    RECOMMENDATION_NOT_READY(HttpStatus.CONFLICT, "추천 생성에 필요한 데이터가 준비되지 않았습니다."),
+    RECOMMENDATION_IN_PROGRESS(HttpStatus.CONFLICT, "해당 커플의 추천 결과를 이미 생성하고 있습니다."),
+    RECOMMENDATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "추천 결과 생성 중 오류가 발생했습니다."),
+    RECOMMENDATION_NOT_FOUND(HttpStatus.NOT_FOUND, "현재 정보 기준으로 조회할 추천 결과가 없습니다.");
 
     private final HttpStatus status;
     private final String message;

@@ -11,10 +11,14 @@ import com.financematch.match.domain.CompatibilityResult;
 import com.financematch.match.domain.MatchCoupleData;
 import com.financematch.match.domain.MatchMemberData;
 import com.financematch.match.mapper.MatchMapper;
+
 import com.financematch.report.service.AssetStabilityScoreService;
 import com.financematch.report.service.GoalFeasibilityScoreService;
 
 import lombok.RequiredArgsConstructor;
+
+import com.financematch.common.ErrorCode;
+import com.financematch.exception.ApiException;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +29,7 @@ public class MatchService {
     private final MatchCalculator calculator;
     private final GoalFeasibilityScoreService goalFeasibilityScoreService;
     private final AssetStabilityScoreService assetStabilityScoreService;
+
 
     @Transactional
     public CompatibilityResult getOrCalculateCompatibilityResult(
@@ -119,5 +124,38 @@ public class MatchService {
         );
 
         return savedResult;
+    }
+
+    @Transactional(readOnly = true)
+    public CompatibilityResult getCompatibilityResult(
+            Long memberId
+    ) {
+        if (memberId == null) {
+            throw new ApiException(ErrorCode.INVALID_INPUT);
+        }
+
+        MatchCoupleData couple =
+                matchMapper.findCoupleDataByMemberId(memberId);
+
+        if (couple == null) {
+            throw new ApiException(
+                    ErrorCode.NOT_FOUND,
+                    "연결된 커플 정보를 찾을 수 없습니다."
+            );
+        }
+
+        CompatibilityResult result =
+                matchMapper.findCompatibilityResultByCoupleId(
+                        couple.getCoupleId()
+                );
+
+        if (result == null) {
+            throw new ApiException(
+                    ErrorCode.NOT_FOUND,
+                    "금융 궁합도 계산 결과를 찾을 수 없습니다."
+            );
+        }
+
+        return result;
     }
 }

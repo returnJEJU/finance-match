@@ -1,5 +1,6 @@
 package com.financematch.match.controller;
 
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,6 +32,21 @@ public class MatchController {
                 matchService.getOrCalculateCompatibilityResult(
                         memberId
                 );
+
+        CompatibilityResultResponse response =
+                CompatibilityResultResponse.from(result);
+
+        return ApiResponse.ok(response);
+    }
+
+    @GetMapping("/compatibility")
+    public ApiResponse<CompatibilityResultResponse>
+    getCompatibility() {
+
+        Long memberId = TEMP_MEMBER_ID;
+
+        CompatibilityResult result =
+                matchService.getCompatibilityResult(memberId);
 
         CompatibilityResultResponse response =
                 CompatibilityResultResponse.from(result);

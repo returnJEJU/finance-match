@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.auth.mapper.MemberMapper">
+
+    <!--
+      탈퇴(soft delete) 회원도 포함해서 확인한다.
+      uk_member_email 은 deleted_at 과 무관하게 걸려 있어, 탈퇴 회원의 이메일도 그대로 점유되어 있다.
+      deleted_at IS NULL 로 걸러내면 "사용 가능" 이라고 답한 뒤 INSERT 가 중복 키로 실패한다.
+    -->
+    <select id="existsByEmail" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM member
+            WHERE email = #{email}
+        )
+    </select>
+
+    <!--
+      status·kb_star_savings_eligible 는 DB 기본값(ACTIVE·0)을 쓴다.
+      last_login_at 은 넣지 않는다 — NULL 이어야 첫 로그인 판별(isFirstLogin)이 동작한다.
+    -->
+    <insert id="insert"
+            parameterType="com.financematch.auth.domain.Member"
+            useGeneratedKeys="true"
+            keyProperty="id"
+            keyColumn="id">
+        INSERT INTO member (
+            email,
+            password,
+            name,
+            gender,
+            birth_date
+        ) VALUES (
+            #{email},
+            #{password},
+            #{name},
+            #{gender},
+            #{birthDate}
+        )
+    </insert>
+
+    <insert id="insertAgreement"
+            parameterType="com.financematch.auth.domain.MemberAgreement"
+            useGeneratedKeys="true"
+            keyProperty="id"
+            keyColumn="id">
+        INSERT INTO member_agreement (
+            member_id,
+            agree_mydata_terms,
+            agree_privacy,
+            agree_asset_link,
+            agree_couple_share,
+            agree_marketing,
+            agreed_at
+        ) VALUES (
+            #{memberId},
+            #{agreeMydataTerms},
+            #{agreePrivacy},
+            #{agreeAssetLink},
+            #{agreeCoupleShare},
+            #{agreeMarketing},
+            #{agreedAt}
+        )
+    </insert>
+</mapper>

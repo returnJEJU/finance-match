@@ -5,6 +5,8 @@
 // 타이머로 가짜 진행을 만들지 않고, 대기 화면이 멈춰 보이지 않게 CSS 애니메이션만 넣는다.
 import { useRouter } from 'vue-router'
 import { CreditCard, Landmark, Lock, TrendingUp, Wallet, X } from 'lucide-vue-next'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import PageTitle from '@/components/ui/PageTitle.vue'
 
 // 불러오는 항목. done 이 false 면 금액 대신 스켈레톤을 보여준다.
 const ITEMS = [
@@ -51,9 +53,7 @@ function close() {
     </div>
 
     <div class="flex flex-1 flex-col px-7">
-      <h1 class="mt-3.5 text-[26px] leading-[1.38] font-extrabold tracking-[-0.4px]">
-        임민지님의 자산을<br />불러오고 있어요
-      </h1>
+      <PageTitle class="mt-3.5">임민지님의 자산을<br />불러오고 있어요</PageTitle>
       <p class="text-muted mt-2 text-[13px] leading-[1.5]">
         금융보안 규격에 따라 안전하게 연결 중이에요.
       </p>
@@ -110,11 +110,7 @@ function close() {
     </div>
 
     <div class="flex flex-none flex-col px-7 pb-14">
-      <div
-        class="bg-line-card text-muted-soft rounded-card flex h-[54px] items-center justify-center text-[16px] font-bold"
-      >
-        잠시만 기다려 주세요
-      </div>
+      <BaseButton variant="disabled">잠시만 기다려 주세요</BaseButton>
     </div>
   </div>
 </template>

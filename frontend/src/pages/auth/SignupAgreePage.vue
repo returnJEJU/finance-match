@@ -3,8 +3,10 @@
 //
 // 체크 상태는 화면 안에서만 관리한다. 저장·전송은 인증 도메인이 준비되면 붙인다.
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { Check, ChevronDown, ChevronLeft, TriangleAlert } from 'lucide-vue-next'
+import { Check, ChevronDown, TriangleAlert } from 'lucide-vue-next'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import PageTitle from '@/components/ui/PageTitle.vue'
+import FunnelHeader from '@/components/layout/FunnelHeader.vue'
 
 // 약관 목록. detail 이 있으면 펼쳐서 내용을 볼 수 있다.
 const TERMS = [
@@ -45,8 +47,6 @@ const TERMS = [
   },
 ]
 
-const router = useRouter()
-
 const checked = ref({})
 const expanded = ref('')
 
@@ -69,26 +69,10 @@ function toggleDetail(key) {
 
 <template>
   <div class="flex min-h-screen flex-col">
-    <!-- 상단 진행바 — 4단계 중 2단계 -->
-    <div class="flex flex-none items-center gap-2.5 px-7 pt-3.5 pb-1.5">
-      <button
-        type="button"
-        class="w-6 flex-none cursor-pointer"
-        aria-label="뒤로 가기"
-        @click="router.back()"
-      >
-        <ChevronLeft class="h-5 w-5" />
-      </button>
-      <div class="bg-line-card h-1 flex-1 overflow-hidden rounded-full">
-        <i class="bg-brand-deep block h-full w-2/4 rounded-full"></i>
-      </div>
-      <span class="text-muted-soft flex-none text-[12px] font-medium">2/4</span>
-    </div>
+    <FunnelHeader :step="2" :fallback-to="{ name: 'signup' }" />
 
     <div class="flex flex-1 flex-col px-7">
-      <h1 class="mt-3.5 text-[26px] leading-[1.38] font-extrabold tracking-[-0.4px]">
-        자산 연동을 위해<br />동의가 필요해요.
-      </h1>
+      <PageTitle class="mt-3.5">자산 연동을 위해<br />동의가 필요해요.</PageTitle>
 
       <p
         class="bg-brand-soft text-brand-ink rounded-field mt-4.5 px-3.5 py-3 text-[12px] leading-[1.6]"
@@ -176,12 +160,7 @@ function toggleDetail(key) {
     </div>
 
     <div class="flex flex-none flex-col px-7 pb-14">
-      <RouterLink
-        :to="{ name: 'signup-cert' }"
-        class="bg-brand rounded-card flex h-[54px] cursor-pointer items-center justify-center text-[16px] font-bold transition-transform duration-100 active:scale-[0.98]"
-      >
-        동의하고 계속하기
-      </RouterLink>
+      <BaseButton :to="{ name: 'signup-cert' }"> 동의하고 계속하기 </BaseButton>
     </div>
   </div>
 </template>
