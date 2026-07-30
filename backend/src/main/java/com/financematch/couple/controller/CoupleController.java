@@ -1,5 +1,14 @@
 package com.financematch.couple.controller;
 
+import com.financematch.auth.annotation.LoginMember;
+import com.financematch.common.ApiResponse;
+import com.financematch.couple.dto.CoupleProfileMessageRequest;
+import com.financematch.couple.dto.CoupleProfileMessageResponse;
+import com.financematch.couple.service.CoupleService;
+import javax.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import com.financematch.common.ApiResponse;
 import com.financematch.couple.dto.CreateCoupleRequest;
 import com.financematch.couple.dto.CreateCoupleResponse;
@@ -19,10 +28,24 @@ import java.net.URI;
 @RequiredArgsConstructor
 public class CoupleController {
 
+    private final CoupleService coupleService;
+
+    @GetMapping("/profile-message")
+    public ApiResponse<CoupleProfileMessageResponse> getProfileMessage(
+            @LoginMember Long memberId) {
+        return ApiResponse.ok(coupleService.getProfileMessage(memberId));
+    }
+
+    @PatchMapping("/profile-message")
+    public ApiResponse<CoupleProfileMessageResponse> updateProfileMessage(
+            @LoginMember Long memberId,
+            @Valid @RequestBody CoupleProfileMessageRequest request) {
+        return ApiResponse.ok(
+                coupleService.updateProfileMessage(
+                        memberId,
+                        request.getProfileMessage()));
     private static final Long TEMP_MEMBER_ID = 4L;
     private static final URI COUPLE_LOCATION = URI.create("/api/v1/members/me/couple");
-
-    private final CoupleService coupleService;
 
     @PostMapping("")
     public ResponseEntity<ApiResponse<CreateCoupleResponse>> createCouple(

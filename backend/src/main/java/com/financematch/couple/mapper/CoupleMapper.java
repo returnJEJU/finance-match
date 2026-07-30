@@ -1,5 +1,9 @@
 package com.financematch.couple.mapper;
 
+import com.financematch.couple.domain.CoupleProfile;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
 import com.financematch.couple.domain.InvitationTarget;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -8,6 +12,14 @@ import java.util.List;
 
 @Mapper
 public interface CoupleMapper {
+
+    // 로그인 회원이 속한 커플의 한줄 소개를 조회한다.
+    CoupleProfile findProfileByMemberId(@Param("memberId") Long memberId);
+
+    // 로그인 회원이 속한 커플 row만 한줄 소개를 수정한다.
+    int updateProfileMessageByMemberId(
+            @Param("memberId") Long memberId,
+            @Param("profileMessage") String profileMessage);
 
     // 연결된 파트너 이름을 응답하기 위한 메서드
     String findMemberNameById(@Param("memberId") Long memberId);

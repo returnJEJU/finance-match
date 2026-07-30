@@ -1,8 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.financematch.couple.mapper.CoupleMapper">
+
+    <!-- 커플 프로필 메시지 -->
+
+    <!-- 로그인 회원이 속한 커플 row만 조회한다. -->
+    <select id="findProfileByMemberId"
+            resultType="com.financematch.couple.domain.CoupleProfile">
+        SELECT
+            id AS couple_id,
+            profile_message
+        FROM couple
+        WHERE inviter_id = #{memberId}
+           OR invitee_id = #{memberId}
+    </select>
+
+    <!-- 경로에 coupleId를 받지 않고 내 커플 row만 수정해 IDOR를 막는다. -->
+    <update id="updateProfileMessageByMemberId">
+        UPDATE couple
+        SET profile_message = #{profileMessage}
+        WHERE inviter_id = #{memberId}
+           OR invitee_id = #{memberId}
+    </update>
+
+
+    <!-- 커플 생성 -->
 
     <select id="findMemberNameById" resultType="string">
         SELECT name
@@ -20,7 +45,7 @@
             cs.member_id AS inviter_id,
             ic.status
         FROM invitation_code ic
-            INNER JOIN common_survey cs
+        INNER JOIN common_survey cs
             ON cs.id = ic.common_survey_id
         WHERE ic.code_value = #{inviteCode}
         FOR UPDATE
@@ -48,7 +73,7 @@
     <delete id="deleteInvitationByMemberId">
         DELETE ic
         FROM invitation_code ic
-            INNER JOIN common_survey cs
+        INNER JOIN common_survey cs
             ON cs.id = ic.common_survey_id
         WHERE cs.member_id = #{memberId}
     </delete>
@@ -61,7 +86,7 @@
     <delete id="deleteInvestmentExperiencesByMemberId">
         DELETE psie
         FROM personal_survey_investment_experience psie
-            INNER JOIN personal_survey ps
+        INNER JOIN personal_survey ps
             ON ps.id = psie.personal_survey_id
         WHERE ps.member_id = #{memberId}
     </delete>
@@ -75,7 +100,7 @@
         UPDATE member
         SET investment_type = NULL
         WHERE id = #{memberId}
-            AND investment_type IS NOT NULL
+          AND investment_type IS NOT NULL
     </update>
 
     <insert id="insertCouple">
@@ -94,7 +119,7 @@
         UPDATE invitation_code
         SET status = 'USED'
         WHERE id = #{invitationCodeId}
-            AND status = 'ACTIVE'
+          AND status = 'ACTIVE'
     </update>
 
 </mapper>
