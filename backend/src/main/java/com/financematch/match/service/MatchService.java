@@ -11,6 +11,7 @@ import com.financematch.match.domain.CompatibilityResult;
 import com.financematch.match.domain.MatchCoupleData;
 import com.financematch.match.domain.MatchMemberData;
 import com.financematch.match.mapper.MatchMapper;
+import com.financematch.report.service.GoalFeasibilityScoreService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +25,7 @@ public class MatchService {
     private final MatchMapper matchMapper;
     private final MatchCalculationInputConverter converter;
     private final MatchCalculator calculator;
+    private final GoalFeasibilityScoreService goalFeasibilityScoreService;
 
     @Transactional
     public CompatibilityResult getOrCalculateCompatibilityResult(
@@ -102,6 +104,14 @@ public class MatchService {
                     "저장된 금융 궁합도 결과를 찾을 수 없습니다."
             );
         }
+
+        // 8. 목표 달성 가능성 축 reason 생성·저장 (LLM 미사용 · 결정론적)
+        goalFeasibilityScoreService.generateAndSave(
+                savedResult.getId(),
+                calculationResult.getExpectedAsset(),
+                calculationInput.getTargetAmount(),
+                calculationInput.getTargetPeriodMonths()
+        );
 
         return savedResult;
     }
