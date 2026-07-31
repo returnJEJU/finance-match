@@ -145,7 +145,8 @@
 
     <update id="clearInvestmentType">
         UPDATE member
-        SET investment_type = NULL
+        SET investment_type = NULL,
+            recommendation_input_updated_at = CURRENT_TIMESTAMP
         WHERE id = #{memberId}
           AND investment_type IS NOT NULL
     </update>

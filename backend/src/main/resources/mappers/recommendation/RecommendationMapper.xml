@@ -66,7 +66,7 @@
             resultType="java.time.LocalDateTime">
         SELECT MAX(input_version.updated_at)
         FROM (
-            SELECT member.updated_at
+            SELECT member.recommendation_input_updated_at AS updated_at
             FROM member
                 INNER JOIN couple
                     ON member.id IN (couple.inviter_id, couple.invitee_id)
@@ -289,7 +289,7 @@
                           SELECT 1
                           FROM member
                           WHERE id IN (c.inviter_id, c.invitee_id)
-                            AND updated_at &gt; r.updated_at
+                            AND recommendation_input_updated_at &gt; r.updated_at
                       )
                       OR EXISTS (
                           SELECT 1

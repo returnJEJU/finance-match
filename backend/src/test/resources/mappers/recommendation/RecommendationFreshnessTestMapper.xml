@@ -31,6 +31,19 @@
         WHERE member.id = #{memberId}
     </update>
 
+    <update id="moveInvestmentTypeAfterRecommendation">
+        UPDATE member
+            INNER JOIN couple
+                ON couple.inviter_id = member.id
+                OR couple.invitee_id = member.id
+            INNER JOIN recommendation
+                ON recommendation.couple_id = couple.id
+        SET member.investment_type = 'VERY_AGGRESSIVE',
+            member.recommendation_input_updated_at =
+                DATE_ADD(recommendation.updated_at, INTERVAL 1 SECOND)
+        WHERE member.id = #{memberId}
+    </update>
+
     <update id="moveCommonSurveyAfterRecommendation">
         UPDATE common_survey
             INNER JOIN invitation_code
