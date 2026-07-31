@@ -1,5 +1,6 @@
 package com.financematch.recommendation.service;
 
+import com.financematch.product.type.LoanPurpose;
 import com.financematch.recommendation.domain.JointRecommendationProduct;
 import com.financematch.recommendation.domain.PersonalInvestmentProduct;
 import com.financematch.recommendation.domain.PersonalTaxSavingProduct;
@@ -92,6 +93,8 @@ public class RecommendationResponseAssembler {
         String comparisonValue = null;
         Integer riskLevel = null;
         String riskLabel = null;
+        Integer aum = null;
+        LoanPurpose loanPurpose = null;
 
         switch (slotType) {
             case DEPOSIT, SAVINGS -> {
@@ -101,10 +104,12 @@ public class RecommendationResponseAssembler {
             case INVESTMENT -> {
                 riskLevel = product.getRiskLevel();
                 riskLabel = riskLabel(riskLevel);
+                aum = product.getAum();
             }
             case LOAN -> {
                 comparisonLabel = "최고금리";
                 comparisonValue = formatRate(product.getLoanMaxRate());
+                loanPurpose = product.getLoanPurpose();
             }
         }
 
@@ -116,7 +121,9 @@ public class RecommendationResponseAssembler {
                 comparisonLabel,
                 comparisonValue,
                 riskLevel,
-                riskLabel);
+                riskLabel,
+                loanPurpose,
+                aum);
     }
 
     private PersonalTaxSavingRecommendationResponse assembleTaxSaving(
@@ -163,7 +170,8 @@ public class RecommendationResponseAssembler {
                                                 product.getDescription(),
                                                 product.getProductUrl(),
                                                 product.getRiskLevel(),
-                                                riskLabel(product.getRiskLevel())))
+                                                riskLabel(product.getRiskLevel()),
+                                                product.getAum()))
                         .toList();
 
         return new PersonalInvestmentRecommendationResponse(

@@ -26,7 +26,10 @@
         <result property="productUrl" column="product_url"/>
         <result property="applicableBaseRate" column="applicable_base_rate"/>
         <result property="riskLevel" column="risk_level"/>
+        <result property="aum" column="aum"/>
         <result property="loanMaxRate" column="loan_max_rate"/>
+        <result property="loanPurpose" column="loan_purpose"
+                javaType="com.financematch.product.type.LoanPurpose"/>
     </resultMap>
 
     <resultMap id="personalTaxSavingProductMap"
@@ -52,6 +55,7 @@
         <result property="description" column="description"/>
         <result property="productUrl" column="product_url"/>
         <result property="riskLevel" column="risk_level"/>
+        <result property="aum" column="aum"/>
     </resultMap>
 
     <select id="lockCoupleIdByMemberIdNowait" resultType="long">
@@ -128,16 +132,6 @@
            OR c.invitee_id = #{memberId}
     </select>
 
-    <!-- 커플 ID를 직접 받을 때도 회원 소유 조건을 함께 걸어 IDOR를 막는다. -->
-    <select id="findRecommendationIdByCoupleIdAndMemberId" resultType="long">
-        SELECT r.id
-        FROM recommendation r
-            INNER JOIN couple c
-                ON c.id = r.couple_id
-        WHERE r.couple_id = #{coupleId}
-          AND (c.inviter_id = #{memberId} OR c.invitee_id = #{memberId})
-    </select>
-
     <select id="findRecommendationResultByMemberId"
             resultMap="recommendationResultMap">
         SELECT
@@ -186,7 +180,9 @@
                 ELSE NULL
             END AS applicable_base_rate,
             i.risk_level,
-            l.max_rate AS loan_max_rate
+            i.aum,
+            l.max_rate AS loan_max_rate,
+            l.loan_purpose
         FROM recommendation r
             INNER JOIN couple c
                 ON c.id = r.couple_id
@@ -251,7 +247,8 @@
             product.product_name,
             product.description,
             product.url AS product_url,
-            investment.risk_level
+            investment.risk_level,
+            investment.aum
         FROM personal_recommendation_investment personal
             INNER JOIN member
                 ON member.id = personal.member_id
@@ -404,53 +401,4 @@
             #{product.rank}
         )
     </insert>
-
-    <!-- 아래 count 쿼리는 저장 결과 검증용이다. -->
-    <select id="countRecommendationsByCoupleId" resultType="int">
-        SELECT COUNT(*)
-        FROM recommendation
-        WHERE couple_id = #{coupleId}
-    </select>
-
-    <select id="countSlotsByRecommendationId" resultType="int">
-        SELECT COUNT(*)
-        FROM recommendation_slot
-        WHERE recommendation_id = #{recommendationId}
-    </select>
-
-    <select id="countProductsByRecommendationId" resultType="int">
-        SELECT COUNT(*)
-        FROM recommendation_product rp
-            INNER JOIN recommendation_slot rs
-                ON rs.id = rp.recommendation_slot_id
-        WHERE rs.recommendation_id = #{recommendationId}
-    </select>
-
-    <select id="countSelectedProductsByRecommendationId" resultType="int">
-        SELECT COUNT(*)
-        FROM recommendation_product rp
-            INNER JOIN recommendation_slot rs
-                ON rs.id = rp.recommendation_slot_id
-        WHERE rs.recommendation_id = #{recommendationId}
-          AND rp.is_selected = 1
-    </select>
-
-    <select id="countSlotsByType" resultType="int">
-        SELECT COUNT(*)
-        FROM recommendation_slot
-        WHERE recommendation_id = #{recommendationId}
-          AND slot_type = #{slotType}
-    </select>
-
-    <select id="countPersonalTaxSavingByMemberId" resultType="int">
-        SELECT COUNT(*)
-        FROM personal_recommendation_tax_saving
-        WHERE member_id = #{memberId}
-    </select>
-
-    <select id="countPersonalInvestmentByMemberId" resultType="int">
-        SELECT COUNT(*)
-        FROM personal_recommendation_investment
-        WHERE member_id = #{memberId}
-    </select>
 </mapper>

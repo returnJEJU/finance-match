@@ -15,4 +15,5 @@ public class PersonalInvestmentProduct {
     private String description;
     private String productUrl;
     private int riskLevel;
+    private int aum;
 }
