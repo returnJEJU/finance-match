@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.personalsurvey.mapper.PersonalSurveyMapper">
+
+    <select id="lockActiveMemberById" resultType="long">
+        SELECT id
+        FROM member
+        WHERE id = #{memberId}
+          AND status = 'ACTIVE'
+          AND deleted_at IS NULL
+        FOR UPDATE
+    </select>
+
+    <select id="existsPersonalSurveyByMemberId" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM personal_survey
+            WHERE member_id = #{memberId}
+        )
+    </select>
+
+    <select id="findCalculationContext"
+            resultType="com.financematch.personalsurvey.domain.PersonalSurveyCalculationContext">
+        SELECT
+            m.birth_date,
+            cs.first_goal_type,
+            cs.target_period_months
+        FROM member m
+            INNER JOIN common_survey cs
+            ON cs.id = COALESCE(
+                (
+                    SELECT ic.common_survey_id
+                    FROM couple c
+                        INNER JOIN invitation_code ic
+                        ON ic.id = c.invitation_code_id
+                    WHERE c.inviter_id = m.id
+                        OR c.invitee_id = m.id
+                ),
+                (
+                    SELECT own_cs.id
+                    FROM common_survey own_cs
+                    WHERE own_cs.member_id = m.id
+                )
+            )
+        WHERE m.id = #{memberId}
+            AND m.status = 'ACTIVE'
+            AND m.deleted_at IS NULL
+    </select>
+
+    <insert id="insertPersonalSurvey"
+            parameterType="com.financematch.personalsurvey.domain.PersonalSurvey"
+            useGeneratedKeys="true"
+            keyProperty="id"
+            keyColumn="id">
+        INSERT INTO personal_survey (
+            member_id,
+            annual_income,
+            monthly_available_amount,
+            financial_asset_ratio,
+            financial_knowledge,
+            capital_preservation_attitude
+        ) VALUES (
+            #{memberId},
+            #{annualIncome},
+            #{monthlyAvailableAmount},
+            #{financialAssetRatio},
+            #{financialKnowledge},
+            #{capitalPreservationAttitude}
+        )
+    </insert>
+
+    <insert id="insertInvestmentExperiences">
+        INSERT INTO personal_survey_investment_experience (
+            personal_survey_id,
+            investment_experience
+        ) VALUES
+        <foreach collection="experiences" item="experience" separator=",">
+            (#{personalSurveyId}, #{experience})
+        </foreach>
+    </insert>
+
+    <update id="updateMemberInvestmentType">
+        UPDATE member
+        SET investment_type = #{investmentType}
+        WHERE id = #{memberId}
+            AND status = 'ACTIVE'
+            AND deleted_at IS NULL
+    </update>
+
+    <select id="findReadyCoupleInvestmentTypes"
+            resultType="com.financematch.personalsurvey.domain.ReadyCoupleInvestmentTypes">
+        SELECT
+            c.id AS couple_id,
+            inviter.investment_type AS inviter_investment_type,
+            invitee.investment_type AS invitee_investment_type
+        FROM couple c
+            INNER JOIN member inviter
+                ON inviter.id = c.inviter_id
+            INNER JOIN member invitee
+                ON invitee.id = c.invitee_id
+        WHERE (c.inviter_id = #{memberId} OR c.invitee_id = #{memberId})
+            AND inviter.investment_type IS NOT NULL
+            AND invitee.investment_type IS NOT NULL
+    </select>
+
+    <update id="updateCoupleInvestmentType">
+        UPDATE couple
+        SET investment_type = #{investmentType}
+        WHERE id = #{coupleId}
+    </update>
+
+</mapper>
