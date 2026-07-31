@@ -1,6 +1,7 @@
 package com.financematch.couple.service;
 
 import com.financematch.common.ErrorCode;
+import com.financematch.couple.domain.CoupleDisconnectTarget;
 import com.financematch.couple.domain.InvitationTarget;
 import com.financematch.couple.domain.CoupleProfile;
 import com.financematch.couple.dto.CoupleProfileMessageResponse;
@@ -50,6 +51,48 @@ public class CoupleService {
         }
 
         return new CoupleProfileMessageResponse(profileMessage);
+    }
+
+    @Transactional
+    public void disconnectCouple(Long memberId) {
+        if (memberId == null) {
+            throw new ApiException(ErrorCode.INVALID_INPUT);
+        }
+
+        CoupleDisconnectTarget target =
+                coupleMapper.findDisconnectTargetByMemberId(memberId);
+
+        if (target == null) {
+            throw new ApiException(ErrorCode.COUPLE_NOT_CONNECTED);
+        }
+
+        // 개인 추천은 member_id 기준 테이블이라 couple 삭제 cascade 대상이 아니다.
+        coupleMapper.deletePersonalTaxSavingByCoupleMembers(
+                target.getInviterId(),
+                target.getInviteeId());
+        coupleMapper.deletePersonalInvestmentByCoupleMembers(
+                target.getInviterId(),
+                target.getInviteeId());
+
+        // couple 삭제 시 compatibility_result/report/recommendation 계열은 FK cascade로 함께 삭제된다.
+        int deletedCoupleRows =
+                coupleMapper.deleteCoupleByIdAndMemberId(
+                        target.getCoupleId(),
+                        memberId);
+
+        if (deletedCoupleRows != 1) {
+            throw new ApiException(ErrorCode.COUPLE_NOT_CONNECTED);
+        }
+
+        // 재연결 시 새 공동설문과 초대코드를 만들 수 있도록 기존 연결 원천 데이터를 제거한다.
+        int deletedInvitationRows =
+                coupleMapper.deleteInvitationById(target.getInvitationCodeId());
+        int deletedCommonSurveyRows =
+                coupleMapper.deleteCommonSurveyById(target.getCommonSurveyId());
+
+        if (deletedInvitationRows != 1 || deletedCommonSurveyRows != 1) {
+            throw new ApiException(ErrorCode.INTERNAL_ERROR);
+        }
     }
 
     private CoupleProfile findCoupleProfile(Long memberId) {

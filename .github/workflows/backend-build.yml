@@ -22,10 +22,13 @@ on:
 permissions:
   contents: read
 
-# 같은 브랜치에 연달아 push 하면 앞선 실행을 취소해 실행 시간을 아낀다.
+# PR 은 연달아 push 하면 앞선 실행을 취소해 실행 시간을 아낀다.
+# develop push 는 취소하지 않는다 — 취소된 실행도 커밋 옆에 빨간 X 로 표시되어
+# "컴파일 실패" 와 구분되지 않는다. develop 은 머지가 잦지 않아 아낄 시간도 거의 없고,
+# "이 커밋이 정상인가" 라는 기록이 남는 편이 훨씬 중요하다.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   backend-compile:
