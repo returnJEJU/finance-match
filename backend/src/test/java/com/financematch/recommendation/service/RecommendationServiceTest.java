@@ -265,7 +265,7 @@ class RecommendationServiceTest {
     }
 
     @Test
-    void 로그인시각이_추천보다_최신이면_기존추천을_반환하지_않는다() {
+    void 로그인시각이_추천보다_최신이어도_기존추천을_반환한다() {
 
         // given
         Long memberId = 1L;
@@ -274,6 +274,25 @@ class RecommendationServiceTest {
                 1,
                 recommendationFreshnessTestMapper
                         .moveLastLoginAfterRecommendation(memberId));
+
+        // when
+        RecommendationResponse response =
+                recommendationService.getRecommendation(memberId);
+
+        // then
+        assertNotNull(response);
+    }
+
+    @Test
+    void 투자성향이_추천보다_최신이면_기존추천을_반환하지_않는다() {
+
+        // given
+        Long memberId = 1L;
+        recommendationService.recommend(memberId);
+        assertEquals(
+                1,
+                recommendationFreshnessTestMapper
+                        .moveInvestmentTypeAfterRecommendation(memberId));
 
         // when
         ApiException exception =

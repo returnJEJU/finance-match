@@ -13,6 +13,9 @@ public interface RecommendationFreshnessTestMapper {
     int moveLastLoginAfterRecommendation(
             @Param("memberId") Long memberId);
 
+    int moveInvestmentTypeAfterRecommendation(
+            @Param("memberId") Long memberId);
+
     int moveCommonSurveyAfterRecommendation(
             @Param("memberId") Long memberId);
 
