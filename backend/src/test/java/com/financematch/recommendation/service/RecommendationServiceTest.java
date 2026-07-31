@@ -13,6 +13,7 @@ import com.financematch.recommendation.dto.PackageSlotResponse;
 import com.financematch.recommendation.dto.RecommendationResponse;
 import com.financematch.recommendation.mapper.RecommendationFreshnessTestMapper;
 import com.financematch.recommendation.mapper.RecommendationMapper;
+import com.financematch.recommendation.mapper.RecommendationTestMapper;
 import com.financematch.recommendation.policy.RecommendedProduct;
 import com.financematch.recommendation.type.PersonalRecommendationType;
 import com.financematch.recommendation.type.RecommendationSlotType;
@@ -37,6 +38,9 @@ class RecommendationServiceTest {
 
     @Autowired
     private RecommendationMapper recommendationMapper;
+
+    @Autowired
+    private RecommendationTestMapper recommendationTestMapper;
 
     @Autowired
     private RecommendationFreshnessTestMapper recommendationFreshnessTestMapper;
@@ -135,10 +139,10 @@ class RecommendationServiceTest {
         // then
         assertNotNull(firstRecommendationId);
         assertEquals(firstRecommendationId, secondRecommendationId);
-        assertEquals(1, recommendationMapper.countRecommendationsByCoupleId(coupleId));
+        assertEquals(1, recommendationTestMapper.countRecommendationsByCoupleId(coupleId));
         assertEquals(
                 secondRecommendationId,
-                recommendationMapper.findRecommendationIdByCoupleIdAndMemberId(
+                recommendationTestMapper.findRecommendationIdByCoupleIdAndMemberId(
                         coupleId,
                         memberId));
 
@@ -379,13 +383,13 @@ class RecommendationServiceTest {
 
         assertEquals(
                 expectedSlotCount,
-                recommendationMapper.countSlotsByRecommendationId(recommendationId));
+                recommendationTestMapper.countSlotsByRecommendationId(recommendationId));
         assertEquals(
                 expectedProductCount,
-                recommendationMapper.countProductsByRecommendationId(recommendationId));
+                recommendationTestMapper.countProductsByRecommendationId(recommendationId));
         assertEquals(
                 expectedSlotCount,
-                recommendationMapper.countSelectedProductsByRecommendationId(recommendationId));
+                recommendationTestMapper.countSelectedProductsByRecommendationId(recommendationId));
 
         plan.joint()
                 .forEach(
@@ -395,7 +399,7 @@ class RecommendationServiceTest {
                             }
                             assertEquals(
                                     1,
-                                    recommendationMapper.countSlotsByType(
+                                    recommendationTestMapper.countSlotsByType(
                                             recommendationId,
                                             slotType));
                         });
@@ -412,16 +416,16 @@ class RecommendationServiceTest {
 
         assertEquals(
                 productCount(taxSavingRecommendations, 1L),
-                recommendationMapper.countPersonalTaxSavingByMemberId(1L));
+                recommendationTestMapper.countPersonalTaxSavingByMemberId(1L));
         assertEquals(
                 productCount(taxSavingRecommendations, 2L),
-                recommendationMapper.countPersonalTaxSavingByMemberId(2L));
+                recommendationTestMapper.countPersonalTaxSavingByMemberId(2L));
         assertEquals(
                 productCount(investmentRecommendations, 1L),
-                recommendationMapper.countPersonalInvestmentByMemberId(1L));
+                recommendationTestMapper.countPersonalInvestmentByMemberId(1L));
         assertEquals(
                 productCount(investmentRecommendations, 2L),
-                recommendationMapper.countPersonalInvestmentByMemberId(2L));
+                recommendationTestMapper.countPersonalInvestmentByMemberId(2L));
     }
 
     private int productCount(

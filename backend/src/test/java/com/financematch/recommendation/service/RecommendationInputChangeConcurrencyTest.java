@@ -10,6 +10,7 @@ import com.financematch.exception.ApiException;
 import com.financematch.recommendation.domain.RecommendationContext;
 import com.financematch.recommendation.mapper.RecommendationFreshnessTestMapper;
 import com.financematch.recommendation.mapper.RecommendationMapper;
+import com.financematch.recommendation.mapper.RecommendationTestMapper;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,9 @@ class RecommendationInputChangeConcurrencyTest {
     private RecommendationMapper recommendationMapper;
 
     @Autowired
+    private RecommendationTestMapper recommendationTestMapper;
+
+    @Autowired
     private RecommendationFreshnessTestMapper recommendationFreshnessTestMapper;
 
     @Autowired
@@ -65,7 +69,7 @@ class RecommendationInputChangeConcurrencyTest {
         Long recommendationIdBefore =
                 recommendationMapper.findRecommendationIdByMemberId(MEMBER_ID);
         int recommendationCountBefore =
-                recommendationMapper.countRecommendationsByCoupleId(COUPLE_ID);
+                recommendationTestMapper.countRecommendationsByCoupleId(COUPLE_ID);
         int slotCountBefore = countSlots(recommendationIdBefore);
         int productCountBefore = countProducts(recommendationIdBefore);
 
@@ -94,7 +98,7 @@ class RecommendationInputChangeConcurrencyTest {
             assertEquals(ErrorCode.RECOMMENDATION_FAILED, exception.getErrorCode());
             assertEquals(
                     recommendationCountBefore,
-                    recommendationMapper.countRecommendationsByCoupleId(COUPLE_ID));
+                    recommendationTestMapper.countRecommendationsByCoupleId(COUPLE_ID));
             assertEquals(
                     recommendationIdBefore,
                     recommendationMapper.findRecommendationIdByMemberId(MEMBER_ID));
@@ -120,13 +124,13 @@ class RecommendationInputChangeConcurrencyTest {
     private int countSlots(Long recommendationId) {
         return recommendationId == null
                 ? 0
-                : recommendationMapper.countSlotsByRecommendationId(recommendationId);
+                : recommendationTestMapper.countSlotsByRecommendationId(recommendationId);
     }
 
     private int countProducts(Long recommendationId) {
         return recommendationId == null
                 ? 0
-                : recommendationMapper.countProductsByRecommendationId(recommendationId);
+                : recommendationTestMapper.countProductsByRecommendationId(recommendationId);
     }
 
     static class BlockingPlannerConfig {

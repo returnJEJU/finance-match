@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.financematch.product.type.LoanPurpose;
 import com.financematch.product.type.TaxAccountType;
 import com.financematch.recommendation.domain.JointRecommendationProduct;
 import com.financematch.recommendation.domain.PersonalInvestmentProduct;
@@ -39,16 +40,26 @@ class RecommendationResponseAssemblerTest {
                         true,
                         "RISE 미국S&P500 ETF");
         investment.setRiskLevel(4);
+        investment.setAum(3144);
+        JointRecommendationProduct loan =
+                jointProduct(
+                        13L,
+                        RecommendationSlotType.LOAN,
+                        301L,
+                        true,
+                        "KB Housing Loan");
+        loan.setLoanMaxRate(new BigDecimal("5.48"));
+        loan.setLoanPurpose(LoanPurpose.HOUSING);
 
         RecommendationResponse response =
                 assembler.assemble(
                         result,
-                        List.of(deposit, investment),
+                        List.of(deposit, investment, loan),
                         List.of(taxSavingProduct()),
                         List.of(investmentProduct()));
 
         assertEquals(100L, response.recommendationId());
-        assertEquals(2, response.packageSlots().size());
+        assertEquals(3, response.packageSlots().size());
         assertEquals(
                 "연 2.80%",
                 response.packageSlots().get(0).products().get(0).comparisonValue());
@@ -56,11 +67,20 @@ class RecommendationResponseAssemblerTest {
                 "위험",
                 response.packageSlots().get(1).products().get(0).riskLabel());
         assertEquals(
+                3144,
+                response.packageSlots().get(1).products().get(0).aum());
+        assertEquals(
+                LoanPurpose.HOUSING,
+                response.packageSlots().get(2).products().get(0).loanPurpose());
+        assertEquals(
                 TaxAccountType.ISA,
                 response.personalTaxSavingRecommendation().products().get(0).accountType());
         assertEquals(
                 "중립",
                 response.personalInvestmentRecommendation().products().get(0).riskLabel());
+        assertEquals(
+                28049,
+                response.personalInvestmentRecommendation().products().get(0).aum());
     }
 
     @Test
@@ -139,6 +159,7 @@ class RecommendationResponseAssemblerTest {
         product.setDescription("미국 대표 기업에 분산 투자하는 상품");
         product.setProductUrl("https://www.riseetf.co.kr/product");
         product.setRiskLevel(5);
+        product.setAum(28049);
         return product;
     }
 }

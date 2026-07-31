@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.recommendation.mapper.RecommendationTestMapper">
+
+<select id="findRecommendationIdByCoupleIdAndMemberId" resultType="long">
+        SELECT r.id
+        FROM recommendation r
+            INNER JOIN couple c
+                ON c.id = r.couple_id
+        WHERE r.couple_id = #{coupleId}
+          AND (c.inviter_id = #{memberId} OR c.invitee_id = #{memberId})
+    </select>
+    <select id="countRecommendationsByCoupleId" resultType="int">
+        SELECT COUNT(*)
+        FROM recommendation
+        WHERE couple_id = #{coupleId}
+    </select>
+
+    <select id="countSlotsByRecommendationId" resultType="int">
+        SELECT COUNT(*)
+        FROM recommendation_slot
+        WHERE recommendation_id = #{recommendationId}
+    </select>
+
+    <select id="countProductsByRecommendationId" resultType="int">
+        SELECT COUNT(*)
+        FROM recommendation_product rp
+            INNER JOIN recommendation_slot rs
+                ON rs.id = rp.recommendation_slot_id
+        WHERE rs.recommendation_id = #{recommendationId}
+    </select>
+
+    <select id="countSelectedProductsByRecommendationId" resultType="int">
+        SELECT COUNT(*)
+        FROM recommendation_product rp
+            INNER JOIN recommendation_slot rs
+                ON rs.id = rp.recommendation_slot_id
+        WHERE rs.recommendation_id = #{recommendationId}
+          AND rp.is_selected = 1
+    </select>
+
+    <select id="countSlotsByType" resultType="int">
+        SELECT COUNT(*)
+        FROM recommendation_slot
+        WHERE recommendation_id = #{recommendationId}
+          AND slot_type = #{slotType}
+    </select>
+
+    <select id="countPersonalTaxSavingByMemberId" resultType="int">
+        SELECT COUNT(*)
+        FROM personal_recommendation_tax_saving
+        WHERE member_id = #{memberId}
+    </select>
+
+    <select id="countPersonalInvestmentByMemberId" resultType="int">
+        SELECT COUNT(*)
+        FROM personal_recommendation_investment
+        WHERE member_id = #{memberId}
+    </select>
+</mapper>

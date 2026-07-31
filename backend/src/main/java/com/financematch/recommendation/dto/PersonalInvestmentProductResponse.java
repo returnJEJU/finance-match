@@ -6,7 +6,8 @@ public record PersonalInvestmentProductResponse(
         String description,
         String productUrl,
         int riskLevel,
-        String riskLabel) {
+        String riskLabel,
+        int aum) {
 
     public PersonalInvestmentProductResponse {
         if (productId == null) {
@@ -20,6 +21,9 @@ public record PersonalInvestmentProductResponse(
         }
         if (riskLabel == null || riskLabel.isBlank()) {
             throw new IllegalArgumentException("개인 투자 추천 상품 위험등급 명칭은 필수입니다.");
+        }
+        if (aum < 0) {
+            throw new IllegalArgumentException("개인 투자 추천 상품 순자산은 0 이상이어야 합니다.");
         }
 
         String expectedLabel =

@@ -1,5 +1,7 @@
 package com.financematch.recommendation.dto;
 
+import com.financematch.product.type.LoanPurpose;
+
 public record PackageProductResponse(
         Long productId,
         String productName,
@@ -8,7 +10,9 @@ public record PackageProductResponse(
         String comparisonLabel,
         String comparisonValue,
         Integer riskLevel,
-        String riskLabel) {
+        String riskLabel,
+        LoanPurpose loanPurpose,
+        Integer aum) {
 
     public PackageProductResponse {
         if (productId == null) {
@@ -45,6 +49,9 @@ public record PackageProductResponse(
         }
         if (hasRisk) {
             validateRisk(riskLevel, riskLabel);
+        }
+        if (aum != null && aum < 0) {
+            throw new IllegalArgumentException("투자상품 순자산은 0 이상이어야 합니다.");
         }
     }
 

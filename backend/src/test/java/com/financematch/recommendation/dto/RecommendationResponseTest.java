@@ -25,6 +25,8 @@ class RecommendationResponseTest {
                         "기본금리",
                         "연 2.80%",
                         null,
+                        null,
+                        null,
                         null);
         PackageSlotResponse slot =
                 new PackageSlotResponse(
@@ -55,7 +57,8 @@ class RecommendationResponseTest {
                                         "미국 대표 기업에 분산 투자하는 상품",
                                         "https://www.riseetf.co.kr/product",
                                         3,
-                                        "고위험")));
+                                        "고위험",
+                                        28049)));
         RecommendationResponse response =
                 new RecommendationResponse(
                         100L, false, List.of(slot), taxSaving, investment);
@@ -123,6 +126,8 @@ class RecommendationResponseTest {
                         "기본금리",
                         "연 2.80%",
                         null,
+                        null,
+                        null,
                         null);
 
         assertThrows(
@@ -154,7 +159,9 @@ class RecommendationResponseTest {
                         null,
                         null,
                         5,
-                        "중립");
+                        "중립",
+                        null,
+                        3144);
 
         JsonNode json = objectMapper.valueToTree(investment);
 
@@ -174,6 +181,7 @@ class RecommendationResponseTest {
                                 null,
                                 "https://www.riseetf.co.kr/product",
                                 4,
-                                "중립"));
+                                "중립",
+                                100));
     }
 }
