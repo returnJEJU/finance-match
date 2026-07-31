@@ -54,11 +54,68 @@
         <result property="riskLevel" column="risk_level"/>
     </resultMap>
 
-    <!-- 커플별 최신 추천 부모 row를 조회한다. -->
-    <select id="findRecommendationIdByCoupleId" resultType="long">
+    <select id="lockCoupleIdByMemberIdNowait" resultType="long">
         SELECT id
-        FROM recommendation
-        WHERE couple_id = #{coupleId}
+        FROM couple
+        WHERE inviter_id = #{memberId}
+           OR invitee_id = #{memberId}
+        FOR UPDATE NOWAIT
+    </select>
+
+    <select id="findLatestInputUpdatedAtByMemberId"
+            resultType="java.time.LocalDateTime">
+        SELECT MAX(input_version.updated_at)
+        FROM (
+            SELECT member.updated_at
+            FROM member
+                INNER JOIN couple
+                    ON member.id IN (couple.inviter_id, couple.invitee_id)
+            WHERE couple.inviter_id = #{memberId}
+               OR couple.invitee_id = #{memberId}
+
+            UNION ALL
+
+            SELECT personal_survey.updated_at
+            FROM personal_survey
+                INNER JOIN couple
+                    ON personal_survey.member_id IN (couple.inviter_id, couple.invitee_id)
+            WHERE couple.inviter_id = #{memberId}
+               OR couple.invitee_id = #{memberId}
+
+            UNION ALL
+
+            SELECT common_survey.updated_at
+            FROM common_survey
+                INNER JOIN invitation_code
+                    ON invitation_code.common_survey_id = common_survey.id
+                INNER JOIN couple
+                    ON couple.invitation_code_id = invitation_code.id
+            WHERE couple.inviter_id = #{memberId}
+               OR couple.invitee_id = #{memberId}
+
+            UNION ALL
+
+            SELECT financial_summary.updated_at
+            FROM financial_summary
+                INNER JOIN couple
+                    ON financial_summary.member_id IN (couple.inviter_id, couple.invitee_id)
+            WHERE couple.inviter_id = #{memberId}
+               OR couple.invitee_id = #{memberId}
+
+            UNION ALL
+
+            SELECT pension_isa_account.updated_at
+            FROM pension_isa_account
+                INNER JOIN couple
+                    ON pension_isa_account.member_id IN (couple.inviter_id, couple.invitee_id)
+            WHERE couple.inviter_id = #{memberId}
+               OR couple.invitee_id = #{memberId}
+
+            UNION ALL
+
+            SELECT product.updated_at
+            FROM product
+        ) input_version
     </select>
 
     <!-- 로그인 회원이 속한 커플의 추천 결과만 조회한다. -->
@@ -94,9 +151,9 @@
         FROM recommendation r
             INNER JOIN couple c
                 ON c.id = r.couple_id
-            LEFT JOIN financial_summary inviter_finance
+            INNER JOIN financial_summary inviter_finance
                 ON inviter_finance.member_id = c.inviter_id
-            LEFT JOIN financial_summary invitee_finance
+            INNER JOIN financial_summary invitee_finance
                 ON invitee_finance.member_id = c.invitee_id
         WHERE c.inviter_id = #{memberId}
            OR c.invitee_id = #{memberId}

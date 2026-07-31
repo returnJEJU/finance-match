@@ -8,6 +8,7 @@ import com.financematch.recommendation.domain.RecommendationResult;
 import com.financematch.recommendation.domain.RecommendationSlot;
 import com.financematch.recommendation.policy.RecommendedProduct;
 import com.financematch.recommendation.type.RecommendationSlotType;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -15,8 +16,11 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface RecommendationMapper {
 
-    // 커플의 최신 추천 결과 ID를 조회한다.
-    Long findRecommendationIdByCoupleId(@Param("coupleId") Long coupleId);
+    // 같은 커플의 추천 생성 요청을 직렬화하고 대기 없이 중복 요청을 거부한다.
+    Long lockCoupleIdByMemberIdNowait(@Param("memberId") Long memberId);
+
+    // 추천 계산에 사용하는 모든 입력 데이터 중 가장 최근 수정 시각을 조회한다.
+    LocalDateTime findLatestInputUpdatedAtByMemberId(@Param("memberId") Long memberId);
 
     // 로그인 회원이 소유한 커플의 추천 결과 ID만 조회한다.
     Long findRecommendationIdByMemberId(@Param("memberId") Long memberId);

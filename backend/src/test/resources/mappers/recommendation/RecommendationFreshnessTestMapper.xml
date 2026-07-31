@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.recommendation.mapper.RecommendationFreshnessTestMapper">
+
+    <update id="moveFinancialSummaryAfterRecommendation">
+        UPDATE financial_summary financial
+            INNER JOIN couple
+                ON couple.inviter_id = financial.member_id
+                OR couple.invitee_id = financial.member_id
+            INNER JOIN recommendation
+                ON recommendation.couple_id = couple.id
+        SET financial.updated_at =
+                DATE_ADD(recommendation.updated_at, INTERVAL 1 SECOND)
+        WHERE financial.member_id = #{memberId}
+    </update>
+
+    <update id="moveLastLoginAfterRecommendation">
+        UPDATE member
+            INNER JOIN couple
+                ON couple.inviter_id = member.id
+                OR couple.invitee_id = member.id
+            INNER JOIN recommendation
+                ON recommendation.couple_id = couple.id
+        SET member.last_login_at =
+                DATE_ADD(recommendation.updated_at, INTERVAL 1 SECOND),
+            member.updated_at =
+                DATE_ADD(recommendation.updated_at, INTERVAL 1 SECOND)
+        WHERE member.id = #{memberId}
+    </update>
+
+    <update id="moveCommonSurveyAfterRecommendation">
+        UPDATE common_survey
+            INNER JOIN invitation_code
+                ON invitation_code.common_survey_id = common_survey.id
+            INNER JOIN couple
+                ON couple.invitation_code_id = invitation_code.id
+            INNER JOIN recommendation
+                ON recommendation.couple_id = couple.id
+        SET common_survey.updated_at =
+                DATE_ADD(recommendation.updated_at, INTERVAL 1 SECOND)
+        WHERE couple.inviter_id = #{memberId}
+           OR couple.invitee_id = #{memberId}
+    </update>
+
+    <update id="movePensionIsaAccountAfterRecommendation">
+        UPDATE pension_isa_account pension
+            INNER JOIN couple
+                ON couple.inviter_id = pension.member_id
+                OR couple.invitee_id = pension.member_id
+            INNER JOIN recommendation
+                ON recommendation.couple_id = couple.id
+        SET pension.updated_at =
+                DATE_ADD(recommendation.updated_at, INTERVAL 1 SECOND)
+        WHERE pension.member_id = #{memberId}
+    </update>
+
+    <update id="moveProductAfterRecommendation">
+        UPDATE product
+            INNER JOIN recommendation_product
+                ON recommendation_product.product_id = product.id
+            INNER JOIN recommendation_slot
+                ON recommendation_slot.id =
+                    recommendation_product.recommendation_slot_id
+            INNER JOIN recommendation
+                ON recommendation.id = recommendation_slot.recommendation_id
+            INNER JOIN couple
+                ON couple.id = recommendation.couple_id
+        SET product.updated_at =
+                DATE_ADD(recommendation.updated_at, INTERVAL 1 SECOND)
+        WHERE recommendation_slot.slot_type = 'DEPOSIT'
+          AND recommendation_product.rank_no = 1
+          AND (couple.inviter_id = #{memberId} OR couple.invitee_id = #{memberId})
+    </update>
+
+    <select id="findFinancialSummaryUpdatedAt"
+            resultType="java.time.LocalDateTime">
+        SELECT updated_at
+        FROM financial_summary
+        WHERE member_id = #{memberId}
+    </select>
+
+    <update id="moveFinancialSummaryToFuture">
+        UPDATE financial_summary
+        SET updated_at = '2099-12-31 23:59:59'
+        WHERE member_id = #{memberId}
+    </update>
+
+    <update id="restoreFinancialSummaryUpdatedAt">
+        UPDATE financial_summary
+        SET updated_at = #{updatedAt}
+        WHERE member_id = #{memberId}
+    </update>
+
+    <delete id="deleteFinancialSummaryByMemberId">
+        DELETE FROM financial_summary
+        WHERE member_id = #{memberId}
+    </delete>
+
+</mapper>

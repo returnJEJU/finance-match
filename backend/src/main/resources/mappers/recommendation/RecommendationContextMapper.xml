@@ -50,8 +50,8 @@
         JOIN personal_survey invitee_survey ON invitee_survey.member_id = invitee.id
         JOIN invitation_code invitation ON invitation.id = c.invitation_code_id
         JOIN common_survey ON common_survey.id = invitation.common_survey_id
-        LEFT JOIN financial_summary inviter_finance ON inviter_finance.member_id = inviter.id
-        LEFT JOIN financial_summary invitee_finance ON invitee_finance.member_id = invitee.id
+        JOIN financial_summary inviter_finance ON inviter_finance.member_id = inviter.id
+        JOIN financial_summary invitee_finance ON invitee_finance.member_id = invitee.id
         LEFT JOIN pension_isa_account inviter_pension ON inviter_pension.member_id = inviter.id
         LEFT JOIN pension_isa_account invitee_pension ON invitee_pension.member_id = invitee.id
         WHERE (c.inviter_id = #{memberId} OR c.invitee_id = #{memberId})
