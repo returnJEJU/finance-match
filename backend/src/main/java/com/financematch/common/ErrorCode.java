@@ -41,13 +41,14 @@ public enum ErrorCode {
     // 계정 열거를 막기 위해 "없는 이메일"·"비밀번호 불일치"·"탈퇴 회원"을 하나의 코드로 통합한다.
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 일치하지 않습니다."),
 
-    // ===== 초대/커플 (강현지) =====
+    // ===== 초대/커플/설문 (강현지) =====
     INVITATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 사용 가능한 초대 코드가 존재합니다."),
     COUPLE_ALREADY_CONNECTED(HttpStatus.CONFLICT, "이미 파트너와 연결된 회원입니다."),
     COMMON_SURVEY_NOT_FOUND(HttpStatus.NOT_FOUND, "조회할 공동 설문이 존재하지 않습니다."),
     INVITATION_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 초대 코드입니다."),
     SELF_INVITATION_NOT_ALLOWED(HttpStatus.CONFLICT, "본인이 생성한 초대코드는 사용할 수 없습니다."),
     INVITATION_NOT_AVAILABLE(HttpStatus.CONFLICT, "이미 사용되었거나 사용할 수 없는 초대 코드입니다."),
+    PERSONAL_SURVEY_ALREADY_EXISTS(HttpStatus.CONFLICT, "개인 설문이 이미 저장되어 있습니다."),
 
     // ===== 추천 =====
     COUPLE_NOT_CONNECTED(HttpStatus.NOT_FOUND, "연결된 커플의 정보가 없습니다."),
