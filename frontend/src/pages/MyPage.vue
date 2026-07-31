@@ -54,7 +54,7 @@ const coupleDisplayName = computed(() => {
     return `${profile.myName} ♡ ${profile.partnerName}`
   }
 
-  return '김하나 ♡ 이두리'
+  return '내 프로필'
 })
 
 watch(
