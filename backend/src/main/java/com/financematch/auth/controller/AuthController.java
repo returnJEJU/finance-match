@@ -1,5 +1,6 @@
 package com.financematch.auth.controller;
 
+import com.financematch.auth.annotation.LoginMember;
 import com.financematch.auth.dto.LoginRequest;
 import com.financematch.auth.dto.LoginResponse;
 import com.financematch.auth.dto.SignupRequest;
@@ -44,5 +45,18 @@ public class AuthController {
     @PostMapping("/login")
     public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ApiResponse.ok(authService.login(request));
+    }
+
+    /**
+     * 로그아웃. 서버는 성공만 응답하고 토큰 삭제는 클라이언트가 한다.
+     *
+     * <p>이 경로는 {@code SecurityConfig} 에서 {@code permitAll} 이지만 인증이 필요하다 — 인증을 요구하는
+     * 것은 {@code @LoginMember} 다. 토큰이 없거나 유효하지 않으면 리졸버가 {@code UNAUTHORIZED}(401) 를
+     * 던지므로 별도의 검사를 두지 않는다.
+     */
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(@LoginMember Long memberId) {
+        authService.logout(memberId);
+        return ApiResponse.ok();
     }
 }
