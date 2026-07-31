@@ -90,4 +90,41 @@
         SET last_login_at = NOW()
         WHERE id = #{memberId}
     </update>
+
+    <!--
+      회원탈퇴 전용. findByEmail 과 달리 탈퇴 회원도 조회한다.
+      제외해 버리면 이미 탈퇴한 회원이 "없는 회원"(404)으로 보여 409 를 구분할 수 없다.
+    -->
+    <select id="findByIdIncludingWithdrawn" resultType="com.financematch.auth.domain.Member">
+        SELECT
+            id,
+            email,
+            password,
+            name,
+            gender,
+            birth_date,
+            last_login_at,
+            status
+        FROM member
+        WHERE id = #{memberId}
+    </select>
+
+    <!--
+      soft delete — 행을 지우지 않고 상태만 바꾼다. 커플·설문·리포트·추천이 member_id 를 참조하고 있어
+      실제로 지우면 함께 무너진다.
+
+      status != 'WITHDRAWN' 조건은 동시 요청 방어다. 같은 회원의 탈퇴 요청이 두 번 들어와도 두 번째는
+      0행이 되어 서비스가 MEMBER_ALREADY_WITHDRAWN 으로 처리한다.
+
+      deleted_at 은 NOW() 가 아니라 파라미터로 받는다 — 응답에 내려줄 시각과 저장된 값이 같아야 하는데,
+      NOW() 로 넣으면 그 값을 알기 위해 다시 조회해야 한다. 서비스에서 초 단위로 잘라 넘긴다(이 컬럼은
+      소수점 이하가 없는 datetime 이라 자르지 않으면 반올림되어 어긋난다).
+    -->
+    <update id="withdraw">
+        UPDATE member
+        SET status = 'WITHDRAWN',
+            deleted_at = #{withdrawnAt}
+        WHERE id = #{memberId}
+          AND status != 'WITHDRAWN'
+    </update>
 </mapper>

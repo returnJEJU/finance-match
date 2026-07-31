@@ -40,6 +40,13 @@ public enum ErrorCode {
     CONSENT_REQUIRED(HttpStatus.BAD_REQUEST, "필수 약관(4종)에 모두 동의해야 합니다."),
     // 계정 열거를 막기 위해 "없는 이메일"·"비밀번호 불일치"·"탈퇴 회원"을 하나의 코드로 통합한다.
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 일치하지 않습니다."),
+    // 회원탈퇴의 본인 확인 실패는 401 이 아니라 400 이다. 탈퇴 요청 시점에는 토큰이 유효해 이미 인증된
+    // 상태이고, 실패한 것은 세션 인증이 아니라 재확인 입력이다. 401 로 두면 프론트의 "401 → 토큰 삭제"
+    // 인터셉터가 동작해 비밀번호를 한 번 틀렸을 뿐인데 탈퇴 화면에서 로그아웃된다.
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
+    INVALID_CONFIRMATION(HttpStatus.BAD_REQUEST, "확인 문구가 올바르지 않습니다."),
+    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "회원 정보를 찾을 수 없습니다."),
+    MEMBER_ALREADY_WITHDRAWN(HttpStatus.CONFLICT, "이미 탈퇴한 회원입니다."),
 
     // ===== 초대/커플/설문 (강현지) =====
     INVITATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 사용 가능한 초대 코드가 존재합니다."),
