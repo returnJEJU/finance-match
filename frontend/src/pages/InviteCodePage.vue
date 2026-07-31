@@ -65,6 +65,10 @@ const submitInviteCode = () => {
   createCoupleMutation.mutate(inviteCode.value)
 }
 
+const focusInviteCodeInput = () => {
+  document.getElementById('invite-code')?.focus()
+}
+
 const goToCoupleSurvey = () => {
   router.push({ name: 'survey-couple' })
 }
@@ -78,7 +82,7 @@ const goToCreatedInviteCode = () => {
   <section class="flex min-h-screen flex-col px-6 pt-5 pb-8">
     <header class="text-center text-[15px]">커플 연동</header>
 
-    <main class="mt-[128px] flex flex-1 flex-col">
+    <main class="mt-16 flex flex-1 flex-col">
       <div class="text-center">
         <PageTitle align="center">초대 코드 입력</PageTitle>
 
@@ -88,14 +92,15 @@ const goToCreatedInviteCode = () => {
         </p>
       </div>
 
-      <div class="h-[122px] flex-none"></div>
+      <div class="h-12 flex-none"></div>
 
       <div>
         <div
-          class="rounded-card relative flex h-[104px] items-center justify-center border bg-white px-8 shadow-sm transition"
+          class="rounded-card relative flex h-[54px] items-center border bg-white px-3 shadow-sm transition"
           :class="
             inviteCodeError ? 'border-red-300' : 'border-line-field focus-within:border-brand-deep'
           "
+          @click="focusInviteCodeInput"
         >
           <input
             id="invite-code"
@@ -105,16 +110,17 @@ const goToCreatedInviteCode = () => {
             autocomplete="one-time-code"
             maxlength="8"
             :disabled="isConnecting"
-            class="rounded-card absolute inset-0 h-full w-full cursor-text bg-transparent px-8 text-center font-mono text-[28px] tracking-[0.2em] text-transparent caret-gray-900 outline-none disabled:cursor-not-allowed"
+            class="absolute inset-0 h-full w-full cursor-text bg-transparent text-transparent caret-transparent outline-none disabled:cursor-not-allowed"
             @input="handleInviteCodeInput"
             @keydown.enter.prevent="submitInviteCode"
           />
 
-          <div class="pointer-events-none flex items-center justify-center gap-4">
+          <div class="pointer-events-none grid w-full grid-cols-8 gap-1.5">
             <span
               v-for="(character, index) in codeCharacters"
               :key="index"
-              class="text-ink-sub w-6 text-center font-mono text-[26px] font-bold"
+              class="flex h-9 items-center justify-center rounded-[7px] border border-line-soft bg-surface-muted text-center font-mono text-[18px] font-extrabold text-ink-sub"
+              :class="character !== '-' ? 'border-brand-deep bg-white text-ink' : ''"
             >
               {{ character }}
             </span>
@@ -127,7 +133,7 @@ const goToCreatedInviteCode = () => {
       </div>
 
       <BaseButton
-        class="mt-10"
+        class="mt-8"
         :variant="isConnecting || !isInviteCodeValid ? 'disabled' : 'primary'"
         @click="submitInviteCode"
       >
@@ -136,13 +142,13 @@ const goToCreatedInviteCode = () => {
         {{ isConnecting ? '커플 연동 중' : '커플 연동하기' }}
       </BaseButton>
 
-      <div class="mt-8 flex items-center gap-3">
+      <div class="mt-6 flex items-center gap-3">
         <div class="bg-line-soft h-px flex-1"></div>
         <span class="text-muted text-[10px] font-semibold">OR</span>
         <div class="bg-line-soft h-px flex-1"></div>
       </div>
 
-      <div class="mt-8 space-y-4">
+      <div class="mt-6 space-y-3">
         <button
           v-if="!hasCreatedInvitation"
           type="button"
