@@ -21,4 +21,10 @@
         VALUES (#{compatibilityResultId}, #{reason})
         ON DUPLICATE KEY UPDATE debt_repayment_reason = VALUES(debt_repayment_reason)
     </insert>
+
+    <insert id="upsertFinancialValueReason">
+        INSERT INTO report (compatibility_result_id, financial_value_reason)
+        VALUES (#{compatibilityResultId}, #{reason})
+        ON DUPLICATE KEY UPDATE financial_value_reason = VALUES(financial_value_reason)
+    </insert>
 </mapper>
