@@ -32,14 +32,17 @@ public class CoupleService {
                         ? profile.getProfileMessage()
                         : DEFAULT_PROFILE_MESSAGE;
 
-        return new CoupleProfileMessageResponse(profileMessage);
+        return new CoupleProfileMessageResponse(
+                profile.getMyName(),
+                profile.getPartnerName(),
+                profileMessage);
     }
 
     @Transactional
     public CoupleProfileMessageResponse updateProfileMessage(
             Long memberId,
             String profileMessage) {
-        findCoupleProfile(memberId);
+        CoupleProfile profile = findCoupleProfile(memberId);
 
         int updatedRows =
                 coupleMapper.updateProfileMessageByMemberId(
@@ -50,7 +53,10 @@ public class CoupleService {
             throw new ApiException(ErrorCode.COUPLE_NOT_CONNECTED);
         }
 
-        return new CoupleProfileMessageResponse(profileMessage);
+        return new CoupleProfileMessageResponse(
+                profile.getMyName(),
+                profile.getPartnerName(),
+                profileMessage);
     }
 
     @Transactional

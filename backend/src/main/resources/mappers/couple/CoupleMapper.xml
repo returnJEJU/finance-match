@@ -11,11 +11,24 @@
     <select id="findProfileByMemberId"
             resultType="com.financematch.couple.domain.CoupleProfile">
         SELECT
-            id AS couple_id,
-            profile_message
-        FROM couple
-        WHERE inviter_id = #{memberId}
-           OR invitee_id = #{memberId}
+            c.id AS couple_id,
+            me.name AS my_name,
+            partner.name AS partner_name,
+            c.profile_message
+        FROM couple c
+        INNER JOIN member me
+            ON me.id = #{memberId}
+            AND me.status = 'ACTIVE'
+            AND me.deleted_at IS NULL
+        INNER JOIN member partner
+            ON partner.id = CASE
+                WHEN c.inviter_id = #{memberId} THEN c.invitee_id
+                ELSE c.inviter_id
+            END
+            AND partner.status = 'ACTIVE'
+            AND partner.deleted_at IS NULL
+        WHERE c.inviter_id = #{memberId}
+           OR c.invitee_id = #{memberId}
     </select>
 
     <!-- 경로에 coupleId를 받지 않고 내 커플 row만 수정해 IDOR를 막는다. -->
