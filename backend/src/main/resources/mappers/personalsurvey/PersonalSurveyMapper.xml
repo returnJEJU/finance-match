@@ -111,4 +111,13 @@
         WHERE id = #{coupleId}
     </update>
 
+    <select id="findInvestmentTypeByMemberId"
+            resultType="com.financematch.personalsurvey.domain.PersonalInvestmentType">
+        SELECT investment_type
+        FROM member
+        WHERE id = #{memberId}
+            AND status = 'ACTIVE'
+            AND deleted_at IS NULL
+    </select>
+
 </mapper>
