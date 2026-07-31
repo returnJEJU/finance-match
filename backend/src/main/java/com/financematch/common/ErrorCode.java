@@ -58,6 +58,10 @@ public enum ErrorCode {
     PERSONAL_SURVEY_ALREADY_EXISTS(HttpStatus.CONFLICT, "개인 설문이 이미 저장되어 있습니다."),
     INVESTMENT_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "산출된 투자성향 결과가 존재하지 않습니다."),
 
+    // ===== 자산 연동 =====
+    ASSET_ALREADY_LINKED(HttpStatus.CONFLICT, "이미 자산 연동이 완료되었습니다."),
+    MYDATA_LINK_FAILED(HttpStatus.BAD_GATEWAY, "마이데이터를 불러오지 못했습니다."),
+
     // ===== 추천 =====
     COUPLE_NOT_CONNECTED(HttpStatus.NOT_FOUND, "연결된 커플의 정보가 없습니다."),
     RECOMMENDATION_NOT_READY(HttpStatus.CONFLICT, "추천 생성에 필요한 데이터가 준비되지 않았습니다."),

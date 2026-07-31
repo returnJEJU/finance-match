@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.asset.mapper.AssetMapper">
+
+    <select id="existsByMemberId" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM financial_summary
+            WHERE member_id = #{memberId}
+        )
+    </select>
+
+    <insert id="insertFinancialSummary"
+            parameterType="com.financematch.asset.domain.FinancialSummary">
+        INSERT INTO financial_summary (
+            member_id,
+            financial_asset,
+            total_debt,
+            available_balance,
+            annual_debt_payment,
+            average_interest_rate,
+            has_high_rate_debt,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{memberId},
+            #{financialAsset},
+            #{totalDebt},
+            #{availableBalance},
+            #{annualDebtPayment},
+            #{averageInterestRate},
+            #{hasHighRateDebt},
+            #{linkedAt},
+            #{linkedAt}
+        )
+    </insert>
+
+    <insert id="insertPensionIsaAccount"
+            parameterType="com.financematch.asset.domain.PensionIsaAccount">
+        INSERT INTO pension_isa_account (
+            member_id,
+            has_pension_saving,
+            has_irp,
+            has_dc,
+            has_isa,
+            pension_saving_balance,
+            irp_balance,
+            pension_annual_payment,
+            irp_annual_payment,
+            dc_annual_payment,
+            isa_annual_deposit,
+            tax_eligibility_status,
+            isa_eligibility_status,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{memberId},
+            #{hasPensionSaving},
+            #{hasIrp},
+            #{hasDc},
+            #{hasIsa},
+            #{pensionSavingBalance},
+            #{irpBalance},
+            #{pensionAnnualPayment},
+            #{irpAnnualPayment},
+            #{dcAnnualPayment},
+            #{isaAnnualDeposit},
+            #{taxEligibilityStatus},
+            #{isaEligibilityStatus},
+            #{linkedAt},
+            #{linkedAt}
+        )
+    </insert>
+
+    <insert id="upsertFinancialSummary"
+            parameterType="com.financematch.asset.domain.FinancialSummary">
+        INSERT INTO financial_summary (
+            member_id,
+            financial_asset,
+            total_debt,
+            available_balance,
+            annual_debt_payment,
+            average_interest_rate,
+            has_high_rate_debt,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{memberId},
+            #{financialAsset},
+            #{totalDebt},
+            #{availableBalance},
+            #{annualDebtPayment},
+            #{averageInterestRate},
+            #{hasHighRateDebt},
+            #{linkedAt},
+            #{linkedAt}
+        )
+        ON DUPLICATE KEY UPDATE
+            financial_asset = VALUES(financial_asset),
+            total_debt = VALUES(total_debt),
+            available_balance = VALUES(available_balance),
+            annual_debt_payment = VALUES(annual_debt_payment),
+            average_interest_rate = VALUES(average_interest_rate),
+            has_high_rate_debt = VALUES(has_high_rate_debt),
+            updated_at = VALUES(updated_at)
+    </insert>
+
+    <insert id="upsertPensionIsaAccount"
+            parameterType="com.financematch.asset.domain.PensionIsaAccount">
+        INSERT INTO pension_isa_account (
+            member_id,
+            has_pension_saving,
+            has_irp,
+            has_dc,
+            has_isa,
+            pension_saving_balance,
+            irp_balance,
+            pension_annual_payment,
+            irp_annual_payment,
+            dc_annual_payment,
+            isa_annual_deposit,
+            tax_eligibility_status,
+            isa_eligibility_status,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{memberId},
+            #{hasPensionSaving},
+            #{hasIrp},
+            #{hasDc},
+            #{hasIsa},
+            #{pensionSavingBalance},
+            #{irpBalance},
+            #{pensionAnnualPayment},
+            #{irpAnnualPayment},
+            #{dcAnnualPayment},
+            #{isaAnnualDeposit},
+            #{taxEligibilityStatus},
+            #{isaEligibilityStatus},
+            #{linkedAt},
+            #{linkedAt}
+        )
+        ON DUPLICATE KEY UPDATE
+            has_pension_saving = VALUES(has_pension_saving),
+            has_irp = VALUES(has_irp),
+            has_dc = VALUES(has_dc),
+            has_isa = VALUES(has_isa),
+            pension_saving_balance = VALUES(pension_saving_balance),
+            irp_balance = VALUES(irp_balance),
+            pension_annual_payment = VALUES(pension_annual_payment),
+            irp_annual_payment = VALUES(irp_annual_payment),
+            dc_annual_payment = VALUES(dc_annual_payment),
+            isa_annual_deposit = VALUES(isa_annual_deposit),
+            tax_eligibility_status = VALUES(tax_eligibility_status),
+            isa_eligibility_status = VALUES(isa_eligibility_status),
+            updated_at = VALUES(updated_at)
+    </insert>
+
+</mapper>
