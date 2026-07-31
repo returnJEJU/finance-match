@@ -14,7 +14,8 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 public class PersonalSurveyController {
 
-    private static final Long TEMP_MEMBER_ID = 4L;
+    // TODO: 추후 @LoginMember Long memberId로 교체
+    private static final Long TEMP_MEMBER_ID = 3L;
 
     private final PersonalSurveyService personalSurveyService;
 
@@ -26,8 +27,8 @@ public class PersonalSurveyController {
     }
 
     @GetMapping("")
-    public ApiResponse<PersonalSurveyResponse> getInvestmentType() {
-        PersonalSurveyResponse response = personalSurveyService.getInvestmentType(TEMP_MEMBER_ID);
+    public ApiResponse<PersonalSurveyResponse> getPersonalSurveyResult() {
+        PersonalSurveyResponse response = personalSurveyService.getPersonalSurveyResult(TEMP_MEMBER_ID);
         return ApiResponse.ok(response);
     }
 

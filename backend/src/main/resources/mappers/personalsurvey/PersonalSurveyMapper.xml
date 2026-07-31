@@ -112,9 +112,11 @@
         WHERE id = #{coupleId}
     </update>
 
-    <select id="findInvestmentTypeByMemberId"
-            resultType="com.financematch.personalsurvey.domain.PersonalInvestmentType">
-        SELECT investment_type
+    <select id="findPersonalSurveyResultByMemberId"
+            resultType="com.financematch.personalsurvey.domain.PersonalSurveyResult">
+        SELECT
+            name,
+            investment_type
         FROM member
         WHERE id = #{memberId}
             AND status = 'ACTIVE'
