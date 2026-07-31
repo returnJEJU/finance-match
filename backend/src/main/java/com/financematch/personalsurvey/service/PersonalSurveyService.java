@@ -8,6 +8,7 @@ import com.financematch.personalsurvey.domain.PersonalInvestmentType;
 import com.financematch.personalsurvey.domain.PersonalSurvey;
 import com.financematch.personalsurvey.domain.PersonalSurveyCalculationContext;
 import com.financematch.personalsurvey.dto.PersonalSurveyRequest;
+import com.financematch.personalsurvey.dto.PersonalSurveyResponse;
 import com.financematch.personalsurvey.mapper.PersonalSurveyMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -77,5 +78,15 @@ public class PersonalSurveyService {
 
         coupleInvestmentTypeService.calculateAndSaveIfReady(memberId);
 
+    }
+
+    public PersonalSurveyResponse getInvestmentType(Long memberId) {
+        PersonalInvestmentType investmentType = personalSurveyMapper.findInvestmentTypeByMemberId(memberId);
+
+        if (investmentType == null) {
+            throw new ApiException(ErrorCode.INVESTMENT_PROFILE_NOT_FOUND);
+        }
+
+        return PersonalSurveyResponse.of(investmentType);
     }
 }

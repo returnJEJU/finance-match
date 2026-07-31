@@ -2,12 +2,10 @@ package com.financematch.personalsurvey.controller;
 
 import com.financematch.common.ApiResponse;
 import com.financematch.personalsurvey.dto.PersonalSurveyRequest;
+import com.financematch.personalsurvey.dto.PersonalSurveyResponse;
 import com.financematch.personalsurvey.service.PersonalSurveyService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
@@ -25,6 +23,12 @@ public class PersonalSurveyController {
             @Valid @RequestBody PersonalSurveyRequest request) {
         personalSurveyService.save(TEMP_MEMBER_ID, request);
         return ApiResponse.ok(null);
+    }
+
+    @GetMapping("")
+    public ApiResponse<PersonalSurveyResponse> getInvestmentType() {
+        PersonalSurveyResponse response = personalSurveyService.getInvestmentType(TEMP_MEMBER_ID);
+        return ApiResponse.ok(response);
     }
 
 }
