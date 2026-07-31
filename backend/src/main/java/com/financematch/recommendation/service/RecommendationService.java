@@ -13,11 +13,17 @@ import com.financematch.recommendation.mapper.RecommendationMapper;
 import com.financematch.recommendation.policy.RecommendedProduct;
 import com.financematch.recommendation.type.PersonalRecommendationType;
 import com.financematch.recommendation.type.RecommendationSlotType;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class RecommendationService {
 
@@ -41,15 +47,36 @@ public class RecommendationService {
         this.responseAssembler = responseAssembler;
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void createRecommendation(Long memberId) {
         try {
+            Long coupleId =
+                    recommendationMapper.lockCoupleIdByMemberIdNowait(memberId);
+            if (coupleId == null) {
+                throw new ApiException(ErrorCode.COUPLE_NOT_CONNECTED);
+            }
+
+            LocalDateTime inputVersionBefore =
+                    recommendationMapper.findLatestInputUpdatedAtByMemberId(memberId);
             recommend(memberId);
+
+            LocalDateTime inputVersionAfter =
+                    recommendationMapper.findLatestInputUpdatedAtByMemberId(memberId);
+            if (!Objects.equals(inputVersionBefore, inputVersionAfter)) {
+                throw new RecommendationInputChangedException(
+                        inputVersionBefore,
+                        inputVersionAfter);
+            }
+        } catch (CannotAcquireLockException exception) {
+            log.warn("추천 생성 중복 요청. memberId={}", memberId);
+            throw new ApiException(ErrorCode.RECOMMENDATION_IN_PROGRESS);
         } catch (ApiException exception) {
             throw exception;
         } catch (IllegalArgumentException exception) {
+            log.warn("추천 생성 준비 정보 부족. memberId={}", memberId, exception);
             throw new ApiException(ErrorCode.RECOMMENDATION_NOT_READY);
         } catch (Exception exception) {
+            log.error("추천 생성 실패. memberId={}", memberId, exception);
             throw new ApiException(ErrorCode.RECOMMENDATION_FAILED);
         }
     }
@@ -81,12 +108,12 @@ public class RecommendationService {
         } catch (ApiException exception) {
             throw exception;
         } catch (Exception exception) {
+            log.error("추천 조회 실패. memberId={}", memberId, exception);
             throw new ApiException(ErrorCode.RECOMMENDATION_FAILED);
         }
     }
 
-    @Transactional
-    public RecommendationPlan recommend(Long memberId) {
+    RecommendationPlan recommend(Long memberId) {
 
         if (memberId == null) {
             throw new IllegalArgumentException("회원 ID는 필수입니다.");
@@ -106,6 +133,15 @@ public class RecommendationService {
         saveRecommendationResult(context, plan);
 
         return plan;
+    }
+
+    private static class RecommendationInputChangedException extends RuntimeException {
+
+        private RecommendationInputChangedException(
+                LocalDateTime before,
+                LocalDateTime after) {
+            super("추천 생성 중 입력정보가 변경되었습니다. before=" + before + ", after=" + after);
+        }
     }
 
     private void saveRecommendationResult(
