@@ -13,8 +13,10 @@ import com.financematch.match.domain.MatchMemberData;
 import com.financematch.match.mapper.MatchMapper;
 
 import com.financematch.report.dto.reason.DebtRepaymentReasonInput;
+import com.financematch.report.dto.reason.FinancialValueReasonInput;
 import com.financematch.report.service.AssetStabilityScoreService;
 import com.financematch.report.service.DebtRepaymentScoreService;
+import com.financematch.report.service.FinancialValueScoreService;
 import com.financematch.report.service.GoalFeasibilityScoreService;
 
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,7 @@ public class MatchService {
     private final GoalFeasibilityScoreService goalFeasibilityScoreService;
     private final AssetStabilityScoreService assetStabilityScoreService;
     private final DebtRepaymentScoreService debtRepaymentScoreService;
+    private final FinancialValueScoreService financialValueScoreService;
 
 
     @Transactional
@@ -138,6 +141,19 @@ public class MatchService {
                 calculationResult.getMemberBDebtScore()
         );
         debtRepaymentScoreService.generateAndSave(savedResult.getId(), debtRepaymentReasonInput);
+
+        // 11. 투자 가치관 일치도 축 reason 생성·저장 (LLM 사용)
+        FinancialValueReasonInput financialValueReasonInput = new FinancialValueReasonInput(
+                calculationInput.getMemberA().getFinancialAssetRatioScore(),
+                calculationInput.getMemberA().getInvestmentExperienceScore(),
+                calculationInput.getMemberA().getFinancialKnowledgeScore(),
+                calculationInput.getMemberA().getCapitalPreservationScore(),
+                calculationInput.getMemberB().getFinancialAssetRatioScore(),
+                calculationInput.getMemberB().getInvestmentExperienceScore(),
+                calculationInput.getMemberB().getFinancialKnowledgeScore(),
+                calculationInput.getMemberB().getCapitalPreservationScore()
+        );
+        financialValueScoreService.generateAndSave(savedResult.getId(), financialValueReasonInput);
 
         return savedResult;
     }

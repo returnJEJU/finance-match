@@ -26,8 +26,10 @@ import com.financematch.match.domain.MatchCoupleData;
 import com.financematch.match.domain.MatchMemberData;
 import com.financematch.match.mapper.MatchMapper;
 import com.financematch.report.dto.reason.DebtRepaymentReasonInput;
+import com.financematch.report.dto.reason.FinancialValueReasonInput;
 import com.financematch.report.service.AssetStabilityScoreService;
 import com.financematch.report.service.DebtRepaymentScoreService;
+import com.financematch.report.service.FinancialValueScoreService;
 import com.financematch.report.service.GoalFeasibilityScoreService;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,6 +52,9 @@ class MatchServiceTest {
 
     @Mock
     private DebtRepaymentScoreService debtRepaymentScoreService;
+
+    @Mock
+    private FinancialValueScoreService financialValueScoreService;
 
     @InjectMocks
     private MatchService matchService;
@@ -117,6 +122,12 @@ class MatchServiceTest {
                         org.mockito.ArgumentMatchers.anyLong(),
                         org.mockito.ArgumentMatchers.any()
                 );
+
+        verify(financialValueScoreService, never())
+                .generateAndSave(
+                        org.mockito.ArgumentMatchers.anyLong(),
+                        org.mockito.ArgumentMatchers.any()
+                );
     }
 
     @Test
@@ -141,11 +152,19 @@ class MatchServiceTest {
         MemberCalculationInput memberACalcInput =
                 MemberCalculationInput.builder()
                         .totalDebt(new BigDecimal("1000000"))
+                        .financialAssetRatioScore(3)
+                        .investmentExperienceScore(2)
+                        .financialKnowledgeScore(4)
+                        .capitalPreservationScore(5)
                         .build();
 
         MemberCalculationInput memberBCalcInput =
                 MemberCalculationInput.builder()
                         .totalDebt(BigDecimal.ZERO)
+                        .financialAssetRatioScore(3)
+                        .investmentExperienceScore(2)
+                        .financialKnowledgeScore(1)
+                        .capitalPreservationScore(2)
                         .build();
 
         MatchCalculationInput calculationInput =
@@ -249,5 +268,21 @@ class MatchServiceTest {
         assertEquals(false, capturedDebtInput.isPartnerHasDebt());
         assertEquals(new BigDecimal("62.50"), capturedDebtInput.getMeScore());
         assertEquals(new BigDecimal("100.00"), capturedDebtInput.getPartnerScore());
+
+        // 투자 가치관 일치도 reason 생성이 두 회원의 설문 4문항 원점수를 정확히 담아 호출됐는지 확인
+        ArgumentCaptor<FinancialValueReasonInput> financialValueInputCaptor =
+                ArgumentCaptor.forClass(FinancialValueReasonInput.class);
+        verify(financialValueScoreService).generateAndSave(
+                org.mockito.ArgumentMatchers.eq(10L), financialValueInputCaptor.capture());
+
+        FinancialValueReasonInput capturedFinancialValueInput = financialValueInputCaptor.getValue();
+        assertEquals(3, capturedFinancialValueInput.getMeAssetRatio());
+        assertEquals(2, capturedFinancialValueInput.getMeInvestExperience());
+        assertEquals(4, capturedFinancialValueInput.getMeProductUnderstanding());
+        assertEquals(5, capturedFinancialValueInput.getMeLossTolerance());
+        assertEquals(3, capturedFinancialValueInput.getPartnerAssetRatio());
+        assertEquals(2, capturedFinancialValueInput.getPartnerInvestExperience());
+        assertEquals(1, capturedFinancialValueInput.getPartnerProductUnderstanding());
+        assertEquals(2, capturedFinancialValueInput.getPartnerLossTolerance());
     }
 }

@@ -17,6 +17,9 @@ import org.springframework.stereotype.Service;
  *
  * <p>⚠️ 임계값 {@value #THRESHOLD}는 AGENTIC.md GAP-03 미확정 상태의 권장값(T=1)이다. 팀 확정 후
  * 이 상수만 바꾸면 된다.
+ *
+ * <p>4문항 중 "손실 감내력"(capitalPreservationScore)만 실제로는 1~6(최대 diff 5) 척도라, 나머지
+ * 세 문항(1~5, 최대 diff 4)과 같은 기준으로 비교되도록 diff 를 4/5 로 비례 보정한다({@link #fallback}).
  */
 @Slf4j
 @Service
@@ -75,15 +78,17 @@ public class FinancialValueReasonService {
     }
 
     String fallback(FinancialValueReasonInput input) {
-        int[] diffs = {
+        double[] diffs = {
             Math.abs(input.getMeAssetRatio() - input.getPartnerAssetRatio()),
             Math.abs(input.getMeInvestExperience() - input.getPartnerInvestExperience()),
             Math.abs(input.getMeProductUnderstanding() - input.getPartnerProductUnderstanding()),
-            Math.abs(input.getMeLossTolerance() - input.getPartnerLossTolerance()),
+            // 손실 감내력(capitalPreservationScore)은 1~6(최대 diff 5) 척도라, 나머지 세 문항
+            // (1~5, 최대 diff 4)과 같은 기준으로 비교할 수 있도록 비례 보정한다.
+            Math.abs(input.getMeLossTolerance() - input.getPartnerLossTolerance()) * (4.0 / 5.0),
         };
 
-        int maxDiff = max(diffs);
-        int minDiff = min(diffs);
+        double maxDiff = max(diffs);
+        double minDiff = min(diffs);
 
         if (maxDiff <= THRESHOLD) {
             return "두 분은 가치관이 비슷해요.";
@@ -92,28 +97,40 @@ public class FinancialValueReasonService {
             return "두 분은 네 가지 항목 모두에서 가치관 차이가 있어요.";
         }
 
-        String minItem = ITEM_ORDER.get(firstIndexOf(diffs, minDiff));
+        // 가장 크게 벌어진 항목 하나만 짚는다(팀 확정) — 나머지가 "비슷하다"고 같이 말하면, 동점인
+        // 항목이 여러 개일 때(예: 3개 문항이 diff=1로 묶임) 그중 하나만 골라 비슷하다고 단정하는 셈이라
+        // 오해를 줄 수 있다. 최댓값이 동점이면 위 고정 순서에서 먼저 오는 항목을 택한다.
         String maxItem = ITEM_ORDER.get(firstIndexOf(diffs, maxDiff));
-        return "두 분은 " + minItem + "은 비슷하지만 " + maxItem + "이 차이가 나요.";
+        return "두 분은 " + withSubjectParticle(maxItem) + " 차이가 나요.";
     }
 
-    private static int max(int[] values) {
-        int max = values[0];
-        for (int value : values) {
+    // 받침 유무에 따라 이/가를 고른다 ("금융 투자 상품 이해도"처럼 받침 없는 항목명도 있어서 필요).
+    private static boolean hasBatchim(String word) {
+        char last = word.charAt(word.length() - 1);
+        return (last - 0xAC00) % 28 != 0;
+    }
+
+    private static String withSubjectParticle(String word) {
+        return word + (hasBatchim(word) ? "이" : "가");
+    }
+
+    private static double max(double[] values) {
+        double max = values[0];
+        for (double value : values) {
             max = Math.max(max, value);
         }
         return max;
     }
 
-    private static int min(int[] values) {
-        int min = values[0];
-        for (int value : values) {
+    private static double min(double[] values) {
+        double min = values[0];
+        for (double value : values) {
             min = Math.min(min, value);
         }
         return min;
     }
 
-    private static int firstIndexOf(int[] values, int target) {
+    private static int firstIndexOf(double[] values, double target) {
         for (int i = 0; i < values.length; i++) {
             if (values[i] == target) {
                 return i;
