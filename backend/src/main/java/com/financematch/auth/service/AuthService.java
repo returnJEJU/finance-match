@@ -13,10 +13,12 @@ import com.financematch.exception.ApiException;
 import com.financematch.onboarding.dto.OnboardingStatusResponse;
 import com.financematch.onboarding.service.OnboardingService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -84,5 +86,22 @@ public class AuthService {
 
         return LoginResponse.of(
                 member, jwtProvider.createAccessToken(member.getId()), isFirstLogin, progress);
+    }
+
+    /**
+     * 로그아웃.
+     *
+     * <p>JWT 는 서버가 로그인 상태를 들고 있지 않으므로 지울 세션이 없다. 실제 무효화는 클라이언트가 저장된
+     * accessToken 을 삭제해 이뤄지고, 서버는 호출 사실만 남기고 성공을 응답한다. 토큰 자체는 만료(1시간)
+     * 전까지 유효하다.
+     *
+     * <p>즉시 무효화가 필요해지면 이 자리에 Redis 블랙리스트를 얹는다 — 토큰의 {@code jti} 를 남은
+     * 유효시간을 TTL 로 저장하고, {@code JwtAuthenticationFilter} 가 조회해 걸러낸다. 그때 계약(경로·요청·
+     * 응답)은 그대로 두고 서버 내부만 바뀐다.
+     *
+     * <p>DB 를 건드리지 않아 {@code @Transactional} 을 붙이지 않는다.
+     */
+    public void logout(Long memberId) {
+        log.info("로그아웃 — memberId={}", memberId);
     }
 }
