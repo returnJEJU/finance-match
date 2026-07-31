@@ -7,6 +7,7 @@ import com.financematch.personalsurvey.calculator.PersonalInvestmentTypeCalculat
 import com.financematch.personalsurvey.domain.PersonalInvestmentType;
 import com.financematch.personalsurvey.domain.PersonalSurvey;
 import com.financematch.personalsurvey.domain.PersonalSurveyCalculationContext;
+import com.financematch.personalsurvey.domain.PersonalSurveyResult;
 import com.financematch.personalsurvey.dto.PersonalSurveyRequest;
 import com.financematch.personalsurvey.dto.PersonalSurveyResponse;
 import com.financematch.personalsurvey.mapper.PersonalSurveyMapper;
@@ -80,13 +81,18 @@ public class PersonalSurveyService {
 
     }
 
-    public PersonalSurveyResponse getInvestmentType(Long memberId) {
-        PersonalInvestmentType investmentType = personalSurveyMapper.findInvestmentTypeByMemberId(memberId);
+    public PersonalSurveyResponse getPersonalSurveyResult(Long memberId) {
+        PersonalSurveyResult result =
+                personalSurveyMapper.findPersonalSurveyResultByMemberId(memberId);
 
-        if (investmentType == null) {
+        if (result == null) {
+            throw new ApiException(ErrorCode.MEMBER_NOT_FOUND);
+        }
+
+        if (result.getInvestmentType() == null) {
             throw new ApiException(ErrorCode.INVESTMENT_PROFILE_NOT_FOUND);
         }
 
-        return PersonalSurveyResponse.of(investmentType);
+        return PersonalSurveyResponse.of(result);
     }
 }

@@ -33,6 +33,7 @@ public interface PersonalSurveyMapper {
             @Param("coupleId") Long coupleId,
             @Param("investmentType") CoupleInvestmentType investmentType);
 
-    PersonalInvestmentType findInvestmentTypeByMemberId(@Param("memberId") Long memberId);
+    PersonalSurveyResult findPersonalSurveyResultByMemberId(
+            @Param("memberId") Long memberId);
 
 }
