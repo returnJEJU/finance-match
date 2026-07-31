@@ -7,6 +7,7 @@ import com.financematch.common.ErrorCode;
 import com.financematch.config.RootConfig;
 import com.financematch.exception.ApiException;
 import com.financematch.recommendation.mapper.RecommendationMapper;
+import com.financematch.recommendation.mapper.RecommendationTestMapper;
 import com.financematch.recommendation.policy.RecommendedProduct;
 import com.financematch.recommendation.type.RecommendationSlotType;
 import java.util.List;
@@ -38,18 +39,21 @@ class RecommendationTransactionRollbackTest {
     @Autowired
     private RecommendationMapper recommendationMapper;
 
+    @Autowired
+    private RecommendationTestMapper recommendationTestMapper;
+
     @Test
     void rollsBackAllSavedRowsWhenSavingRecommendationFails() {
         Long recommendationIdBefore =
                 recommendationMapper.findRecommendationIdByMemberId(MEMBER_ID);
         int recommendationCountBefore =
-                recommendationMapper.countRecommendationsByCoupleId(COUPLE_ID);
+                recommendationTestMapper.countRecommendationsByCoupleId(COUPLE_ID);
         int slotCountBefore = countSlots(recommendationIdBefore);
         int productCountBefore = countProducts(recommendationIdBefore);
         int taxSavingCountBefore =
-                recommendationMapper.countPersonalTaxSavingByMemberId(MEMBER_ID);
+                recommendationTestMapper.countPersonalTaxSavingByMemberId(MEMBER_ID);
         int investmentCountBefore =
-                recommendationMapper.countPersonalInvestmentByMemberId(MEMBER_ID);
+                recommendationTestMapper.countPersonalInvestmentByMemberId(MEMBER_ID);
 
         ApiException exception =
                 assertThrows(
@@ -59,7 +63,7 @@ class RecommendationTransactionRollbackTest {
         assertEquals(ErrorCode.RECOMMENDATION_FAILED, exception.getErrorCode());
         assertEquals(
                 recommendationCountBefore,
-                recommendationMapper.countRecommendationsByCoupleId(COUPLE_ID));
+                recommendationTestMapper.countRecommendationsByCoupleId(COUPLE_ID));
         assertEquals(
                 recommendationIdBefore,
                 recommendationMapper.findRecommendationIdByMemberId(MEMBER_ID));
@@ -67,22 +71,22 @@ class RecommendationTransactionRollbackTest {
         assertEquals(productCountBefore, countProducts(recommendationIdBefore));
         assertEquals(
                 taxSavingCountBefore,
-                recommendationMapper.countPersonalTaxSavingByMemberId(MEMBER_ID));
+                recommendationTestMapper.countPersonalTaxSavingByMemberId(MEMBER_ID));
         assertEquals(
                 investmentCountBefore,
-                recommendationMapper.countPersonalInvestmentByMemberId(MEMBER_ID));
+                recommendationTestMapper.countPersonalInvestmentByMemberId(MEMBER_ID));
     }
 
     private int countSlots(Long recommendationId) {
         return recommendationId == null
                 ? 0
-                : recommendationMapper.countSlotsByRecommendationId(recommendationId);
+                : recommendationTestMapper.countSlotsByRecommendationId(recommendationId);
     }
 
     private int countProducts(Long recommendationId) {
         return recommendationId == null
                 ? 0
-                : recommendationMapper.countProductsByRecommendationId(recommendationId);
+                : recommendationTestMapper.countProductsByRecommendationId(recommendationId);
     }
 
     static class FailurePlannerConfig {
