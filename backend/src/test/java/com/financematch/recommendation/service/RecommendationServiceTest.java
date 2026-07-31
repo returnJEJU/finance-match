@@ -3,11 +3,15 @@ package com.financematch.recommendation.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.financematch.common.ErrorCode;
 import com.financematch.config.RootConfig;
+import com.financematch.exception.ApiException;
 import com.financematch.recommendation.dto.PackageSlotResponse;
 import com.financematch.recommendation.dto.RecommendationResponse;
+import com.financematch.recommendation.mapper.RecommendationFreshnessTestMapper;
 import com.financematch.recommendation.mapper.RecommendationMapper;
 import com.financematch.recommendation.policy.RecommendedProduct;
 import com.financematch.recommendation.type.PersonalRecommendationType;
@@ -20,10 +24,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.transaction.annotation.Transactional;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = RootConfig.class)
 @WebAppConfiguration
+@Transactional
 class RecommendationServiceTest {
 
     @Autowired
@@ -31,6 +37,40 @@ class RecommendationServiceTest {
 
     @Autowired
     private RecommendationMapper recommendationMapper;
+
+    @Autowired
+    private RecommendationFreshnessTestMapper recommendationFreshnessTestMapper;
+
+    @Test
+    void 생성진입점으로_추천결과를_저장하고_조회한다() {
+
+        Long memberId = 1L;
+
+        recommendationService.createRecommendation(memberId);
+        RecommendationResponse response =
+                recommendationService.getRecommendation(memberId);
+
+        assertNotNull(response);
+        assertNotNull(response.recommendationId());
+        assertFalse(response.packageSlots().isEmpty());
+    }
+
+    @Test
+    void 커플중_한명의_금융정보가_없으면_추천을_생성하지_않는다() {
+
+        Long memberId = 1L;
+        assertEquals(
+                1,
+                recommendationFreshnessTestMapper
+                        .deleteFinancialSummaryByMemberId(memberId));
+
+        ApiException exception =
+                assertThrows(
+                        ApiException.class,
+                        () -> recommendationService.createRecommendation(memberId));
+
+        assertEquals(ErrorCode.RECOMMENDATION_NOT_READY, exception.getErrorCode());
+    }
 
     @Test
     void 회원ID로_공동_예금과_적금추천을_생성한다() {
@@ -201,6 +241,102 @@ class RecommendationServiceTest {
                 (inviterResponse.personalInvestmentRecommendation() == null ? 0 : 1)
                         + (inviteeResponse.personalInvestmentRecommendation() == null ? 0 : 1);
         assertTrue(personalInvestmentOwnerCount <= 1);
+    }
+
+    @Test
+    void 금융정보가_추천보다_최신이면_기존추천을_반환하지_않는다() {
+
+        // given
+        Long memberId = 1L;
+        recommendationService.recommend(memberId);
+        assertEquals(
+                1,
+                recommendationFreshnessTestMapper
+                        .moveFinancialSummaryAfterRecommendation(memberId));
+
+        // when
+        ApiException exception =
+                assertThrows(
+                        ApiException.class,
+                        () -> recommendationService.getRecommendation(memberId));
+
+        // then
+        assertEquals(ErrorCode.RECOMMENDATION_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    void 로그인시각이_추천보다_최신이면_기존추천을_반환하지_않는다() {
+
+        // given
+        Long memberId = 1L;
+        recommendationService.recommend(memberId);
+        assertEquals(
+                1,
+                recommendationFreshnessTestMapper
+                        .moveLastLoginAfterRecommendation(memberId));
+
+        // when
+        ApiException exception =
+                assertThrows(
+                        ApiException.class,
+                        () -> recommendationService.getRecommendation(memberId));
+
+        // then
+        assertEquals(ErrorCode.RECOMMENDATION_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    void 공동설문이_추천보다_최신이면_기존추천을_반환하지_않는다() {
+
+        Long memberId = 1L;
+        recommendationService.recommend(memberId);
+        assertEquals(
+                1,
+                recommendationFreshnessTestMapper
+                        .moveCommonSurveyAfterRecommendation(memberId));
+
+        ApiException exception =
+                assertThrows(
+                        ApiException.class,
+                        () -> recommendationService.getRecommendation(memberId));
+
+        assertEquals(ErrorCode.RECOMMENDATION_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    void 연금ISA정보가_추천보다_최신이면_기존추천을_반환하지_않는다() {
+
+        Long memberId = 1L;
+        recommendationService.recommend(memberId);
+        assertEquals(
+                1,
+                recommendationFreshnessTestMapper
+                        .movePensionIsaAccountAfterRecommendation(memberId));
+
+        ApiException exception =
+                assertThrows(
+                        ApiException.class,
+                        () -> recommendationService.getRecommendation(memberId));
+
+        assertEquals(ErrorCode.RECOMMENDATION_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    void 상품정보가_추천보다_최신이면_기존추천을_반환하지_않는다() {
+
+        Long memberId = 1L;
+        recommendationService.recommend(memberId);
+        assertEquals(
+                1,
+                recommendationFreshnessTestMapper
+                        .moveProductAfterRecommendation(memberId));
+
+        ApiException exception =
+                assertThrows(
+                        ApiException.class,
+                        () -> recommendationService.getRecommendation(memberId));
+
+        assertEquals(ErrorCode.RECOMMENDATION_NOT_FOUND, exception.getErrorCode());
     }
 
     private void assertJointRecommendationsSaved(
