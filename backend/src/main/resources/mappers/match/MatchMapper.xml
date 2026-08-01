@@ -71,7 +71,10 @@
         pia.dc_annual_payment,
         pia.isa_annual_deposit,
         pia.tax_eligibility_status,
-        pia.isa_eligibility_status
+        pia.isa_eligibility_status,
+        pia.has_isa,
+        pia.has_irp,
+        pia.has_pension_saving
 
         FROM member m
 

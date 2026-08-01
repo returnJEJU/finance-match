@@ -75,6 +75,9 @@ public class MatchCalculationInputConverter {
                 .isaAnnualDeposit(member.getIsaAnnualDeposit())
                 .taxEligibilityStatus(member.getTaxEligibilityStatus())
                 .isaEligibilityStatus(member.getIsaEligibilityStatus())
+                .hasIsa(member.isHasIsa())
+                .hasIrp(member.isHasIrp())
+                .hasPensionSaving(member.isHasPensionSaving())
                 .build();
     }
 

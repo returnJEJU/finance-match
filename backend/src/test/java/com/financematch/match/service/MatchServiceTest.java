@@ -20,17 +20,18 @@ import com.financematch.match.calculator.MatchCalculationInput;
 import com.financematch.match.calculator.MatchCalculationResult;
 import com.financematch.match.calculator.MatchCalculator;
 import com.financematch.match.calculator.MemberCalculationInput;
-import com.financematch.match.converter.MatchCalculationInputConverter;
 import com.financematch.match.domain.CompatibilityResult;
 import com.financematch.match.domain.MatchCoupleData;
 import com.financematch.match.domain.MatchMemberData;
 import com.financematch.match.mapper.MatchMapper;
 import com.financematch.report.dto.reason.DebtRepaymentReasonInput;
 import com.financematch.report.dto.reason.FinancialValueReasonInput;
+import com.financematch.report.dto.reason.TaxStrategyReasonInput;
 import com.financematch.report.service.AssetStabilityScoreService;
 import com.financematch.report.service.DebtRepaymentScoreService;
 import com.financematch.report.service.FinancialValueScoreService;
 import com.financematch.report.service.GoalFeasibilityScoreService;
+import com.financematch.report.service.TaxStrategyScoreService;
 
 @ExtendWith(MockitoExtension.class)
 class MatchServiceTest {
@@ -39,10 +40,7 @@ class MatchServiceTest {
     private MatchMapper matchMapper;
 
     @Mock
-    private MatchCalculationInputConverter converter;
-
-    @Mock
-    private MatchCalculator calculator;
+    private MatchCalculationPersistenceService matchCalculationPersistenceService;
 
     @Mock
     private GoalFeasibilityScoreService goalFeasibilityScoreService;
@@ -55,6 +53,9 @@ class MatchServiceTest {
 
     @Mock
     private FinancialValueScoreService financialValueScoreService;
+
+    @Mock
+    private TaxStrategyScoreService taxStrategyScoreService;
 
     @InjectMocks
     private MatchService matchService;
@@ -87,19 +88,10 @@ class MatchServiceTest {
         verify(matchMapper, never())
                 .findMemberDataByMemberId(anyLong());
 
-        verify(converter, never())
-                .convert(
+        verify(matchCalculationPersistenceService, never())
+                .calculateAndPersist(
                         org.mockito.ArgumentMatchers.any(),
                         org.mockito.ArgumentMatchers.any(),
-                        org.mockito.ArgumentMatchers.any()
-                );
-
-        verify(calculator, never())
-                .calculate(org.mockito.ArgumentMatchers.any());
-
-        verify(matchMapper, never())
-                .insertCompatibilityResult(
-                        org.mockito.ArgumentMatchers.anyLong(),
                         org.mockito.ArgumentMatchers.any()
                 );
 
@@ -124,6 +116,12 @@ class MatchServiceTest {
                 );
 
         verify(financialValueScoreService, never())
+                .generateAndSave(
+                        org.mockito.ArgumentMatchers.anyLong(),
+                        org.mockito.ArgumentMatchers.any()
+                );
+
+        verify(taxStrategyScoreService, never())
                 .generateAndSave(
                         org.mockito.ArgumentMatchers.anyLong(),
                         org.mockito.ArgumentMatchers.any()
@@ -156,6 +154,13 @@ class MatchServiceTest {
                         .investmentExperienceScore(2)
                         .financialKnowledgeScore(4)
                         .capitalPreservationScore(5)
+                        .hasIsa(true)
+                        .isaAnnualDeposit(new BigDecimal("12000000"))
+                        .hasIrp(true)
+                        .irpAnnualPayment(new BigDecimal("3000000"))
+                        .dcAnnualPayment(new BigDecimal("1000000"))
+                        .hasPensionSaving(false)
+                        .pensionAnnualPayment(BigDecimal.ZERO)
                         .build();
 
         MemberCalculationInput memberBCalcInput =
@@ -165,6 +170,13 @@ class MatchServiceTest {
                         .investmentExperienceScore(2)
                         .financialKnowledgeScore(1)
                         .capitalPreservationScore(2)
+                        .hasIsa(false)
+                        .isaAnnualDeposit(BigDecimal.ZERO)
+                        .hasIrp(true)
+                        .irpAnnualPayment(new BigDecimal("5000000"))
+                        .dcAnnualPayment(BigDecimal.ZERO)
+                        .hasPensionSaving(true)
+                        .pensionAnnualPayment(new BigDecimal("6000000"))
                         .build();
 
         MatchCalculationInput calculationInput =
@@ -200,10 +212,9 @@ class MatchServiceTest {
         when(matchMapper.findCoupleDataByMemberId(1L))
                 .thenReturn(couple);
 
-        // 첫 번째 조회에는 결과가 없고,
-        // 저장 후 두 번째 조회에는 결과가 존재한다.
+        // 캐시 확인 시점에는 결과가 없다. 계산·저장은 MatchCalculationPersistenceService 로 위임된다.
         when(matchMapper.findCompatibilityResultByCoupleId(1L))
-                .thenReturn(null, savedResult);
+                .thenReturn(null);
 
         when(matchMapper.findMemberDataByMemberId(1L))
                 .thenReturn(memberA);
@@ -211,16 +222,8 @@ class MatchServiceTest {
         when(matchMapper.findMemberDataByMemberId(2L))
                 .thenReturn(memberB);
 
-        when(converter.convert(couple, memberA, memberB))
-                .thenReturn(calculationInput);
-
-        when(calculator.calculate(calculationInput))
-                .thenReturn(calculationResult);
-
-        when(matchMapper.insertCompatibilityResult(
-                1L,
-                calculationResult
-        )).thenReturn(1);
+        when(matchCalculationPersistenceService.calculateAndPersist(couple, memberA, memberB))
+                .thenReturn(new MatchCalculationPersistenceResult(savedResult, calculationInput, calculationResult));
 
         CompatibilityResult result =
                 matchService.getOrCalculateCompatibilityResult(1L);
@@ -230,19 +233,7 @@ class MatchServiceTest {
         verify(matchMapper).findMemberDataByMemberId(1L);
         verify(matchMapper).findMemberDataByMemberId(2L);
 
-        verify(converter).convert(couple, memberA, memberB);
-        verify(calculator).calculate(calculationInput);
-
-        verify(matchMapper).insertCompatibilityResult(
-                1L,
-                calculationResult
-        );
-
-        // 저장 전 한 번, 저장 후 한 번
-        verify(
-                matchMapper,
-                org.mockito.Mockito.times(2)
-        ).findCompatibilityResultByCoupleId(1L);
+        verify(matchCalculationPersistenceService).calculateAndPersist(couple, memberA, memberB);
 
         // 목표 달성 가능성 reason 생성이 저장된 결과의 id·계산기 산출값으로 정확히 호출됐는지 확인
         verify(goalFeasibilityScoreService).generateAndSave(
@@ -284,5 +275,32 @@ class MatchServiceTest {
         assertEquals(2, capturedFinancialValueInput.getPartnerInvestExperience());
         assertEquals(1, capturedFinancialValueInput.getPartnerProductUnderstanding());
         assertEquals(2, capturedFinancialValueInput.getPartnerLossTolerance());
+
+        // 절세 축 reason 생성이 두 회원의 계좌 개설 여부·납입액·한도를 정확히 담아 호출됐는지 확인
+        ArgumentCaptor<TaxStrategyReasonInput> taxInputCaptor =
+                ArgumentCaptor.forClass(TaxStrategyReasonInput.class);
+        verify(taxStrategyScoreService).generateAndSave(
+                org.mockito.ArgumentMatchers.eq(10L), taxInputCaptor.capture());
+
+        TaxStrategyReasonInput capturedTaxInput = taxInputCaptor.getValue();
+        assertEquals("김철수", capturedTaxInput.getMeName());
+        assertEquals("이영희", capturedTaxInput.getPartnerName());
+
+        assertEquals(true, capturedTaxInput.getMe().getIsa().isOpened());
+        assertEquals(new BigDecimal("12000000"), capturedTaxInput.getMe().getIsa().getContributed());
+        assertEquals(MatchCalculator.ISA_ANNUAL_LIMIT_AMOUNT, capturedTaxInput.getMe().getIsa().getAnnualLimit());
+
+        assertEquals(true, capturedTaxInput.getMe().getIrp().isOpened());
+        assertEquals(new BigDecimal("4000000"), capturedTaxInput.getMe().getIrp().getContributed());
+        assertEquals(MatchCalculator.PENSION_IRP_ANNUAL_LIMIT, capturedTaxInput.getMe().getIrp().getAnnualLimit());
+
+        assertEquals(false, capturedTaxInput.getMe().getPension().isOpened());
+
+        assertEquals(false, capturedTaxInput.getPartner().getIsa().isOpened());
+        assertEquals(true, capturedTaxInput.getPartner().getPension().isOpened());
+        assertEquals(new BigDecimal("6000000"), capturedTaxInput.getPartner().getPension().getContributed());
+        assertEquals(
+                MatchCalculator.PENSION_SAVING_ANNUAL_LIMIT,
+                capturedTaxInput.getPartner().getPension().getAnnualLimit());
     }
 }

@@ -54,7 +54,7 @@ public class ReportLlmClient {
             HttpRequest request =
                     HttpRequest.newBuilder()
                             .uri(URI.create(ENDPOINT))
-                            .timeout(Duration.ofSeconds(60))
+                            .timeout(Duration.ofSeconds(90))
                             .header("Content-Type", "application/json")
                             .header("Authorization", "Bearer " + apiKey)
                             .POST(HttpRequest.BodyPublishers.ofString(requestJson))

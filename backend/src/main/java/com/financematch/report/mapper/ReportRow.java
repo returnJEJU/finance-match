@@ -30,10 +30,12 @@ public class ReportRow {
 
     private BigDecimal goalFeasibilityScore;
     private String goalFeasibilityReason;
+    private BigDecimal expectedAsset;
 
     private BigDecimal taxStrategyScore;
     private String taxStrategyReason;
 
+    private BigDecimal targetAmount;
     private Integer targetMonths;
     private String loanPurpose;
 
