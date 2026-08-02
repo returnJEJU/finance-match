@@ -1,13 +1,20 @@
 <script setup>
 // 로그인 · 레이아웃: BlankLayout
 //
-// 입력값은 화면 안에서만 관리한다. 검증·저장·API 는 인증 도메인이 준비되면 붙인다.
-import { ref } from 'vue'
-import { Eye, EyeOff } from 'lucide-vue-next'
+// 로그인에 성공하면 토큰은 authStore 가 저장하고, 어느 화면으로 갈지는 resolveNextRoute 가 정한다.
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useMutation } from '@tanstack/vue-query'
+import { Eye, EyeOff, LoaderCircle } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
+import { resolveNextRoute } from '@/router/resolveNextRoute'
 import logoWordmark from '@/assets/images/logo/logo-wordmark.png'
 import characterMarried from '@/assets/images/characters/character-married.png'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
+
+const router = useRouter()
+const authStore = useAuthStore()
 
 const form = ref({
   email: '',
@@ -16,6 +23,33 @@ const form = ref({
 
 // 비밀번호 표시 여부 — 기본은 가림(감은 눈), 누르면 보임(뜬 눈)
 const showPassword = ref(false)
+
+const loginError = ref('')
+
+const loginMutation = useMutation({
+  mutationFn: () => authStore.login(form.value),
+  onSuccess: (result) => {
+    // 로그인 화면을 히스토리에 남기지 않는다. 다음 화면에서 뒤로 가면 로그인으로 돌아오는 대신
+    // 그 이전(온보딩)으로 나가야 한다.
+    router.replace(resolveNextRoute(result))
+  },
+  onError: (error) => {
+    // 백엔드는 "없는 이메일"·"비밀번호 불일치"·"탈퇴 회원"을 INVALID_CREDENTIALS 하나로 응답한다
+    // (계정 열거 방지). 그래서 화면에서도 사유를 나눠 안내할 수 없다.
+    loginError.value = error.message || '로그인에 실패했어요. 잠시 후 다시 시도해 주세요.'
+  },
+})
+
+const isSubmitting = computed(() => loginMutation.isPending.value)
+
+// 형식 검사는 하지 않는다. 백엔드가 형식 오류든 값 오류든 같은 코드로 답하므로 여기서 미리
+// 걸러도 사용자에게 더 알려줄 수 있는 것이 없다. 빈 값만 막는다.
+const canSubmit = computed(() => Boolean(form.value.email && form.value.password))
+
+function submit() {
+  loginError.value = ''
+  loginMutation.mutate()
+}
 </script>
 
 <template>
@@ -64,9 +98,18 @@ const showPassword = ref(false)
       <!-- 비밀번호 찾기는 만들지 않는다. 누를 수 없는 안내 문구로만 둔다. -->
       <p class="text-muted mt-[15px] text-center text-[12.5px]">비밀번호를 잊으셨나요?</p>
 
-      <!-- TODO(인증): 로그인 API 연동 후 성공했을 때만 이동.
-           갈 곳은 설문·커플 연동 상태에 따라 달라진다 — 둘 다 끝났으면 대시보드. -->
-      <BaseButton :to="{ name: 'dashboard' }" class="mt-5">로그인</BaseButton>
+      <p v-if="loginError" class="mt-3 text-center text-[12px] font-medium text-red-500">
+        {{ loginError }}
+      </p>
+
+      <BaseButton
+        :variant="canSubmit && !isSubmitting ? 'primary' : 'disabled'"
+        class="mt-5"
+        @click="submit"
+      >
+        <LoaderCircle v-if="isSubmitting" class="h-[18px] w-[18px] animate-spin" />
+        {{ isSubmitting ? '로그인하는 중' : '로그인' }}
+      </BaseButton>
 
       <div class="my-3.5 flex items-center gap-3">
         <span class="bg-line-card h-px flex-1"></span>
