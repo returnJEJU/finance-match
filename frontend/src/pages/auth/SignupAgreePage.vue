@@ -1,12 +1,21 @@
 <script setup>
 // 회원가입 - 약관 동의 (2/4) · 레이아웃: BlankLayout
 //
-// 체크 상태는 화면 안에서만 관리한다. 저장·전송은 인증 도메인이 준비되면 붙인다.
+// 체크 상태를 signupStore 에 담아 다음 단계로 넘긴다. 실제 가입 요청은 3단계에서 1·2단계를
+// 합쳐 한 번에 보낸다.
+//
+// TERMS 의 key 는 백엔드 필드명과 똑같이 맞춰 두었다(mydataTerms·assetLink·coupleShare).
+// 다르게 두면 보낼 때 옮겨 담는 코드가 생기고, 항목이 늘 때 거기를 빠뜨린다.
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { Check, ChevronDown, TriangleAlert } from 'lucide-vue-next'
+import { useSignupStore } from '@/stores/signup'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import PageTitle from '@/components/ui/PageTitle.vue'
 import FunnelHeader from '@/components/layout/FunnelHeader.vue'
+
+const router = useRouter()
+const signupStore = useSignupStore()
 
 // 약관 목록. detail 이 있으면 펼쳐서 내용을 볼 수 있다.
 const TERMS = [
@@ -47,11 +56,22 @@ const TERMS = [
   },
 ]
 
-const checked = ref({})
+// 뒤로 갔다 와도 체크가 남도록 스토어에 있던 값으로 시작한다.
+const checked = ref({ ...signupStore.agreements })
 const expanded = ref('')
 
 // 전체 동의는 개별 항목이 모두 켜졌을 때만 켜진 것으로 본다.
 const allChecked = computed(() => TERMS.every((term) => checked.value[term.key]))
+
+/**
+ * 필수 항목(마케팅 제외)에 모두 동의했는지.
+ *
+ * 백엔드도 검사해 CONSENT_REQUIRED 로 거절하지만, 그건 3단계까지 가서야 나온다.
+ * 여기서 막아 두 화면 뒤에서 실패하는 일을 없앤다.
+ */
+const requiredAgreed = computed(() =>
+  TERMS.filter((term) => term.required).every((term) => checked.value[term.key]),
+)
 
 function toggleAll() {
   const next = !allChecked.value
@@ -64,6 +84,11 @@ function toggle(key) {
 
 function toggleDetail(key) {
   expanded.value = expanded.value === key ? '' : key
+}
+
+function goNext() {
+  signupStore.setAgreements(checked.value)
+  router.push({ name: 'signup-cert' })
 }
 </script>
 
@@ -160,7 +185,9 @@ function toggleDetail(key) {
     </div>
 
     <div class="flex flex-none flex-col px-7 pb-14">
-      <BaseButton :to="{ name: 'signup-cert' }"> 동의하고 계속하기 </BaseButton>
+      <BaseButton :variant="requiredAgreed ? 'primary' : 'disabled'" @click="goNext">
+        동의하고 계속하기
+      </BaseButton>
     </div>
   </div>
 </template>
