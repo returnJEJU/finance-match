@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useSignupStore } from '@/stores/signup'
 import BlankLayout from '@/layouts/BlankLayout.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 
@@ -46,6 +47,10 @@ const routes = [
         name: 'signup-cert',
         component: () => import('@/pages/auth/SignupCertPage.vue'),
         meta: { public: true },
+        // 회원가입 요청을 보내는 단계라 1·2단계 입력이 반드시 있어야 한다. 스토어는 메모리에만
+        // 있어서 새로고침하면 비므로, 그 상태로 들어오면 처음부터 다시 받는다.
+        // (화면이 뜬 뒤에 이동을 걸면 진행 중인 내비게이션과 충돌한다)
+        beforeEnter: () => (useSignupStore().isReady ? true : { name: 'signup' }),
       },
       {
         path: 'signup/asset',
