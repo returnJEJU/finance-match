@@ -11,7 +11,7 @@ import FunnelHeader from '@/components/layout/FunnelHeader.vue'
 // 약관 목록. detail 이 있으면 펼쳐서 내용을 볼 수 있다.
 const TERMS = [
   {
-    key: 'mydata',
+    key: 'mydataTerms',
     required: true,
     label: '마이데이터 서비스 이용약관',
     detail:
@@ -25,14 +25,14 @@ const TERMS = [
       '수집 항목: 계좌·예적금·투자·대출·보험·카드 정보 및 거래내역\n보유 기간: 서비스 이용 종료 또는 삭제 요청 시까지 (1년 미로그인 시 파기)',
   },
   {
-    key: 'asset',
+    key: 'assetLink',
     required: true,
     label: '자산정보 연동(마이데이터) 동의',
     detail:
       '전송 요구 항목: 금융기관이 보유한 계좌·거래내역 등 신용정보\n전송 주기: 앱 실행 시 및 1일 1회 자동 갱신 (전송요구는 언제든 철회 가능)',
   },
   {
-    key: 'match',
+    key: 'coupleShare',
     required: true,
     label: '자산 궁합 매칭·상대방 공유 동의',
     detail:

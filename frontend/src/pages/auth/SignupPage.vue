@@ -14,7 +14,7 @@ import FunnelHeader from '@/components/layout/FunnelHeader.vue'
 const form = ref({
   name: '',
   gender: '',
-  birth: '',
+  birthDate: '',
   email: '',
   password: '',
   passwordConfirm: '',
@@ -33,7 +33,7 @@ const showPasswordConfirm = ref(false)
 function formatBirth(event) {
   const digits = event.target.value.replace(/\D/g, '').slice(0, 8)
   const parts = [digits.slice(0, 4), digits.slice(4, 6), digits.slice(6, 8)]
-  form.value.birth = parts.filter(Boolean).join('-')
+  form.value.birthDate = parts.filter(Boolean).join('-')
 }
 </script>
 
@@ -74,7 +74,7 @@ function formatBirth(event) {
 
       <label class="text-ink-sub mt-4 mb-1.5 text-[12px] font-semibold">생년월일</label>
       <input
-        :value="form.birth"
+        :value="form.birthDate"
         type="text"
         inputmode="numeric"
         maxlength="10"
