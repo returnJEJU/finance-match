@@ -1,24 +1,28 @@
 <script setup>
 // 회원가입 - 정보 입력 (1/4) · 레이아웃: BlankLayout
 //
-// 입력값은 화면 안에서만 관리한다. 검증·저장·API 는 인증 도메인이 준비되면 붙인다.
-// 첫 단계라 상단에 뒤로가기를 두지 않는다.
-import { ref } from 'vue'
+// 입력값은 signupStore 에 담아 다음 단계로 넘긴다. 실제 가입 요청은 3단계(인증서)에서
+// 1·2단계를 합쳐 한 번에 보낸다. 첫 단계라 상단에 뒤로가기를 두지 않는다.
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { Eye, EyeOff } from 'lucide-vue-next'
+import { useSignupStore } from '@/stores/signup'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import PageTitle from '@/components/ui/PageTitle.vue'
 import FunnelHeader from '@/components/layout/FunnelHeader.vue'
 
+/** 백엔드 제약(8~64자)의 최솟값. 여기서 막지 않으면 3단계에 가서야 INVALID_INPUT 이 난다. */
+const MIN_PASSWORD_LENGTH = 8
+
+const router = useRouter()
+const signupStore = useSignupStore()
+
 // gender 는 백엔드 enum 값(F·M)을 그대로 담는다. 화면 문구(여성·남성)와 분리해 두면
 // 보낼 때 변환하는 단계가 생기고, 빠뜨리면 INVALID_INPUT 이 난다.
-const form = ref({
-  name: '',
-  gender: '',
-  birthDate: '',
-  email: '',
-  password: '',
-  passwordConfirm: '',
-})
+//
+// 2단계에서 뒤로 돌아왔을 때 다시 입력하지 않도록 스토어에 있던 값으로 시작한다.
+// passwordConfirm 은 스토어에 담지 않으므로(보낼 값이 아니다) 비밀번호로 채워 둔다.
+const form = ref({ ...signupStore.form, passwordConfirm: signupStore.form.password })
 
 // 비밀번호 표시 여부 — 기본은 가림(감은 눈), 누르면 보임(뜬 눈)
 const showPassword = ref(false)
@@ -34,6 +38,39 @@ function formatBirth(event) {
   const digits = event.target.value.replace(/\D/g, '').slice(0, 8)
   const parts = [digits.slice(0, 4), digits.slice(4, 6), digits.slice(6, 8)]
   form.value.birthDate = parts.filter(Boolean).join('-')
+}
+
+/**
+ * 비밀번호 불일치 안내.
+ *
+ * 확인란을 아직 건드리지 않았을 때는 띄우지 않는다 — 입력을 시작하기도 전에 빨간 문구가 뜨면
+ * 잘못한 것처럼 보인다.
+ */
+const passwordMismatch = computed(
+  () => form.value.passwordConfirm !== '' && form.value.password !== form.value.passwordConfirm,
+)
+
+/** 다음 단계로 넘길 수 있는지. 백엔드가 거절할 값을 여기서 미리 막는다. */
+const canSubmit = computed(() => {
+  const { name, gender, birthDate, email, password, passwordConfirm } = form.value
+
+  return Boolean(
+    name &&
+    gender &&
+    // formatBirth 가 하이픈을 넣으므로 YYYY-MM-DD 는 10자다. 부분 입력(예: '1995')을 걸러낸다.
+    birthDate.length === 10 &&
+    email &&
+    password.length >= MIN_PASSWORD_LENGTH &&
+    password === passwordConfirm,
+  )
+})
+
+/** passwordConfirm 은 화면에서만 쓰는 값이라 스토어에 담지 않는다. */
+function goNext() {
+  const { name, gender, birthDate, email, password } = form.value
+
+  signupStore.setForm({ name, gender, birthDate, email, password })
+  router.push({ name: 'signup-agree' })
 }
 </script>
 
@@ -133,11 +170,15 @@ function formatBirth(event) {
         </button>
       </div>
 
+      <p v-if="passwordMismatch" class="mt-2 text-[12px] font-medium text-red-500">
+        비밀번호가 일치하지 않습니다.
+      </p>
+
       <div class="h-6 flex-1"></div>
     </div>
 
     <div class="flex flex-none flex-col px-7 pb-14">
-      <BaseButton :to="{ name: 'signup-agree' }"> 다음 </BaseButton>
+      <BaseButton :variant="canSubmit ? 'primary' : 'disabled'" @click="goNext"> 다음 </BaseButton>
     </div>
   </div>
 </template>
