@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAssetLinkStore } from '@/stores/assetLink'
+import { useAuthStore } from '@/stores/auth'
 import { useSignupStore } from '@/stores/signup'
 import BlankLayout from '@/layouts/BlankLayout.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
@@ -57,25 +58,21 @@ const routes = [
         path: 'signup/asset',
         name: 'signup-asset',
         component: () => import('@/pages/auth/AssetLinkPage.vue'),
-        meta: { public: true },
       },
       {
         path: 'signup/asset/institutions',
         name: 'signup-asset-institutions',
         component: () => import('@/pages/auth/InstitutionsPage.vue'),
-        meta: { public: true },
       },
       {
         path: 'signup/asset/linking',
         name: 'signup-asset-linking',
         component: () => import('@/pages/auth/AssetLinkingPage.vue'),
-        meta: { public: true },
       },
       {
         path: 'signup/asset/done',
         name: 'signup-asset-done',
         component: () => import('@/pages/auth/AssetLinkedPage.vue'),
-        meta: { public: true },
         // 연동 응답이 있어야 그릴 수 있는 화면이다. 자산 조회 API 가 없어 다시 불러올 수도 없으므로,
         // 새로고침 등으로 스토어가 빈 채 들어오면 연동 화면으로 되돌린다.
         // (화면이 뜬 뒤에 이동을 걸면 진행 중인 내비게이션과 충돌한다 — signup-cert 와 같은 이유)
@@ -193,20 +190,26 @@ const router = createRouter({
 })
 
 /**
- * 인증 가드 (뼈대).
+ * 인증 가드.
  *
- * 인증 도메인(로그인 화면 + authStore)이 준비되면 아래 주석을 활성화한다.
- * meta.public 이 없는 라우트는 로그인이 필요한 것으로 간주한다.
+ * {@code meta.public} 이 없는 라우트는 로그인이 필요한 것으로 본다. 토큰이 없으면 화면을 띄우지
+ * 않고 로그인으로 보내고, 원래 가려던 주소를 {@code redirect} 로 넘긴다.
+ *
+ * <b>이것은 보안장치가 아니다.</b> 브라우저 코드라 우회할 수 있고, 실제로 데이터를 지키는 것은
+ * 백엔드 시큐리티 필터다. 여기서 막는 이유는 <b>헛걸음을 없애기 위해서</b>다 — 없으면 사용자는
+ * 화면만 뜨고 내용은 비어 있는 상태를 보고 나서야 로그인이 필요한 줄 알게 된다.
  */
-router.beforeEach(() => {
-  // 활성화 시 파라미터(to)를 받아 사용:
-  //   router.beforeEach((to) => {
-  //     const authStore = useAuthStore()
-  //     if (!to.meta.public && !authStore.isAuthenticated) {
-  //       return { name: 'login', query: { redirect: to.fullPath } }
-  //     }
-  //     return true
-  //   })
+router.beforeEach((to) => {
+  const authStore = useAuthStore()
+
+  // localStorage 의 실제 값과 먼저 맞춘다. client.js 의 응답 인터셉터는 401 을 받으면 스토어를
+  // 거치지 않고 토큰을 지우므로, 이걸 빼면 스토어만 "아직 로그인 중"이라고 착각해 통과시킨다.
+  authStore.syncFromStorage()
+
+  if (!to.meta.public && !authStore.isAuthenticated) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
   return true
 })
 

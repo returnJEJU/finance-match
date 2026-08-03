@@ -12,7 +12,7 @@
  * 설문을 막 끝냈을 때의 이동(개인설문 → 개인성향 → 계산중 → 대시보드)은 각 화면이 이미 담당한다.
  * 여기서는 그 사슬의 <b>어느 지점에 떨어뜨릴지</b>만 정한다.
  */
-export function resolveNextRoute({ isFirstLogin, progress }) {
+export function resolveNextRoute({ isFirstLogin, progress }, redirect = null) {
   // 가입 직후 첫 로그인. 서비스 소개를 거쳐 초대 화면으로 넘어간다(이동은 소개 화면이 담당).
   if (isFirstLogin) {
     return { name: 'service-introduction' }
@@ -24,6 +24,15 @@ export function resolveNextRoute({ isFirstLogin, progress }) {
     personalSurveyCompleted,
     partnerPersonalSurveyCompleted,
   } = progress
+
+  // 로그인이 필요해서 튕겨 나왔던 사람을 원래 가려던 화면으로 돌려보낸다.
+  //
+  // 단 <b>온보딩을 다 끝낸 사람에게만</b> 허용한다. 퍼널 중간에 있는 사람을 원하는 곳으로 보내면
+  // 볼 것이 없는 화면(커플도 없는데 리포트 등)에 떨어진다. 그런 사람은 다음 단계로 안내하는 편이
+  // 낫다.
+  if (redirect && isOnboardingComplete(progress)) {
+    return redirect
+  }
 
   if (!coupleConnected) {
     // 초대코드를 만들려면 공동설문을 먼저 해야 한다.
@@ -48,4 +57,17 @@ export function resolveNextRoute({ isFirstLogin, progress }) {
   return partnerPersonalSurveyCompleted
     ? { name: 'match-calculating' }
     : { name: 'dashboard-waiting' }
+}
+
+/**
+ * 온보딩을 모두 마쳐 앱을 자유롭게 돌아다녀도 되는 상태인지.
+ *
+ * 커플이 연결되고 두 사람의 개인설문이 모두 끝나야 리포트·추천·대시보드에 볼 것이 생긴다.
+ */
+export function isOnboardingComplete(progress) {
+  return Boolean(
+    progress?.coupleConnected &&
+    progress?.personalSurveyCompleted &&
+    progress?.partnerPersonalSurveyCompleted,
+  )
 }
