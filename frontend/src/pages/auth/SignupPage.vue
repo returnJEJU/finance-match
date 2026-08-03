@@ -1,46 +1,32 @@
 <script setup>
 // 회원가입 - 정보 입력 (1/4) · 레이아웃: BlankLayout
 //
-// 입력값은 화면 안에서만 관리한다. 검증·저장·API 는 인증 도메인이 준비되면 붙인다.
-// 첫 단계라 상단에 뒤로가기를 두지 않는다.
-import { nextTick, ref } from 'vue'
-import { ChevronDown, Eye, EyeOff, X } from 'lucide-vue-next'
+// 입력값은 signupStore 에 담아 다음 단계로 넘긴다. 실제 가입 요청은 3단계(인증서)에서
+// 1·2단계를 합쳐 한 번에 보낸다. 첫 단계라 상단에 뒤로가기를 두지 않는다.
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { Eye, EyeOff } from 'lucide-vue-next'
+import { useSignupStore } from '@/stores/signup'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import PageTitle from '@/components/ui/PageTitle.vue'
 import FunnelHeader from '@/components/layout/FunnelHeader.vue'
 
-const form = ref({
-  name: '',
-  gender: '',
-  birth: '',
-  emailLocal: '', // @ 앞
-  emailDomain: '', // @ 뒤 — 목록에서 고른 값 ('custom' 이면 직접 입력)
-  emailDomainCustom: '', // 직접 입력한 도메인
-  password: '',
-  passwordConfirm: '',
-})
+/** 백엔드 제약(8~64자)의 최솟값. 여기서 막지 않으면 3단계에 가서야 INVALID_INPUT 이 난다. */
+const MIN_PASSWORD_LENGTH = 8
+
+const router = useRouter()
+const signupStore = useSignupStore()
+
+// gender 는 백엔드 enum 값(F·M)을 그대로 담는다. 화면 문구(여성·남성)와 분리해 두면
+// 보낼 때 변환하는 단계가 생기고, 빠뜨리면 INVALID_INPUT 이 난다.
+//
+// 2단계에서 뒤로 돌아왔을 때 다시 입력하지 않도록 스토어에 있던 값으로 시작한다.
+// passwordConfirm 은 스토어에 담지 않으므로(보낼 값이 아니다) 비밀번호로 채워 둔다.
+const form = ref({ ...signupStore.form, passwordConfirm: signupStore.form.password })
 
 // 비밀번호 표시 여부 — 기본은 가림(감은 눈), 누르면 보임(뜬 눈)
 const showPassword = ref(false)
 const showPasswordConfirm = ref(false)
-
-// 이메일 도메인 목록. '직접 입력' 을 고르면 같은 자리가 입력창으로 바뀐다.
-const EMAIL_DOMAINS = ['gmail.com', 'naver.com']
-
-const domainInput = ref(null)
-
-// 목록에서 '직접 입력' 을 고르면 곧바로 타이핑할 수 있게 커서를 옮긴다.
-async function onDomainChange() {
-  if (form.value.emailDomain !== 'custom') return
-  await nextTick()
-  domainInput.value?.focus()
-}
-
-// 직접 입력을 취소하고 다시 목록으로 되돌린다.
-function resetDomain() {
-  form.value.emailDomain = ''
-  form.value.emailDomainCustom = ''
-}
 
 /**
  * 생년월일을 YYYY-MM-DD 로 보이게 한다.
@@ -51,7 +37,40 @@ function resetDomain() {
 function formatBirth(event) {
   const digits = event.target.value.replace(/\D/g, '').slice(0, 8)
   const parts = [digits.slice(0, 4), digits.slice(4, 6), digits.slice(6, 8)]
-  form.value.birth = parts.filter(Boolean).join('-')
+  form.value.birthDate = parts.filter(Boolean).join('-')
+}
+
+/**
+ * 비밀번호 불일치 안내.
+ *
+ * 확인란을 아직 건드리지 않았을 때는 띄우지 않는다 — 입력을 시작하기도 전에 빨간 문구가 뜨면
+ * 잘못한 것처럼 보인다.
+ */
+const passwordMismatch = computed(
+  () => form.value.passwordConfirm !== '' && form.value.password !== form.value.passwordConfirm,
+)
+
+/** 다음 단계로 넘길 수 있는지. 백엔드가 거절할 값을 여기서 미리 막는다. */
+const canSubmit = computed(() => {
+  const { name, gender, birthDate, email, password, passwordConfirm } = form.value
+
+  return Boolean(
+    name &&
+    gender &&
+    // formatBirth 가 하이픈을 넣으므로 YYYY-MM-DD 는 10자다. 부분 입력(예: '1995')을 걸러낸다.
+    birthDate.length === 10 &&
+    email &&
+    password.length >= MIN_PASSWORD_LENGTH &&
+    password === passwordConfirm,
+  )
+})
+
+/** passwordConfirm 은 화면에서만 쓰는 값이라 스토어에 담지 않는다. */
+function goNext() {
+  const { name, gender, birthDate, email, password } = form.value
+
+  signupStore.setForm({ name, gender, birthDate, email, password })
+  router.push({ name: 'signup-agree' })
 }
 </script>
 
@@ -77,8 +96,8 @@ function formatBirth(event) {
       <div class="flex gap-2">
         <button
           v-for="option in [
-            { value: 'male', label: '남성' },
-            { value: 'female', label: '여성' },
+            { value: 'M', label: '남성' },
+            { value: 'F', label: '여성' },
           ]"
           :key="option.value"
           type="button"
@@ -92,7 +111,7 @@ function formatBirth(event) {
 
       <label class="text-ink-sub mt-4 mb-1.5 text-[12px] font-semibold">생년월일</label>
       <input
-        :value="form.birth"
+        :value="form.birthDate"
         type="text"
         inputmode="numeric"
         maxlength="10"
@@ -102,54 +121,14 @@ function formatBirth(event) {
       />
 
       <label class="text-ink-sub mt-4 mb-1.5 text-[12px] font-semibold">이메일(아이디)</label>
-      <div class="flex items-center gap-2">
-        <input
-          v-model="form.emailLocal"
-          type="text"
-          placeholder="example"
-          class="border-line-field rounded-field placeholder:text-muted-soft h-12 min-w-0 flex-1 border bg-white px-3.5 text-[14px] outline-none"
-        />
-        <span class="text-muted flex-none text-[14px]">@</span>
-        <div class="relative min-w-0 flex-1">
-          <!-- 목록에서 고르는 상태 -->
-          <template v-if="form.emailDomain !== 'custom'">
-            <select
-              v-model="form.emailDomain"
-              class="border-line-field rounded-field h-12 w-full cursor-pointer appearance-none border bg-white pr-9 pl-3.5 text-[14px] outline-none"
-              :class="form.emailDomain === '' ? 'text-muted-soft' : 'text-ink'"
-              @change="onDomainChange"
-            >
-              <option value="" disabled>선택</option>
-              <option v-for="domain in EMAIL_DOMAINS" :key="domain" :value="domain">
-                {{ domain }}
-              </option>
-              <option value="custom">직접 입력</option>
-            </select>
-            <ChevronDown
-              class="text-muted-soft pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2"
-            />
-          </template>
-
-          <!-- 직접 입력하는 상태 — 같은 자리가 입력창으로 바뀐다 -->
-          <template v-else>
-            <input
-              ref="domainInput"
-              v-model="form.emailDomainCustom"
-              type="text"
-              placeholder="직접 입력"
-              class="border-line-field rounded-field placeholder:text-muted-soft h-12 w-full border bg-white pr-9 pl-3.5 text-[14px] outline-none"
-            />
-            <button
-              type="button"
-              class="text-muted-soft absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer"
-              aria-label="목록에서 고르기"
-              @click="resetDomain"
-            >
-              <X class="h-4 w-4" />
-            </button>
-          </template>
-        </div>
-      </div>
+      <input
+        v-model="form.email"
+        type="email"
+        inputmode="email"
+        autocomplete="email"
+        placeholder="example@gmail.com"
+        class="border-line-field rounded-field placeholder:text-muted-soft h-12 border bg-white px-3.5 text-[14px] outline-none"
+      />
 
       <label class="text-ink-sub mt-4 mb-1.5 text-[12px] font-semibold">비밀번호</label>
       <div
@@ -191,11 +170,15 @@ function formatBirth(event) {
         </button>
       </div>
 
+      <p v-if="passwordMismatch" class="mt-2 text-[12px] font-medium text-red-500">
+        비밀번호가 일치하지 않습니다.
+      </p>
+
       <div class="h-6 flex-1"></div>
     </div>
 
     <div class="flex flex-none flex-col px-7 pb-14">
-      <BaseButton :to="{ name: 'signup-agree' }"> 다음 </BaseButton>
+      <BaseButton :variant="canSubmit ? 'primary' : 'disabled'" @click="goNext"> 다음 </BaseButton>
     </div>
   </div>
 </template>
