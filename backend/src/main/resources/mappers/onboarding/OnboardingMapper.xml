@@ -22,13 +22,23 @@
                 FROM member_couple
             ) AS couple_connected,
 
+            <!--
+                초대코드를 발급한 적이 있는가 = 공동설문을 한 사람 = 초대를 "보낸" 사람.
+
+                코드 상태(ACTIVE/USED)는 보지 않는다. 커플이 연결되는 순간 코드가 USED 로 바뀌는데
+                (CoupleService.markInvitationUsed), 상태를 따지면 그때부터 보낸 사람도 false 가 되어
+                받은 사람과 구분할 수 없다. 프론트는 연결 후 "받은 사람만 연결 완료 화면을 거치게"
+                하는 데 이 값을 쓴다.
+
+                받은 사람에게 false 인 것은 보장된다 — 커플 연결 시 그 사람의 초대·공동설문 행을
+                지우기 때문이다(CoupleService 의 "A의 정보 삭제").
+            -->
             EXISTS (
                 SELECT 1
                 FROM common_survey cs
                     INNER JOIN invitation_code ic
                     ON ic.common_survey_id = cs.id
                 WHERE cs.member_id = m.id
-                    AND ic.status = 'ACTIVE'
             ) AS has_invitation,
 
             EXISTS (
