@@ -98,10 +98,10 @@ function goToPersonalSurvey() {
     <div class="flex flex-1 flex-col">
       <div class="text-center">
         <img :src="logoWordmark" alt="찰떡귱합" class="mx-auto w-[74px]" />
-        <img :src="characterMarried" alt="" class="mx-auto mt-3.5 w-[150px]" />
+        <img :src="characterMarried" alt="" class="mx-auto mt-3.5 w-[180px]" />
 
-        <PageTitle class="mt-2" align="center">{{ headline }}</PageTitle>
-        <p class="text-muted mt-2 text-[13px] leading-[1.5]">
+        <PageTitle class="mt-2 !text-[32px]" align="center">{{ headline }}</PageTitle>
+        <p class="text-muted mt-2 text-[16px] leading-[1.5]">
           파트너가 설정한 공동 목표를 확인한 뒤<br />개인 설문을 진행해 주세요.
         </p>
       </div>
@@ -112,12 +112,12 @@ function goToPersonalSurvey() {
       </div>
 
       <template v-else>
-        <p v-if="isError" class="mt-5 text-center text-[12px] font-semibold text-red-500">
+        <p v-if="isError" class="mt-5 text-center text-[16px] font-semibold text-red-500">
           공동 목표 정보를 불러오지 못했어요.
         </p>
 
         <section class="rounded-card border-line-card mt-6 border bg-white px-5 py-5 shadow-sm">
-          <h2 class="text-ink flex items-center gap-2 text-[15px] font-extrabold">
+          <h2 class="text-ink flex items-center gap-2 text-[20px] font-extrabold">
             <ClipboardList :size="18" class="text-brand-ink" />
             우리의 공동 목표 요약
           </h2>
@@ -128,9 +128,9 @@ function goToPersonalSurvey() {
               :key="item.label"
               class="rounded-field bg-surface-muted px-3.5 py-3"
             >
-              <dt class="text-muted text-[12px] font-bold">{{ item.label }}</dt>
+              <dt class="text-muted text-[16px] font-bold">{{ item.label }}</dt>
               <dd
-                class="text-brand-ink mt-1.5 text-[14px] leading-[1.35] font-extrabold break-keep"
+                class="text-brand-ink mt-1.5 text-[18px] leading-[1.35] font-extrabold break-keep"
               >
                 {{ item.value }}
               </dd>
@@ -142,7 +142,7 @@ function goToPersonalSurvey() {
       <div class="flex-1"></div>
     </div>
 
-    <BaseButton class="mt-7 flex-none" @click="goToPersonalSurvey">
+    <BaseButton class="mt-7 flex-none text-[20px]" @click="goToPersonalSurvey">
       개인 설문 시작하기
       <ArrowRight :size="18" :stroke-width="2.4" />
     </BaseButton>

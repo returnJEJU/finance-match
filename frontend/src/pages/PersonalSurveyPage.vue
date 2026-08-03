@@ -250,40 +250,42 @@ function submitSurvey() {
 </script>
 
 <template>
-  <section class="mx-auto flex min-h-screen flex-col bg-canvas px-5 pt-3 pb-7">
-    <header class="flex flex-none items-center">
-      <button
-        type="button"
-        class="relative z-10 flex h-8 w-8 cursor-pointer items-center justify-start"
-        aria-label="뒤로 가기"
-        @click="goBack"
-      >
-        <ChevronLeft :size="20" :stroke-width="2" />
-      </button>
+  <section class="mx-auto flex min-h-screen flex-col bg-canvas px-5 pb-7">
+    <div class="sticky top-0 z-30 -mx-5 bg-canvas px-5 pt-3 pb-4">
+      <header class="flex flex-none items-center">
+        <button
+          type="button"
+          class="relative z-10 flex h-8 w-8 cursor-pointer items-center justify-start"
+          aria-label="뒤로 가기"
+          @click="goBack"
+        >
+          <ChevronLeft :size="20" :stroke-width="2" />
+        </button>
 
-      <h1 class="-ml-8 flex-1 text-center text-[18px] font-semibold text-ink">개인 설문</h1>
-    </header>
+        <h1 class="-ml-8 flex-1 text-center text-[20px] font-semibold text-ink">개인 설문</h1>
+      </header>
 
-    <div class="mt-8">
-      <span class="text-brand-ink text-[13px] font-extrabold">
-        {{ progressLabel }}
-      </span>
+      <div class="mt-8">
+        <span class="text-brand-ink text-[16px] font-extrabold">
+          {{ progressLabel }}
+        </span>
 
-      <div class="mt-2 grid h-1.5 grid-cols-6 gap-1">
-        <div
-          v-for="(_, index) in questionCompletion"
-          :key="index"
-          class="h-full rounded-full transition-colors"
-          :class="index < completedQuestionCount ? 'bg-brand-deep' : 'bg-line-card'"
-        ></div>
+        <div class="mt-2 grid h-1.5 grid-cols-6 gap-1">
+          <div
+            v-for="(_, index) in questionCompletion"
+            :key="index"
+            class="h-full rounded-full transition-colors"
+            :class="index < completedQuestionCount ? 'bg-brand-deep' : 'bg-line-card'"
+          ></div>
+        </div>
       </div>
     </div>
 
-    <main class="mt-8 flex-1">
+    <main class="mt-7 flex-1">
       <div class="rounded-field flex items-center gap-4 bg-brand px-4 py-4">
         <img :src="characterExcited" alt="" class="h-14 w-14 flex-none object-contain" />
 
-        <p class="text-[14px] leading-[1.45] font-bold text-brand-ink">
+        <p class="text-[16px] leading-[1.45] font-bold text-brand-ink">
           찰떡같은 맞춤 리포트를 위해 개인별<br />
           추가 정보가 필요해요.
         </p>
@@ -292,7 +294,7 @@ function submitSurvey() {
       <form class="mt-7 space-y-7" @submit.prevent="submitSurvey">
         <!-- Q1 -->
         <fieldset class="min-w-0">
-          <label for="annual-income" class="text-[17px] font-extrabold text-ink">
+          <label for="annual-income" class="text-[20px] font-extrabold text-ink">
             Q1. 최근 1년 동안 나의 연소득은?
           </label>
 
@@ -304,14 +306,14 @@ function submitSurvey() {
                 type="text"
                 inputmode="numeric"
                 autocomplete="off"
-                class="min-w-0 flex-1 bg-transparent text-right text-[21px] font-semibold text-ink outline-none"
+                class="min-w-0 flex-1 bg-transparent text-right text-[22px] font-semibold text-ink outline-none"
                 @input="updateAnnualIncome"
               />
-              <span class="ml-5 text-[14px] font-medium text-ink">원</span>
+              <span class="ml-5 text-[16px] font-medium text-ink">원</span>
             </div>
 
             <div class="mt-2 flex justify-end">
-              <span class="rounded-[4px] bg-mint px-2 py-1 text-[14px] font-extrabold text-good">
+              <span class="rounded-[4px] bg-mint px-2 py-1 text-[16px] font-extrabold text-good">
                 {{ annualIncomeSummary }}
               </span>
             </div>
@@ -320,7 +322,7 @@ function submitSurvey() {
 
         <!-- Q2 -->
         <fieldset class="min-w-0">
-          <label for="monthly-amount" class="text-[17px] font-extrabold text-ink">
+          <label for="monthly-amount" class="text-[20px] font-extrabold text-ink">
             Q2. 한 달에 무리 없이 모을 수 있는 돈은?
           </label>
 
@@ -332,14 +334,14 @@ function submitSurvey() {
                 type="text"
                 inputmode="numeric"
                 autocomplete="off"
-                class="min-w-0 flex-1 bg-transparent text-right text-[21px] font-semibold text-ink outline-none"
+                class="min-w-0 flex-1 bg-transparent text-right text-[22px] font-semibold text-ink outline-none"
                 @input="updateMonthlyAmount"
               />
-              <span class="ml-5 text-[14px] font-medium text-ink">원</span>
+              <span class="ml-5 text-[16px] font-medium text-ink">원</span>
             </div>
 
             <div class="mt-2 flex justify-end">
-              <span class="rounded-[4px] bg-mint px-2 py-1 text-[14px] font-extrabold text-good">
+              <span class="rounded-[4px] bg-mint px-2 py-1 text-[16px] font-extrabold text-good">
                 {{ monthlyAmountSummary }}
               </span>
             </div>
@@ -348,7 +350,7 @@ function submitSurvey() {
 
         <!-- Q3 -->
         <fieldset>
-          <legend class="text-[17px] leading-[1.5] font-extrabold text-ink">
+          <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
             Q3. 총 자산(부동산 등을 포함) 중 금융자산의<br />
             비중은?
           </legend>
@@ -358,7 +360,7 @@ function submitSurvey() {
               v-for="option in financialAssetRatioOptions"
               :key="option.value"
               type="button"
-              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[13px] font-semibold transition"
+              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[18px] font-semibold transition"
               :class="
                 financialAssetRatio === option.value
                   ? 'border-good bg-mint text-ink'
@@ -373,11 +375,11 @@ function submitSurvey() {
 
         <!-- Q4: 복수 선택 -->
         <fieldset>
-          <legend class="text-[17px] leading-[1.5] font-extrabold text-ink">
+          <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
             Q4. 다음 중 자신의 투자경험과 가까운 항목은?
           </legend>
 
-          <p class="text-muted-soft mt-1 text-[11px] font-semibold">
+          <p class="text-muted-soft mt-1 text-[16px] font-semibold">
             해당하는 항목을 모두 선택해 주세요.
           </p>
 
@@ -386,7 +388,7 @@ function submitSurvey() {
               v-for="option in investmentExperienceOptions"
               :key="option.value"
               type="button"
-              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[12px] leading-[1.45] font-semibold transition"
+              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[18px] leading-[1.45] font-semibold transition"
               :class="
                 investmentExperiences.includes(option.value)
                   ? 'border-good bg-mint text-ink'
@@ -402,7 +404,7 @@ function submitSurvey() {
 
         <!-- Q5 -->
         <fieldset>
-          <legend class="text-[17px] leading-[1.5] font-extrabold text-ink">
+          <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
             Q5. 자신의 금융투자상품에 대한 이해도는?
           </legend>
 
@@ -411,7 +413,7 @@ function submitSurvey() {
               v-for="option in financialKnowledgeOptions"
               :key="option.value"
               type="button"
-              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[12px] leading-[1.45] font-semibold transition"
+              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[18px] leading-[1.45] font-semibold transition"
               :class="
                 financialKnowledge === option.value
                   ? 'border-good bg-mint text-ink'
@@ -426,9 +428,8 @@ function submitSurvey() {
 
         <!-- Q6 -->
         <fieldset>
-          <legend class="text-[17px] leading-[1.5] font-extrabold text-ink">
-            Q6. 다음 중 현재 투자목적을 고려한 원금보존<br />
-            태도는?
+          <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
+            Q6. 다음 중 현재 투자목적을 고려한 원금보존 태도는?
           </legend>
 
           <div class="mt-3 space-y-2.5">
@@ -436,7 +437,7 @@ function submitSurvey() {
               v-for="option in capitalPreservationOptions"
               :key="option.value"
               type="button"
-              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[13px] font-semibold transition"
+              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[18px] font-semibold transition"
               :class="
                 capitalPreservationAttitude === option.value
                   ? 'border-good bg-mint text-ink'
@@ -450,12 +451,13 @@ function submitSurvey() {
         </fieldset>
 
         <div class="pt-1">
-          <p v-if="formError" class="mb-3 min-h-4 text-center text-[12px] font-semibold text-warn">
+          <p v-if="formError" class="mb-3 min-h-4 text-center text-[16px] font-semibold text-warn">
             {{ formError }}
           </p>
 
           <BaseButton
-            class="w-full rounded-full shadow-lg shadow-brand-deep/30"
+            class="w-full rounded-full text-[20px] shadow-lg"
+            :class="isFormValid && !isSubmitting ? 'shadow-brand-deep/30' : 'shadow-gray-300/60'"
             :variant="isFormValid && !isSubmitting ? 'primary' : 'disabled'"
             @click="submitSurvey"
           >

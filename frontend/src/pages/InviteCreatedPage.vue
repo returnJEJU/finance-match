@@ -140,17 +140,17 @@ function goToInviteCodeInput() {
 <template>
   <section class="flex min-h-screen flex-col bg-canvas px-4 pt-4 pb-7">
     <header class="flex justify-center">
-      <span class="text-[17px] font-extrabold text-good">찰떡궁합</span>
+      <span class="text-[18px] font-extrabold text-good">찰떡궁합</span>
     </header>
 
     <main class="mt-5 flex flex-1 flex-col">
       <div class="text-center">
-        <img :src="characterExcited" alt="" class="mx-auto h-[104px] w-[104px] object-contain" />
+        <img :src="characterExcited" alt="" class="mx-auto h-32 w-32 object-contain" />
 
-        <h1 class="mt-5 text-[24px] leading-[1.35] font-extrabold text-ink">
+        <h1 class="mt-5 text-[32px] leading-[1.35] font-extrabold text-ink">
           공동 목표가 설정됐어요!
         </h1>
-        <p class="text-muted mt-2 text-[13px] font-medium">
+        <p class="text-muted mt-2 text-[16px] font-medium">
           두 분의 소중한 미래를 위한 첫 걸음입니다.
         </p>
       </div>
@@ -160,12 +160,12 @@ function goToInviteCodeInput() {
       </div>
 
       <template v-else>
-        <p v-if="hasLoadError" class="mt-5 text-center text-[12px] font-semibold text-red-500">
+        <p v-if="hasLoadError" class="mt-5 text-center text-[16px] font-semibold text-red-500">
           공동 목표 정보를 불러오지 못했어요.
         </p>
 
         <section class="rounded-card border-line-card mt-7 border bg-white px-5 py-5 shadow-sm">
-          <h2 class="flex items-center gap-2 text-[16px] font-extrabold text-ink">
+          <h2 class="flex items-center gap-2 text-[20px] font-extrabold text-ink">
             <ClipboardList :size="18" class="text-brand-ink" />
             우리의 공동 목표 요약
           </h2>
@@ -176,8 +176,8 @@ function goToInviteCodeInput() {
               :key="item.label"
               class="rounded-field bg-surface-muted px-4 py-4"
             >
-              <dt class="text-[12px] font-bold text-muted">{{ item.label }}</dt>
-              <dd class="mt-2 break-keep text-[14px] leading-[1.35] font-extrabold text-brand-ink">
+              <dt class="text-[16px] font-bold text-muted">{{ item.label }}</dt>
+              <dd class="mt-2 break-keep text-[18px] leading-[1.35] font-extrabold text-brand-ink">
                 {{ item.value }}
               </dd>
             </div>
@@ -185,13 +185,13 @@ function goToInviteCodeInput() {
         </section>
 
         <section class="rounded-card mt-5 bg-brand px-5 py-5">
-          <p class="text-center text-[14px] font-extrabold text-ink">
+          <p class="text-center text-[18px] font-extrabold text-ink">
             아래 코드를 파트너에게 보내주세요.
           </p>
 
           <div class="mt-4 rounded-[8px] border-2 border-dashed border-white bg-white px-4 py-4">
             <p
-              class="text-center font-mono text-[32px] leading-none font-extrabold tracking-[0.08em] text-ink"
+              class="text-center font-mono text-[38px] leading-none font-extrabold tracking-[0.08em] text-ink"
             >
               {{ inviteCode || '--------' }}
             </p>
@@ -199,7 +199,7 @@ function goToInviteCodeInput() {
 
           <button
             type="button"
-            class="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-card bg-mint text-[14px] font-extrabold text-ink transition active:scale-[0.98]"
+            class="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-card bg-mint text-[18px] font-extrabold text-ink transition active:scale-[0.98]"
             :disabled="!inviteCode"
             @click="copyInviteCode"
           >
@@ -210,7 +210,7 @@ function goToInviteCodeInput() {
         </section>
 
         <section class="rounded-card border-line-card mt-5 border bg-white px-5 py-5 shadow-sm">
-          <h2 class="text-[15px] font-extrabold text-ink">진행 상태</h2>
+          <h2 class="text-[20px] font-extrabold text-ink">진행 상태</h2>
 
           <ol class="mt-4 space-y-4">
             <li
@@ -220,16 +220,16 @@ function goToInviteCodeInput() {
             >
               <span
                 v-if="index < progressSteps.length - 1"
-                class="absolute top-6 left-[9px] h-7 w-px bg-line-card"
+                class="absolute top-7 left-[11px] h-8 w-px bg-line-card"
               ></span>
               <span
-                class="relative z-10 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+                class="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[16px] font-bold"
                 :class="step.done ? 'bg-mint text-good' : 'bg-line-card text-muted'"
               >
-                <Check v-if="step.done" :size="13" :stroke-width="3" />
+                <Check v-if="step.done" :size="15" :stroke-width="3" />
                 <span v-else class="h-1.5 w-1.5 rounded-full bg-muted"></span>
               </span>
-              <span class="pt-0.5 text-[13px] font-bold text-ink">{{ step.label }}</span>
+              <span class="pt-0.5 text-[18px] font-bold text-ink">{{ step.label }}</span>
             </li>
           </ol>
         </section>
@@ -239,7 +239,7 @@ function goToInviteCodeInput() {
     <div class="mt-7 flex flex-none flex-col gap-3">
       <!-- 진행 상태를 불러오기 전에는 어디로 갈지 정할 수 없어 누를 수 없게 둔다 -->
       <BaseButton
-        class="shadow-[0_8px_18px_rgba(250,230,77,0.28)]"
+        class="text-[20px] shadow-[0_8px_18px_rgba(250,230,77,0.28)]"
         :variant="isLoading ? 'disabled' : 'primary'"
         @click="goToNextStep"
       >
@@ -247,7 +247,12 @@ function goToInviteCodeInput() {
         <ArrowRight :size="18" :stroke-width="2.4" />
       </BaseButton>
 
-      <BaseButton v-if="!coupleConnected" variant="ghost" @click="goToInviteCodeInput">
+      <BaseButton
+        v-if="!coupleConnected"
+        class="text-[20px]"
+        variant="ghost"
+        @click="goToInviteCodeInput"
+      >
         <KeyRound :size="17" :stroke-width="2.2" />
         파트너 코드 입력하기
       </BaseButton>
