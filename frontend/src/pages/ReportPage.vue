@@ -19,23 +19,60 @@ import typeRiskNeutral from '@/assets/images/characters/types/type-risk-neutral.
 import typeActive from '@/assets/images/characters/types/type-active.png'
 import typeAggressive from '@/assets/images/characters/types/type-aggressive.png'
 
+// TEMP: description 은 백엔드(PersonalInvestmentType)에 아직 "확정 후 수정" 임시 문구뿐이고,
+// 이 리포트 API는 애초에 본인 것만 조회 가능해 파트너 설명을 못 받아온다 — 실제 문구 나오면 교체.
 const investmentTypeMeta = {
-  STABLE: { label: '안정형', character: typeStable },
-  STABLE_SEEKING: { label: '안정추구형', character: typeStabilitySeeking },
-  NEUTRAL: { label: '위험중립형', character: typeRiskNeutral },
-  AGGRESSIVE: { label: '적극투자형', character: typeActive },
-  VERY_AGGRESSIVE: { label: '공격투자형', character: typeAggressive },
+  STABLE: {
+    label: '든든지킴형',
+    character: typeStable,
+    description: '안정성과 예측 가능한 관리를 가장 중요하게 생각해요.',
+  },
+  STABLE_SEEKING: {
+    label: '차곡성장형',
+    character: typeStabilitySeeking,
+    description: '안정성을 우선하면서도 약간의 위험은 감수해 꾸준히 자산을 불려가요.',
+  },
+  NEUTRAL: {
+    label: '균형설계형',
+    character: typeRiskNeutral,
+    description: '안정과 수익 사이에서 균형을 유연하게 고려해요.',
+  },
+  AGGRESSIVE: {
+    label: '적극성장형',
+    character: typeActive,
+    description: '높은 수익을 위해 어느 정도의 위험은 감수하고 적극적으로 기회를 활용해요.',
+  },
+  VERY_AGGRESSIVE: {
+    label: '과감도전형',
+    character: typeAggressive,
+    description: '높은 위험을 감수하더라도 최대한의 수익을 추구하는 걸 선호해요.',
+  },
 }
 
 // 커플 공통 성향(investmentProfile.we)은 개인 성향과 다른 값이다 — 두 사람의 개인 성향 단계
 // 차이(0~4)를 나타내는 CoupleInvestmentType(DIFF_0~DIFF_4, 백엔드 CoupleInvestmentTypeCalculator)다.
-// TEMP: 실제 디자인·문구가 아직 기획되지 않아 임시 라벨로 연결해둔다. 확정되면 여기만 교체하면 된다.
+// TEMP: 실제 디자인·문구가 아직 기획되지 않아 임시 라벨·설명으로 연결해둔다. 확정되면 여기만 교체하면 된다.
 const coupleInvestmentTypeMeta = {
-  DIFF_0: { label: '찰떡궁합형' },
-  DIFF_1: { label: '비슷한 성향형' },
-  DIFF_2: { label: '적당히 다른 성향형' },
-  DIFF_3: { label: '많이 다른 성향형' },
-  DIFF_4: { label: '정반대 성향형' },
+  DIFF_0: {
+    label: '찰떡귱합형',
+    description: '금융을 바라보는 기준과 방향이 꼭 닮은 찰떡귱합이에요.',
+  },
+  DIFF_1: {
+    label: '닮은성향형',
+    description: '금융 기준이 대체로 비슷해 중요한 결정을 함께 내리기 편해요',
+  },
+  DIFF_2: {
+    label: '균형조합형',
+    description: '서로 다른 장점이 적절하게 만나 균형을 만들어가는 조합이에요',
+  },
+  DIFF_3: {
+    label: '조율성장형',
+    description: '차이는 있지만 대화를 통해 서로에게 맞는 방향을 찾아갈 수 있어요',
+  },
+  DIFF_4: {
+    label: '반전케미형',
+    description: '서로의 금융 관점이 뚜렷하게 달라요. 함께 지킬 기준을 정하는게 중요해요.',
+  },
 }
 
 // 점수 축(key)별 아이콘 — report API 의 scoreAxes[].key 와 매핑한다.
@@ -72,6 +109,9 @@ const goalDifferenceLabel = computed(() =>
 const coupleTypeLabel = computed(
   () => coupleInvestmentTypeMeta[report.value.investmentProfile.we].label,
 )
+const coupleTypeDescription = computed(
+  () => coupleInvestmentTypeMeta[report.value.investmentProfile.we].description,
+)
 
 const me = computed(() => ({
   name: report.value.name,
@@ -82,14 +122,49 @@ const partner = computed(() => ({
   ...investmentTypeMeta[report.value.investmentProfile.you],
 }))
 
-// 슬라이더 위치(%) — DIFF_0(0%, 성향 거의 같음) ~ DIFF_4(100%, 성향 정반대) 5단계.
-// TEMP: "안정형~공격형" 축 라벨은 원래 개인 성향 스펙트럼용이라 의미가 완전히 들어맞진 않지만,
-// 실제 디자인이 나오기 전까지 슬라이더가 최소한 정상 범위(0~100%) 안에서 움직이게만 해둔다.
-const coupleInvestmentTypeOrder = ['DIFF_0', 'DIFF_1', 'DIFF_2', 'DIFF_3', 'DIFF_4']
-const sliderPosition = computed(() => {
-  const index = coupleInvestmentTypeOrder.indexOf(report.value.investmentProfile.we)
-  return (index / (coupleInvestmentTypeOrder.length - 1)) * 100
+// 슬라이더 위치(%) — 안정형(0%) ~ 공격투자형(100%) 5단계 중 개인 성향의 인덱스로 계산.
+// 커플 공통 노브 1개 대신, 두 사람 각자의 위치를 따로 찍는다 — 이 축(안정형~공격형) 자체가
+// 원래 개인 성향 스펙트럼이라 "각자 어디에 있는지"가 "커플이 얼마나 다른지(DIFF)"보다 더 잘 맞는다.
+const investmentTypeOrder = ['STABLE', 'STABLE_SEEKING', 'NEUTRAL', 'AGGRESSIVE', 'VERY_AGGRESSIVE']
+const typePosition = (code) => {
+  const index = investmentTypeOrder.indexOf(code)
+  return (index / (investmentTypeOrder.length - 1)) * 100
+}
+const mePosition = computed(() => typePosition(report.value.investmentProfile.me))
+const partnerPosition = computed(() => typePosition(report.value.investmentProfile.you))
+
+// 슬라이더 색은 사람이 아니라 "위치"(안정 쪽=민트 ~ 도전 쪽=노랑) 기준으로 정해진다 —
+// 누가 왼쪽/오른쪽에 오는지는 그때그때 다르므로, 매번 낮은 쪽·높은 쪽을 다시 구한다.
+const isMeLower = computed(() => mePosition.value <= partnerPosition.value)
+const lowerPerson = computed(() => (isMeLower.value ? me.value : partner.value))
+const higherPerson = computed(() => (isMeLower.value ? partner.value : me.value))
+const lowerPosition = computed(() => Math.min(mePosition.value, partnerPosition.value))
+const higherPosition = computed(() => Math.max(mePosition.value, partnerPosition.value))
+
+// 캐릭터·커플 성향 라벨을 클릭하면 그 설명을 보여준다. 'me' | 'partner' | 'couple' | null —
+// 하나만 열려있다. 모바일에선 hover 가 안 먹히니 클릭으로 여닫는다. 같은 걸 다시 누르면 닫힌다.
+const openDescription = ref(null)
+const toggleDescription = (who) => {
+  openDescription.value = openDescription.value === who ? null : who
+}
+
+// 두 캐릭터 사이의 "글래스 하트" — 얇은 하트 SVG를 여러 겹 쌓아 Z축으로 펼치고 rotateY 로 돌려서
+// 3D처럼 보이게 만든다(Claude Design "Glass heart rotation effect" 포팅). 정적인 값이라 매 렌더마다
+// 다시 계산할 필요 없이 한 번만 만들어둔다.
+const HEART_PATH =
+  'M50 84 C 21 62, 11 45, 11 30 C 11 17, 22 10, 32 10 C 41 10, 46 15, 50 22 C 54 15, 59 10, 68 10 C 78 10, 89 17, 89 30 C 89 45, 79 62, 50 84 Z'
+const HEART_LAYER_COUNT = 20
+const HEART_DEPTH = 22
+const heartLayers = Array.from({ length: HEART_LAYER_COUNT }, (_, i) => {
+  const t = i / (HEART_LAYER_COUNT - 1)
+  return {
+    key: i,
+    z: (t - 0.5) * HEART_DEPTH,
+    hue: Math.round(210 + t * 170),
+    isFace: i === 0 || i === HEART_LAYER_COUNT - 1,
+  }
 })
+const heartGlintZ = (HEART_DEPTH / 2 + 1).toFixed(2)
 
 // 카드별 펼침 상태(복수 개 동시에 펼칠 수 있음). 기본은 전부 펼친 상태라, "닫힌 것만" 기록한다
 // (scoreAxes 가 비동기로 나중에 도착해도 미리 키를 알 필요가 없다).
@@ -122,12 +197,28 @@ const toggleCard = (key) => {
 
     <template v-else>
       <!-- 커플 성향 히어로 -->
-      <div class="text-center">
+      <div class="relative text-center">
         <p class="text-[13px] font-medium text-ink-sub">우리 커플의 금융 스타일은</p>
-        <p class="mt-1 text-[26px] font-extrabold">
+        <button
+          type="button"
+          class="mt-1 cursor-pointer text-[26px] font-extrabold"
+          :aria-expanded="openDescription === 'couple'"
+          @click="toggleDescription('couple')"
+        >
           <span class="text-good">{{ coupleTypeLabel }}</span>
           <span class="text-ink">입니다.</span>
-        </p>
+        </button>
+        <div
+          v-if="openDescription === 'couple'"
+          role="tooltip"
+          class="absolute top-full left-1/2 z-10 mt-2 w-[220px] -translate-x-1/2 rounded-[12px] bg-[#d5fae7] px-3 py-3 text-center text-[11px] leading-[1.5] font-medium tracking-[-0.3px] text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
+        >
+          <span
+            class="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-[#d5fae7]"
+          />
+          <p class="relative font-bold">{{ coupleTypeLabel }}</p>
+          <p class="relative mt-0.5">{{ coupleTypeDescription }}</p>
+        </div>
       </div>
 
       <div class="mt-6 flex items-center justify-between px-2">
@@ -140,23 +231,174 @@ const toggleCard = (key) => {
       </div>
 
       <div class="mt-2 flex items-center justify-center gap-4">
-        <img :src="me.character" :alt="me.label" class="h-24 w-24 object-contain" />
-        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand">
-          <Heart :size="16" fill="currentColor" class="text-ink" />
+        <div class="relative">
+          <button
+            type="button"
+            class="block cursor-pointer"
+            :aria-expanded="openDescription === 'me'"
+            @click="toggleDescription('me')"
+          >
+            <img :src="me.character" :alt="me.label" class="h-24 w-24 object-contain" />
+          </button>
+          <div
+            v-if="openDescription === 'me'"
+            role="tooltip"
+            class="absolute top-full left-1/2 z-10 mt-2 w-[180px] -translate-x-1/2 rounded-[12px] bg-[#d5fae7] px-3 py-3 text-center text-[11px] leading-[1.5] font-medium tracking-[-0.3px] text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
+          >
+            <span
+              class="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-[#d5fae7]"
+            />
+            <p class="relative font-bold">{{ me.label }}</p>
+            <p class="relative mt-0.5">{{ me.description }}</p>
+          </div>
         </div>
-        <img :src="partner.character" :alt="partner.label" class="h-24 w-24 object-contain" />
+
+        <!-- 글래스 하트: 얇은 SVG 하트를 여러 겹 쌓아 3D 회전 -->
+        <div class="relative flex h-16 w-16 shrink-0 items-center justify-center">
+          <span
+            class="absolute bottom-1 h-2 w-8 rounded-full bg-black/15 blur-[3px]"
+            aria-hidden="true"
+          />
+          <div class="heart-float relative h-12 w-12 rounded-full" style="perspective: 300px">
+            <div
+              class="absolute inset-0 rounded-full"
+              style="
+                background: radial-gradient(
+                  circle at 32% 26%,
+                  rgba(255, 255, 255, 0.28),
+                  rgba(255, 255, 255, 0) 58%
+                );
+                box-shadow: inset 0 0 12px rgba(120, 140, 200, 0.14);
+              "
+            />
+            <div
+              class="heart-spin absolute inset-0 flex items-center justify-center"
+              style="transform-style: preserve-3d; opacity: 0.9"
+            >
+              <div class="relative" style="width: 0; height: 0; transform-style: preserve-3d">
+                <svg
+                  v-for="layer in heartLayers"
+                  :key="layer.key"
+                  width="34"
+                  height="31"
+                  viewBox="0 0 100 92"
+                  class="absolute top-1/2 left-1/2"
+                  :style="{
+                    transform: `translate(-50%, -50%) translateZ(${layer.z.toFixed(2)}px)`,
+                  }"
+                >
+                  <path
+                    :d="HEART_PATH"
+                    :fill="`hsl(${layer.hue} 92% 66%)`"
+                    :fill-opacity="layer.isFace ? 0.55 : 0.14"
+                    :stroke="layer.isFace ? 'rgba(255,255,255,0.85)' : 'none'"
+                    :stroke-width="layer.isFace ? 2 : 0"
+                  />
+                </svg>
+                <svg
+                  width="34"
+                  height="31"
+                  viewBox="0 0 100 92"
+                  class="absolute top-1/2 left-1/2"
+                  :style="{ transform: `translate(-50%, -50%) translateZ(${heartGlintZ}px)` }"
+                >
+                  <ellipse
+                    cx="36"
+                    cy="30"
+                    rx="11"
+                    ry="6"
+                    fill="#ffffff"
+                    opacity="0.7"
+                    transform="rotate(-30 36 30)"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div
+              class="pointer-events-none absolute inset-0 rounded-full"
+              style="
+                background:
+                  radial-gradient(
+                    circle at 30% 24%,
+                    rgba(255, 255, 255, 0.92),
+                    rgba(255, 255, 255, 0) 20%
+                  ),
+                  radial-gradient(
+                    circle at 72% 76%,
+                    rgba(255, 255, 255, 0.4),
+                    rgba(255, 255, 255, 0) 26%
+                  );
+                box-shadow:
+                  inset 0 0 0 1px rgba(255, 255, 255, 0.4),
+                  inset 0 -8px 14px rgba(90, 110, 170, 0.12),
+                  inset 0 6px 12px rgba(255, 255, 255, 0.25);
+              "
+            />
+          </div>
+        </div>
+
+        <div class="relative">
+          <button
+            type="button"
+            class="block cursor-pointer"
+            :aria-expanded="openDescription === 'partner'"
+            @click="toggleDescription('partner')"
+          >
+            <img :src="partner.character" :alt="partner.label" class="h-24 w-24 object-contain" />
+          </button>
+          <div
+            v-if="openDescription === 'partner'"
+            role="tooltip"
+            class="absolute top-full left-1/2 z-10 mt-2 w-[180px] -translate-x-1/2 rounded-[12px] bg-[#d5fae7] px-3 py-3 text-center text-[11px] leading-[1.5] font-medium tracking-[-0.3px] text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
+          >
+            <span
+              class="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-[#d5fae7]"
+            />
+            <p class="relative font-bold">{{ partner.label }}</p>
+            <p class="relative mt-0.5">{{ partner.description }}</p>
+          </div>
+        </div>
       </div>
 
-      <!-- 안정형 ~ 공격형 슬라이더 -->
-      <div class="mt-6 flex items-center gap-3">
-        <span class="shrink-0 text-[11px] text-muted">안정형</span>
-        <div class="relative h-1 flex-1 rounded-full bg-line-card">
-          <span
-            class="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-ink bg-brand-deep"
-            :style="{ left: `calc(${sliderPosition}% - 6px)` }"
-          />
+      <!-- 안정 ~ 도전 슬라이더: 안정 쪽=민트, 도전 쪽=노랑 그라데이션. 낮은 위치·높은 위치에
+           각각 점을 찍고, 호버하면 이름·성향이 뜬다 -->
+      <div class="mt-7">
+        <div class="flex items-center justify-between">
+          <span class="text-[14px] font-bold text-ink">안정</span>
+          <span class="text-[14px] font-bold text-ink">도전</span>
         </div>
-        <span class="shrink-0 text-[11px] text-muted">공격형</span>
+        <div class="relative mt-3 h-1.5 rounded-full bg-line-card">
+          <div
+            class="absolute top-0 h-full rounded-full"
+            style="background: linear-gradient(to right, #78f2dc, #c3f29c, #fff44f)"
+            :style="{
+              left: `${lowerPosition}%`,
+              width: `${higherPosition - lowerPosition}%`,
+            }"
+          />
+          <span
+            class="group absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full bg-[#78f2dc]"
+            style="box-shadow: 0 0 0 6px rgba(120, 242, 220, 0.3)"
+            :style="{ left: `${lowerPosition}%` }"
+          >
+            <span
+              class="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100"
+            >
+              {{ lowerPerson.name }}님 · {{ lowerPerson.label }}
+            </span>
+          </span>
+          <span
+            class="group absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full bg-[#fff44f]"
+            style="box-shadow: 0 0 0 6px rgba(255, 244, 79, 0.35)"
+            :style="{ left: `${higherPosition}%` }"
+          >
+            <span
+              class="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100"
+            >
+              {{ higherPerson.name }}님 · {{ higherPerson.label }}
+            </span>
+          </span>
+        </div>
       </div>
 
       <!-- 점수 상세 분석 -->
@@ -252,3 +494,29 @@ const toggleCard = (key) => {
     </template>
   </section>
 </template>
+
+<style scoped>
+.heart-spin {
+  animation: heart-spin-y 6s linear infinite;
+}
+.heart-float {
+  animation: heart-float 4.8s ease-in-out infinite;
+}
+@keyframes heart-spin-y {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+@keyframes heart-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+</style>
