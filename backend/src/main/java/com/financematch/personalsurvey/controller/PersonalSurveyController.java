@@ -1,5 +1,6 @@
 package com.financematch.personalsurvey.controller;
 
+import com.financematch.auth.annotation.LoginMember;
 import com.financematch.common.ApiResponse;
 import com.financematch.personalsurvey.dto.PersonalSurveyRequest;
 import com.financematch.personalsurvey.dto.PersonalSurveyResponse;
@@ -14,21 +15,20 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 public class PersonalSurveyController {
 
-    // TODO: 추후 @LoginMember Long memberId로 교체
-    private static final Long TEMP_MEMBER_ID = 3L;
-
     private final PersonalSurveyService personalSurveyService;
 
     @PutMapping("")
     public ApiResponse<Void> savePersonalSurvey(
+            @LoginMember Long memberId,
             @Valid @RequestBody PersonalSurveyRequest request) {
-        personalSurveyService.save(TEMP_MEMBER_ID, request);
+        personalSurveyService.save(memberId, request);
         return ApiResponse.ok(null);
     }
 
     @GetMapping("")
-    public ApiResponse<PersonalSurveyResponse> getPersonalSurveyResult() {
-        PersonalSurveyResponse response = personalSurveyService.getPersonalSurveyResult(TEMP_MEMBER_ID);
+    public ApiResponse<PersonalSurveyResponse> getPersonalSurveyResult(
+            @LoginMember Long memberId) {
+        PersonalSurveyResponse response = personalSurveyService.getPersonalSurveyResult(memberId);
         return ApiResponse.ok(response);
     }
 
