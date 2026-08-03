@@ -44,7 +44,11 @@ class CoupleServiceTest {
                 coupleService.getProfileMessage(2L);
 
         // then
+        assertEquals("김하나", updated.getMyName());
+        assertEquals("이두리", updated.getPartnerName());
         assertEquals(profileMessage, updated.getProfileMessage());
+        assertEquals("이두리", partnerView.getMyName());
+        assertEquals("김하나", partnerView.getPartnerName());
         assertEquals(profileMessage, partnerView.getProfileMessage());
     }
 

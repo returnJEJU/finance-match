@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { computed, ref, watch } from 'vue'
 import { RefreshCw, X } from 'lucide-vue-next'
 import RecommendationProductCard from '@/components/recommendation/RecommendationProductCard.vue'
@@ -97,7 +97,7 @@ const addAllPackageProducts = () => {
 <template>
   <section class="rounded-[18px] border border-ink bg-[#FFF56E] p-3">
     <div class="mb-2">
-      <span class="rounded-full bg-ink px-2.5 py-1 text-[9px] font-semibold text-white">
+      <span class="rounded-full bg-ink px-2.5 py-1 text-[9px] font-semibold text-[#A2F5E6]">
         찰떡 PICK 패키지
       </span>
       <h2 class="mt-2 text-[14px] font-bold">우리 커플을 위한 맞춤 패키지</h2>
@@ -179,10 +179,12 @@ const addAllPackageProducts = () => {
       aria-modal="true"
       aria-label="패키지 상품 변경 확인"
     >
-      <section class="w-full max-w-[350px] rounded-[24px] bg-white p-5 text-center shadow-xl">
+      <section
+        class="relative w-full max-w-[350px] rounded-[28px] bg-white px-7 pt-7 pb-6 text-center shadow-xl"
+      >
         <button
           type="button"
-          class="ml-auto flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-muted"
+          class="absolute top-4 right-4 flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-muted"
           aria-label="상품 변경 취소"
           @click="cancelProductChange"
         >
@@ -190,27 +192,34 @@ const addAllPackageProducts = () => {
         </button>
 
         <div
-          class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-brand bg-brand-soft text-ink"
+          class="mx-auto flex h-14 w-14 items-center justify-center rounded-[16px] bg-[#FFF9C7] text-[#4F8EF7]"
         >
-          <RefreshCw class="h-6 w-6" />
+          <span class="flex h-8 w-8 items-center justify-center rounded-full bg-white"
+            ><RefreshCw class="h-5 w-5"
+          /></span>
         </div>
         <h2 class="mt-4 text-[15px] leading-5 font-extrabold">
           패키지 내 상품을<br />
           이 상품으로 변경하시겠습니까?
         </h2>
 
-        <div class="mt-5 grid grid-cols-2 gap-2 text-left">
-          <div class="rounded-xl bg-gray-50 p-3">
-            <p class="text-[9px] text-muted">현재 대표</p>
-            <p class="mt-1 text-[11px] leading-4 font-semibold">
+        <div class="mt-5 rounded-[14px] bg-[#F8F8F8] px-4 py-4 text-left">
+          <div class="grid grid-cols-[72px_1fr] items-start gap-2">
+            <p class="text-[10px] text-[#9CA3AF]">현재 대표</p>
+            <p class="text-[11px] leading-4 font-semibold text-[#9CA3AF] line-through">
               {{ currentProduct?.productName }}
             </p>
           </div>
-          <div class="rounded-xl bg-brand-soft p-3">
-            <p class="text-[9px] text-brand-ink">변경 상품</p>
-            <p class="mt-1 text-[11px] leading-4 font-semibold">
-              {{ pendingProduct.productName }}
-            </p>
+          <div class="mt-4 grid grid-cols-[72px_1fr] items-start gap-2">
+            <p class="text-[10px] font-semibold text-[#35CBAA]">변경 후</p>
+            <div>
+              <p class="text-[11px] leading-4 font-bold text-ink">
+                {{ pendingProduct.productName }}
+              </p>
+              <p v-if="pendingProduct.description" class="mt-1 text-[9px] leading-4 text-[#B97008]">
+                {{ pendingProduct.description }}
+              </p>
+            </div>
           </div>
         </div>
 

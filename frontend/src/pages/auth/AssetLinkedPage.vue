@@ -1,54 +1,102 @@
 <script setup>
 // 자산 연동 완료 · 레이아웃: BlankLayout
 //
-// 금액·기관 수는 모두 디자인 값 그대로다. 실제 연동이 붙으면 서버 응답으로 바꾼다.
+// 금액·구성비는 연동 응답에서 그린다. 응답은 assetLinkStore 가 앞 화면에서 넘겨준다 —
+// 자산 조회 API 가 없고(연동·갱신뿐), 카테고리별 금액은 응답을 만들 때만 쪼개 주는 값이라
+// DB 에도 남지 않아서 이 화면이 스스로 다시 불러올 수 없다.
+import { computed } from 'vue'
 import { ChevronRight, CreditCard, Landmark, Lock, TrendingUp, Wallet } from 'lucide-vue-next'
+import { useAssetLinkStore } from '@/stores/assetLink'
 import logoWordmark from '@/assets/images/logo/logo-wordmark.png'
 import characterExcited from '@/assets/images/characters/character-excited.png'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
-// 자산 구성 막대와 범례. percent 합은 100.
-const COMPOSITION = [
-  { key: 'saving', label: '예적금', percent: 60, bar: '#7FD8D3', dot: '#5FC4BE' },
-  { key: 'invest', label: '투자', percent: 25, bar: '#FAE64D', dot: '#C9A800' },
-  { key: 'cash', label: '계좌·현금', percent: 15, bar: '#F5A8C0', dot: '#E58AA8' },
-]
-
-// 불러온 내역
-const ITEMS = [
+/** 카테고리별 표시 정보. 순서가 화면에 나오는 순서다. */
+const ASSET_ROWS = [
   {
-    key: 'cash',
+    key: 'BANK_CHECKING',
     name: '계좌·현금',
     icon: Wallet,
     tint: '#FFF3D6',
-    desc: '토스뱅크 통장 외 10개',
-    amount: '12,630,000원',
+    bar: '#F5A8C0',
+    dot: '#E58AA8',
   },
   {
-    key: 'saving',
+    key: 'BANK_SAVINGS',
     name: '예적금',
     icon: Landmark,
     tint: '#E3F7E8',
-    desc: '주택청약종합저축 외 2개',
-    amount: '50,520,000원',
+    bar: '#7FD8D3',
+    dot: '#5FC4BE',
   },
   {
-    key: 'invest',
+    key: 'SECURITIES',
     name: '투자',
     icon: TrendingUp,
     tint: '#FFE9E9',
-    desc: '삼성전기 외 2개',
-    amount: '21,050,000원',
+    bar: '#FAE64D',
+    dot: '#C9A800',
   },
+  {
+    key: 'INSURANCE',
+    name: '보험',
+    icon: Landmark,
+    tint: '#EDE9FE',
+    bar: '#C4B5FD',
+    dot: '#A78BFA',
+  },
+]
+
+const assetLinkStore = useAssetLinkStore()
+
+// 스토어가 빈 채로 들어오는 경우는 라우터의 beforeEnter 가 막는다.
+// 화면이 뜬 뒤(onMounted)에 이동을 걸면 진행 중인 내비게이션과 충돌해 주소만 바뀐다.
+
+const result = computed(() => assetLinkStore.result)
+
+const won = (amount) => `${Number(amount).toLocaleString('ko-KR')}원`
+
+/** 카테고리 → 금액. 응답에 없는 카테고리는 0 으로 둔다. */
+const amountByCategory = computed(() => {
+  const map = {}
+  for (const row of ASSET_ROWS) map[row.key] = 0
+  for (const item of result.value?.summary ?? []) map[item.category] = item.amount
+  return map
+})
+
+/**
+ * 자산 구성 막대·범례.
+ *
+ * 금액이 0 인 카테고리는 빼서 0% 범례가 늘어서지 않게 한다.
+ */
+const composition = computed(() => {
+  const total = result.value?.totalAsset ?? 0
+  if (total <= 0) return []
+
+  return ASSET_ROWS.filter((row) => amountByCategory.value[row.key] > 0).map((row) => ({
+    ...row,
+    label: row.name,
+    percent: Math.round((amountByCategory.value[row.key] / total) * 1000) / 10,
+  }))
+})
+
+/** 불러온 내역. 자산 4종 + 대출 한 줄. */
+const items = computed(() => [
+  ...ASSET_ROWS.filter((row) => amountByCategory.value[row.key] > 0).map((row) => ({
+    key: row.key,
+    name: row.name,
+    icon: row.icon,
+    tint: row.tint,
+    amount: won(amountByCategory.value[row.key]),
+  })),
   {
     key: 'loan',
     name: '대출',
     icon: CreditCard,
     tint: '#E8EEFF',
-    desc: '연결된 대출이 없어요',
-    amount: '0원',
+    amount: won(result.value?.totalDebt ?? 0),
   },
-]
+])
 </script>
 
 <template>
@@ -64,7 +112,7 @@ const ITEMS = [
         자산 연동 완료!
       </h1>
       <p class="text-muted mt-1.5 text-center text-[13px] leading-[1.5]">
-        <b class="text-ink font-bold">17개 기관</b>을 한 번에 불러왔어요
+        <b class="text-ink font-bold">계좌 {{ result?.assetCount ?? 0 }}개</b>를 한 번에 불러왔어요
       </p>
 
       <!-- 총 자산 -->
@@ -75,14 +123,15 @@ const ITEMS = [
           </span>
           <span class="flex-1"></span>
           <span class="text-[25px] font-extrabold tracking-[-0.8px]">
-            84,200,000<span class="text-[17px]">원</span>
+            {{ Number(result?.totalAsset ?? 0).toLocaleString('ko-KR')
+            }}<span class="text-[17px]">원</span>
           </span>
         </div>
 
         <!-- 구성 비율 막대 -->
         <div class="mt-3.5 flex h-2 overflow-hidden rounded-full">
           <i
-            v-for="part in COMPOSITION"
+            v-for="part in composition"
             :key="part.key"
             class="block h-full"
             :style="{ width: `${part.percent}%`, backgroundColor: part.bar }"
@@ -90,7 +139,7 @@ const ITEMS = [
         </div>
 
         <div class="text-ink-sub mt-2.5 flex gap-3.5 text-[11px]">
-          <span v-for="part in COMPOSITION" :key="part.key" class="flex items-center gap-1">
+          <span v-for="part in composition" :key="part.key" class="flex items-center gap-1">
             <i class="h-1.5 w-1.5 rounded-full" :style="{ backgroundColor: part.dot }"></i>
             {{ part.label }}
             <b class="text-ink font-bold">{{ part.percent }}%</b>
@@ -110,7 +159,7 @@ const ITEMS = [
 
       <!-- 항목이 늘어나도 화면이 길어지지 않도록 이 영역만 스크롤한다 -->
       <div class="max-h-[180px] overflow-y-auto pr-3">
-        <template v-for="(item, index) in ITEMS" :key="item.key">
+        <template v-for="(item, index) in items" :key="item.key">
           <hr v-if="index > 0" class="border-line-soft border-t" />
           <div class="flex items-center gap-3 py-[11px]">
             <span
@@ -121,7 +170,6 @@ const ITEMS = [
             </span>
             <span class="min-w-0">
               <span class="block text-[14px] font-bold">{{ item.name }}</span>
-              <span class="text-muted mt-0.5 block truncate text-[11.5px]">{{ item.desc }}</span>
             </span>
             <span class="flex-1"></span>
             <span class="text-[15px] font-extrabold tracking-[-0.3px]">{{ item.amount }}</span>

@@ -18,6 +18,7 @@ public class ReportController {
 
     @GetMapping("")
     public ApiResponse<ReportResponse> getReport(@LoginMember Long memberId) {
+
         return ApiResponse.ok(reportService.getReport(memberId));
     }
 }

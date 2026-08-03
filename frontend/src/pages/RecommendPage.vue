@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { LoaderCircle, RotateCcw } from 'lucide-vue-next'
 import { createRecommendation, getRecommendation } from '@/api/recommendation'
+import { getCompatibility } from '@/api/match'
 import HighInterestDebtNotice from '@/components/recommendation/HighInterestDebtNotice.vue'
 import PersonalRecommendation from '@/components/recommendation/PersonalRecommendation.vue'
 import RecommendationPackage from '@/components/recommendation/RecommendationPackage.vue'
@@ -32,6 +33,12 @@ const {
 })
 const debtNoticeConfirmed = ref(false)
 
+const { data: compatibility } = useQuery({
+  queryKey: ['compatibility'],
+  queryFn: getCompatibility,
+  retry: false,
+})
+
 const errorCode = computed(() => error.value?.code)
 const isNotReady = computed(() => errorCode.value === 'RECOMMENDATION_NOT_READY')
 const visibleSlots = computed(() =>
@@ -39,6 +46,9 @@ const visibleSlots = computed(() =>
 )
 const recommendationsDimmed = computed(
   () => recommendation.value?.hasHighInterestDebt && !debtNoticeConfirmed.value,
+)
+const compatibilityScore = computed(() =>
+  compatibility.value ? Math.round(compatibility.value.totalScore) : null,
 )
 </script>
 
@@ -81,7 +91,10 @@ const recommendationsDimmed = computed(
       <header>
         <h1 class="text-xl font-extrabold tracking-[-0.03em]">우리를 위한 추천 패키지</h1>
         <p class="mt-1 text-[11px] text-muted">
-          금융 성향 · 공동 목표 · 자산 상태를 함께 반영했어요
+          <template v-if="compatibilityScore !== null">
+            우리 궁합 {{ compatibilityScore }}점 · 두 사람의 목표와 자산 흐름을 반영했어요
+          </template>
+          <template v-else>두 사람의 목표와 자산 흐름을 반영했어요</template>
         </p>
       </header>
 

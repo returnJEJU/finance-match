@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAssetLinkStore } from '@/stores/assetLink'
+import { useSignupStore } from '@/stores/signup'
 import BlankLayout from '@/layouts/BlankLayout.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 
@@ -46,6 +48,10 @@ const routes = [
         name: 'signup-cert',
         component: () => import('@/pages/auth/SignupCertPage.vue'),
         meta: { public: true },
+        // 회원가입 요청을 보내는 단계라 1·2단계 입력이 반드시 있어야 한다. 스토어는 메모리에만
+        // 있어서 새로고침하면 비므로, 그 상태로 들어오면 처음부터 다시 받는다.
+        // (화면이 뜬 뒤에 이동을 걸면 진행 중인 내비게이션과 충돌한다)
+        beforeEnter: () => (useSignupStore().isReady ? true : { name: 'signup' }),
       },
       {
         path: 'signup/asset',
@@ -70,6 +76,10 @@ const routes = [
         name: 'signup-asset-done',
         component: () => import('@/pages/auth/AssetLinkedPage.vue'),
         meta: { public: true },
+        // 연동 응답이 있어야 그릴 수 있는 화면이다. 자산 조회 API 가 없어 다시 불러올 수도 없으므로,
+        // 새로고침 등으로 스토어가 빈 채 들어오면 연동 화면으로 되돌린다.
+        // (화면이 뜬 뒤에 이동을 걸면 진행 중인 내비게이션과 충돌한다 — signup-cert 와 같은 이유)
+        beforeEnter: () => (useAssetLinkStore().hasResult ? true : { name: 'signup-asset' }),
       },
       {
         path: 'login',

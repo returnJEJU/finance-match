@@ -1,5 +1,6 @@
 package com.financematch.match.controller;
 
+import com.financematch.auth.annotation.LoginMember;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,16 +18,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MatchController {
 
-    // JWT 인증 구현 후 로그인 회원 ID로 교체
-    private static final Long TEMP_MEMBER_ID = 1L;
-
     private final MatchService matchService;
 
     @PostMapping("/compatibility")
     public ApiResponse<CompatibilityResultResponse>
-    calculateCompatibility() {
-
-        Long memberId = TEMP_MEMBER_ID;
+    calculateCompatibility(@LoginMember Long memberId) {
 
         CompatibilityResult result =
                 matchService.getOrCalculateCompatibilityResult(
@@ -41,9 +37,7 @@ public class MatchController {
 
     @GetMapping("/compatibility")
     public ApiResponse<CompatibilityResultResponse>
-    getCompatibility() {
-
-        Long memberId = TEMP_MEMBER_ID;
+    getCompatibility(@LoginMember Long memberId) {
 
         CompatibilityResult result =
                 matchService.getCompatibilityResult(memberId);

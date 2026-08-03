@@ -1,8 +1,9 @@
-﻿<script setup>
+<script setup>
 import { computed, ref } from 'vue'
 import {
   ArrowUpRight,
   Briefcase,
+  CarFront,
   Check,
   Flame,
   Heart,
@@ -12,6 +13,7 @@ import {
   Rocket,
   Scale,
   ShieldCheck,
+  Store,
   TrendingUp,
   Umbrella,
   WalletCards,
@@ -66,7 +68,15 @@ const productIcon = computed(() => {
   }
   if (props.slotType === 'DEPOSIT') return Building2
   if (props.slotType === 'SAVINGS') return PiggyBank
-  if (props.slotType === 'LOAN') return House
+  if (props.slotType === 'LOAN') {
+    const loanIcons = {
+      JEONSE: House,
+      HOUSING: House,
+      CAR: CarFront,
+      BUSINESS: Store,
+    }
+    return loanIcons[props.product.loanPurpose] ?? House
+  }
   if (props.slotType !== 'INVESTMENT' && !props.product.riskLabel) return Building2
 
   const icons = {
@@ -122,6 +132,10 @@ const openProduct = (url) => {
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
+const formattedAum = computed(() =>
+  props.product.aum == null ? null : `${props.product.aum.toLocaleString('ko-KR')}억 원`,
+)
+
 const toggleFavorite = () => {
   if (props.favoriteState === null) {
     localFavorite.value = !localFavorite.value
@@ -133,7 +147,7 @@ const toggleFavorite = () => {
 
 <template>
   <article
-    class="cursor-pointer rounded-card bg-white"
+    class="relative cursor-pointer rounded-card bg-white"
     :class="[
       compact
         ? roomy
@@ -164,7 +178,7 @@ const toggleFavorite = () => {
           </h3>
 
           <button
-            v-if="listMode"
+            v-if="listMode && slotType !== 'INVESTMENT'"
             type="button"
             class="flex min-w-14 shrink-0 items-center justify-center"
             :aria-label="isFavorite ? '찜 해제' : '찜하기'"
@@ -178,6 +192,17 @@ const toggleFavorite = () => {
               "
             />
           </button>
+          <div
+            v-else-if="slotType === 'INVESTMENT' && product.riskLabel"
+            class="flex w-14 shrink-0 justify-center"
+          >
+            <span
+              class="rounded-md border px-1.5 py-px text-center text-[10px] font-semibold"
+              :class="riskBadgeClass"
+            >
+              {{ product.riskLabel }}
+            </span>
+          </div>
           <span
             v-else-if="product.comparisonValue"
             class="min-w-14 shrink-0 text-center text-[12px] leading-5 font-bold text-ink"
@@ -212,7 +237,17 @@ const toggleFavorite = () => {
             <ArrowUpRight class="h-3 w-3" stroke-width="2.5" />
           </button>
 
-          <div v-if="!listMode" class="ml-auto flex min-w-14 shrink-0 items-center justify-center">
+          <div
+            v-if="!listMode || slotType === 'INVESTMENT'"
+            class="absolute flex min-w-14 -translate-y-1/2 items-center justify-center"
+            :class="
+              listMode && slotType === 'INVESTMENT'
+                ? 'top-[58px] right-4'
+                : compact
+                  ? 'top-1/2 right-4'
+                  : 'top-1/2 right-0'
+            "
+          >
             <button
               type="button"
               class="flex min-w-14 items-center justify-center"
@@ -231,7 +266,11 @@ const toggleFavorite = () => {
         </div>
 
         <div v-if="listMode" class="mt-4 -ml-[52px] flex min-h-5 items-center">
-          <div v-if="product.comparisonValue" class="flex items-baseline gap-1.5">
+          <div v-if="slotType === 'INVESTMENT' && formattedAum" class="flex items-baseline gap-1.5">
+            <span class="text-[10px] text-muted">순자산</span>
+            <strong class="text-[12px] text-ink">{{ formattedAum }}</strong>
+          </div>
+          <div v-else-if="product.comparisonValue" class="flex items-baseline gap-1.5">
             <span class="text-[10px] text-muted">{{ product.comparisonLabel }}</span>
             <strong class="text-[12px] text-ink">{{ product.comparisonValue }}</strong>
           </div>
