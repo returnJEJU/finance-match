@@ -68,6 +68,11 @@ const routes = [
         path: 'signup/asset/linking',
         name: 'signup-asset-linking',
         component: () => import('@/pages/auth/AssetLinkingPage.vue'),
+        // 이미 연동해 결과를 들고 있으면 다시 불러올 것이 없다. 완료 화면으로 바로 보낸다.
+        //
+        // 연동 화면은 뜨자마자 API 를 부르고, 이미 연동한 회원이면 409 를 받고 나서야 이동한다.
+        // 그래서 여기서 막지 않으면 <b>연동 화면이 한 번 번쩍 보였다가</b> 넘어간다.
+        beforeEnter: () => (useAssetLinkStore().hasResult ? { name: 'signup-asset-done' } : true),
       },
       {
         path: 'signup/asset/done',
@@ -90,9 +95,12 @@ const routes = [
         component: () => import('@/pages/ServiceIntroductionPage.vue'),
       },
       {
+        // 커플 연동의 시작점. 화면(CoupleStartPage)은 아직 뼈대뿐이고, 초대 화면이 이미 그 역할을
+        // 한다 — 코드 입력과 "공동 목표 설정하고 초대 코드 만들기" 양쪽이 그 안에 있다.
+        // 그래서 이 주소로 들어오면 초대 화면으로 넘긴다. (담당자가 시작 화면을 채우면 되돌린다)
         path: 'couple',
         name: 'couple-start',
-        component: () => import('@/pages/CoupleStartPage.vue'),
+        redirect: { name: 'couple-invite' },
       },
       {
         path: 'couple/invite',

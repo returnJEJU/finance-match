@@ -189,7 +189,15 @@ const items = computed(() => [
     </div>
 
     <div class="flex flex-none flex-col px-7 pb-14">
-      <BaseButton :to="{ name: 'couple-start' }">
+      <!--
+        여기가 회원가입 퍼널의 끝이다. 다음은 로그인으로 보낸다 — 어느 화면으로 갈지 정하는 재료
+        (isFirstLogin·progress)가 로그인 응답에만 있어서, 로그인을 거쳐야 첫 로그인으로 인식되어
+        서비스 소개부터 흐른다.
+
+        가입 때 받은 토큰은 지우지 않는다. 로그인하면 어차피 교체되고, 지우면 뒤로 가기로 이
+        화면을 다시 볼 수 없게 된다.
+      -->
+      <BaseButton :to="{ name: 'login' }">
         찰떡귱합 시작하기
         <ChevronRight class="h-[18px] w-[18px]" />
       </BaseButton>
