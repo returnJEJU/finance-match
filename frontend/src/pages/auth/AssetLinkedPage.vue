@@ -112,7 +112,7 @@ const items = computed(() => [
         자산 연동 완료!
       </h1>
       <p class="text-muted mt-1.5 text-center text-[13px] leading-[1.5]">
-        <b class="text-ink font-bold">{{ result?.assetCount ?? 0 }}개</b>를 한 번에 불러왔어요
+        <b class="text-ink font-bold">계좌 {{ result?.assetCount ?? 0 }}개</b>를 한 번에 불러왔어요
       </p>
 
       <!-- 총 자산 -->
