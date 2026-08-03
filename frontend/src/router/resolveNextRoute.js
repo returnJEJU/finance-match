@@ -31,7 +31,13 @@ export function resolveNextRoute({ isFirstLogin, progress }) {
       return { name: 'survey-couple' }
     }
     // 초대는 보냈고 상대가 아직 오지 않은 상태.
-    return personalSurveyCompleted ? { name: 'dashboard-waiting' } : { name: 'survey-personal' }
+    //
+    // 개인설문 전이라면 개인설문이 아니라 <b>생성된 초대코드 화면</b>으로 보낸다. 상대에게 코드를
+    // 전달하는 것이 먼저이기 때문이다(그 화면이 코드를 직접 조회해 보여주고, 다음 버튼이
+    // 개인설문으로 이어준다). 개인설문으로 바로 보내면 코드를 다시 찾아볼 길이 없다.
+    return personalSurveyCompleted
+      ? { name: 'dashboard-waiting' }
+      : { name: 'couple-invite-created' }
   }
 
   if (!personalSurveyCompleted) {
