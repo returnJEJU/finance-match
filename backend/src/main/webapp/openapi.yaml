@@ -443,7 +443,12 @@ components:
       required: [coupleConnected, hasInvitation, personalSurveyCompleted]
       properties:
         coupleConnected: { type: boolean, description: 파트너와 연결됐는가, example: false }
-        hasInvitation: { type: boolean, description: 사용 가능한 초대코드를 갖고 있는가, example: false }
+        hasInvitation:
+          type: boolean
+          description: >-
+            초대코드를 발급한 적이 있는가(= 공동설문을 한 사람 = 초대를 **보낸** 사람).
+            코드가 이미 쓰였는지는 보지 않는다 — 연결 후에도 `true` 로 남아 보낸 사람과 받은 사람을 가른다.
+          example: false
         personalSurveyCompleted: { type: boolean, description: 개인 설문을 마쳤는가, example: false }
         partnerPersonalSurveyCompleted:
           type: boolean
