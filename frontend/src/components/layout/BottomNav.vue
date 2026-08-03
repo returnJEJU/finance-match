@@ -16,8 +16,8 @@ const route = useRoute()
 // to: 라우터 등록 시 이 name과 맞춰야 활성 표시가 동작한다.
 const tabs = [
   { name: 'dashboard', label: '홈', to: '/dashboard', empty: homeEmpty, filled: homeFilled },
-  { name: 'recommend', label: '추천', to: '/recommend', empty: boxEmpty, filled: boxFilled },
   { name: 'report', label: '리포트', to: '/report', empty: reportEmpty, filled: reportFilled },
+  { name: 'recommend', label: '추천', to: '/recommend', empty: boxEmpty, filled: boxFilled },
   { name: 'my', label: '마이페이지', to: '/my', empty: personEmpty, filled: personFilled },
 ]
 
