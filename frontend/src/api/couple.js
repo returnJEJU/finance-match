@@ -2,6 +2,8 @@ import { z } from 'zod'
 import { api } from '@/api/client'
 
 const coupleProfileMessageSchema = z.object({
+  myName: z.string(),
+  partnerName: z.string(),
   profileMessage: z.string(),
 })
 

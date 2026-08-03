@@ -48,6 +48,15 @@ const { data: coupleProfileMessage, isError: isProfileMessageLoadError } = useQu
   queryFn: getCoupleProfileMessage,
 })
 
+const coupleDisplayName = computed(() => {
+  const profile = coupleProfileMessage.value
+  if (profile?.myName && profile?.partnerName) {
+    return `${profile.myName} ♡ ${profile.partnerName}`
+  }
+
+  return '내 프로필'
+})
+
 watch(
   coupleProfileMessage,
   (response) => {
@@ -361,7 +370,7 @@ const confirmWithdraw = () => {
 
       <!-- 사용자 정보 -->
       <div class="ml-3 flex-1">
-        <div class="text-sm font-bold text-gray-900">김현지 ♡ 이민수</div>
+        <div class="text-sm font-bold text-gray-900">{{ coupleDisplayName }}</div>
 
         <div class="mt-1 flex items-center text-[11px] text-gray-500">
           <span>{{ profileMessage }}</span>
