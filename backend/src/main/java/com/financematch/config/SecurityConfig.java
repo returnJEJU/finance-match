@@ -4,8 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.financematch.auth.jwt.JwtAuthenticationEntryPoint;
 import com.financematch.auth.jwt.JwtAuthenticationFilter;
 import com.financematch.auth.jwt.JwtProvider;
+import java.util.Arrays;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -15,6 +18,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * 보안 설정: 비밀번호 인코더와 JWT 기반 필터체인.
@@ -44,6 +50,36 @@ public class SecurityConfig {
     }
 
     /**
+     * 시큐리티 필터체인용 CORS 설정.
+     *
+     * <p>{@code WebConfig} 에도 CORS 설정이 있지만 그것은 MVC 레벨이라 DispatcherServlet 까지 도달한
+     * 요청에만 적용된다. 필터가 401 로 막은 응답에는 붙지 않으므로 여기에 하나 더 둔다.
+     *
+     * <p>두 곳에서 헤더가 겹치지는 않는다 — 스프링의 {@code DefaultCorsProcessor} 는 응답에 이미
+     * {@code Access-Control-Allow-Origin} 이 있으면 건너뛴다.
+     *
+     * <p>설정값은 {@code WebConfig} 와 <b>같은 프로퍼티</b>를 읽는다. 값을 따로 적으면 한쪽만 바꿨을 때
+     * "어떤 응답은 되고 어떤 응답은 안 되는" 상태가 된다.
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource(Environment env) {
+        String origins = env.getProperty("cors.allowed-origins", "http://localhost:5173");
+
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList(origins.split(",")));
+        configuration.setAllowedMethods(
+                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
+    }
+
+    /**
      * 401 응답 작성기.
      *
      * <p>{@code ObjectMapper} 를 여기서 새로 만든다. {@code WebConfig} 에 이미 있지만 그것은 자식인 서블릿
@@ -63,10 +99,14 @@ public class SecurityConfig {
      * 것은 DispatcherServlet 이 {@code /api} 를 떼고 넘겨주기 때문이며, 여기서 {@code /v1/...} 로 쓰면
      * 규칙이 어디에도 걸리지 않는다.
      *
-     * <p><b>모든 경로를 {@code permitAll} 로 둔다.</b> 팀원들이 아직 임시 회원 ID 로 개발 중이라 지금
-     * 잠그면 개발이 막힌다. {@code permitAll} 은 차단만 하지 않는다는 뜻이고 JWT 필터는 모든 요청에서 그대로
-     * 동작하므로, 토큰을 보낸 요청은 {@code @LoginMember} 가 동작하고 나머지는 종전과 같이 동작한다. 팀원
-     * 작업이 정리되면 {@code anyRequest().authenticated()} 로 바꾼다.
+     * <p><b>기본값은 잠김({@code anyRequest().authenticated()})이다.</b> 열어야 하는 경로만 위쪽에
+     * 명시적으로 나열한다 — 그래야 {@code @LoginMember} 를 빠뜨린 새 API 가 생겨도 열린 채로 배포되지
+     * 않는다.
+     *
+     * <p>열어둔 경로는 세 종류다. ①{@code /api/v1/auth/**} — 로그인해야 토큰을 받으므로 인증을 걸 수
+     * 없다. ②{@code /api/health} — 로드밸런서·모니터링용. ③{@code /swagger-ui/**}·
+     * {@code /openapi.yaml} — API 문서. 시큐리티 필터가 {@code /*} 전체에 걸려 있어 여기를 열지 않으면
+     * 정적 파일까지 401 이 되어 문서 화면이 뜨지 않는다.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -94,18 +134,31 @@ public class SecurityConfig {
                 .exceptionHandling()
                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 .and()
+                // 필터가 거절한 응답에도 CORS 헤더가 붙게 한다. WebConfig 의 CORS 설정은 MVC 레벨이라
+                // DispatcherServlet 까지 도달한 요청에만 적용된다 — 필터가 401 로 막으면 거기까지 가지
+                // 못해 헤더가 빠지고, 브라우저는 응답 본문을 프론트에 넘기지 않는다. 그러면 프론트가
+                // EXPIRED_TOKEN 을 읽지 못해 "만료 시 로그인 화면으로" 분기가 동작하지 않는다.
+                .cors()
+                .and()
                 .authorizeHttpRequests()
                 // 인증 없이 열려야 하는 경로. 로그인해야 토큰을 받으므로 인증을 걸 수 없다.
                 .requestMatchers(
                         new AntPathRequestMatcher("/api/v1/auth/**"),
                         new AntPathRequestMatcher("/api/health"))
                 .permitAll()
+                // API 문서. 시큐리티 필터는 /* 전체에 걸려 있어 여기를 열지 않으면 문서도 401 이 된다.
+                .requestMatchers(
+                        new AntPathRequestMatcher("/swagger-ui/**"),
+                        new AntPathRequestMatcher("/openapi.yaml"))
+                .permitAll()
                 // CORS preflight 에는 브라우저가 Authorization 헤더를 붙이지 않는다. 막으면 프론트의
                 // 모든 요청이 CORS 오류로 실패한다.
                 .requestMatchers(new AntPathRequestMatcher("/**", HttpMethod.OPTIONS.name()))
                 .permitAll()
+                // 기본값을 "잠김"으로 둔다. 앞으로 @LoginMember 를 빠뜨린 새 API 가 생겨도 열린 채로
+                // 배포되지 않는다. 열어야 하는 경로는 위에 명시적으로 추가한다.
                 .anyRequest()
-                .permitAll()
+                .authenticated()
                 .and()
                 // 인증 판정 자리 바로 앞에서 SecurityContext 를 채운다. formLogin 을 껐으므로 기준으로 쓴
                 // 필터 자체는 체인에 없고, 순서상의 위치 표지로만 쓰인다.
