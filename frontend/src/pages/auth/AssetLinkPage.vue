@@ -5,6 +5,7 @@
 import { computed, ref } from 'vue'
 import { CreditCard, Info, Landmark, TrendingUp } from 'lucide-vue-next'
 import characterWorking from '@/assets/images/characters/character-working.png'
+import { useAuthStore } from '@/stores/auth'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import PageTitle from '@/components/ui/PageTitle.vue'
 import FunnelHeader from '@/components/layout/FunnelHeader.vue'
@@ -29,6 +30,8 @@ function toggleAll() {
 function toggle(key) {
   selected.value = { ...selected.value, [key]: !selected.value[key] }
 }
+
+const authStore = useAuthStore()
 </script>
 
 <template>
@@ -38,7 +41,9 @@ function toggle(key) {
     <div class="flex flex-1 flex-col px-7">
       <img :src="characterWorking" alt="" class="mt-1.5 w-32 self-center" />
 
-      <PageTitle class="mt-2" align="center">임민지님의 자산<br />한 번에 찾아볼게요</PageTitle>
+      <PageTitle class="mt-2" align="center">
+        {{ authStore.member?.name ?? '회원' }}님의 자산<br />한 번에 찾아볼게요
+      </PageTitle>
       <p class="text-muted mt-2 text-center text-[13px] leading-[1.5]">
         흩어져 있는 금융 정보를 하나로 합쳐<br />완벽한 찰떡귱합 리포트를 만들어요.
       </p>
