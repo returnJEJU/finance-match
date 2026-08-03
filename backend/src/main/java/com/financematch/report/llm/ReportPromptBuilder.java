@@ -3,7 +3,7 @@ package com.financematch.report.llm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.financematch.report.dto.reason.DebtRepaymentReasonInput;
 import com.financematch.report.dto.reason.FinancialValueReasonInput;
-import com.financematch.report.dto.reason.TaxStrategyReasonInput;
+import com.financematch.report.dto.reason.TaxStrategyPromptInput;
 import org.springframework.stereotype.Component;
 
 /**
@@ -64,10 +64,14 @@ public class ReportPromptBuilder {
             1. ISA·IRP·연금저축 세 계좌를 모두 개설 안 했으면 → 개별 나열하지 말고
                "ISA·IRP·연금저축 모두 개설 안 하셨어요" 처럼 뭉뚱그려 표현 + 추천탭 언급 필수
             2. 일부만 미개설이면 → 미개설 계좌만 정확히 지목해 개설 권유 + 추천탭 언급 필수
-            3. 전부 개설했지만 일부 계좌가 납입 한도 미달이면 → 그 계좌만 지목해 한도 금액·받을 수 있는
-               혜택 금액을 입력값 그대로 명시 (추천탭 언급 불필요)
+            3. 전부 개설했지만 일부 계좌가 납입 한도 미달이면 → 그 계좌만 지목해 한도 금액을 명시하고
+               "더 채우고 세제 혜택 받으세요" 같은 형태로 끝맺는다
+               ("한도를 더 채우라고 권유합니다" 처럼 3인칭 설명체로 끝내지 말 것)
+               (정확한 혜택 금액은 언급하지 않는다. 추천탭 언급 불필요)
             4. 전부 개설 + 전부 한도 충족이면 → 그 사람은 언급하지 않는다(문제 없는 사람은 등장 안 함)
 
+            - 금액은 입력값의 "OOO만원"/"O억" 표기를 그대로 쓴다. 원 단위 숫자(예: 9000000,
+              9,000,000)로 바꿔 쓰지 말 것 — 입력값에 원 단위 숫자는 아예 없다.
             - 두 사람 다 문제(1~3 중 하나)가 있으면 **둘 다** 언급한다(한 명만 골라내지 않음).
             - 두 사람을 같이 언급할 때는 반드시 **이름 가나다순**으로 먼저 등장시킨다
               (보는 사람이 누구든 순서가 같아야 하므로 "나 먼저"는 금지).
@@ -93,7 +97,7 @@ public class ReportPromptBuilder {
         return build("투자 가치관 일치도", axisRules, input, DEFAULT_MAX_LENGTH);
     }
 
-    public String buildTaxStrategyPrompt(TaxStrategyReasonInput input) {
+    public String buildTaxStrategyPrompt(TaxStrategyPromptInput input) {
         return build("절세", TAX_STRATEGY_RULES, input, TAX_STRATEGY_MAX_LENGTH);
     }
 

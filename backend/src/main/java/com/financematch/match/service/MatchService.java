@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.financematch.match.calculator.MatchCalculationInput;
 import com.financematch.match.calculator.MatchCalculationResult;
 import com.financematch.match.calculator.MatchCalculator;
-import com.financematch.match.converter.MatchCalculationInputConverter;
+import com.financematch.match.calculator.MemberCalculationInput;
 import com.financematch.match.domain.CompatibilityResult;
 import com.financematch.match.domain.MatchCoupleData;
 import com.financematch.match.domain.MatchMemberData;
@@ -14,10 +14,14 @@ import com.financematch.match.mapper.MatchMapper;
 
 import com.financematch.report.dto.reason.DebtRepaymentReasonInput;
 import com.financematch.report.dto.reason.FinancialValueReasonInput;
+import com.financematch.report.dto.reason.TaxAccountInput;
+import com.financematch.report.dto.reason.TaxSavingProfile;
+import com.financematch.report.dto.reason.TaxStrategyReasonInput;
 import com.financematch.report.service.AssetStabilityScoreService;
 import com.financematch.report.service.DebtRepaymentScoreService;
 import com.financematch.report.service.FinancialValueScoreService;
 import com.financematch.report.service.GoalFeasibilityScoreService;
+import com.financematch.report.service.TaxStrategyScoreService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,15 +35,14 @@ import com.financematch.exception.ApiException;
 public class MatchService {
 
     private final MatchMapper matchMapper;
-    private final MatchCalculationInputConverter converter;
-    private final MatchCalculator calculator;
+    private final MatchCalculationPersistenceService matchCalculationPersistenceService;
     private final GoalFeasibilityScoreService goalFeasibilityScoreService;
     private final AssetStabilityScoreService assetStabilityScoreService;
     private final DebtRepaymentScoreService debtRepaymentScoreService;
     private final FinancialValueScoreService financialValueScoreService;
+    private final TaxStrategyScoreService taxStrategyScoreService;
 
 
-    @Transactional
     public CompatibilityResult getOrCalculateCompatibilityResult(
             Long memberId
     ) {
@@ -84,38 +87,14 @@ public class MatchService {
             );
         }
 
-        // 4. DB 조회 데이터를 계산기 입력 형식으로 변환
-        MatchCalculationInput calculationInput =
-                converter.convert(couple, memberA, memberB);
+        // 4~7. 계산 + compatibility_result 최초 저장 — 여기까지만 짧은 트랜잭션(MatchCalculationPersistenceService).
+        // 아래 8~12(reason 생성)는 LLM 호출이 섞여 있어 오래 걸릴 수 있으므로 트랜잭션 밖에서 진행한다.
+        MatchCalculationPersistenceResult persisted =
+                matchCalculationPersistenceService.calculateAndPersist(couple, memberA, memberB);
 
-        // 5. 금융 궁합도 계산
-        MatchCalculationResult calculationResult =
-                calculator.calculate(calculationInput);
-
-        // 6. 계산 결과 최초 저장
-        int insertedCount =
-                matchMapper.insertCompatibilityResult(
-                        couple.getCoupleId(),
-                        calculationResult
-                );
-
-        if (insertedCount != 1) {
-            throw new IllegalStateException(
-                    "금융 궁합도 결과 저장에 실패했습니다."
-            );
-        }
-
-        // 7. 저장된 결과를 다시 조회하여 반환
-        CompatibilityResult savedResult =
-                matchMapper.findCompatibilityResultByCoupleId(
-                        couple.getCoupleId()
-                );
-
-        if (savedResult == null) {
-            throw new IllegalStateException(
-                    "저장된 금융 궁합도 결과를 찾을 수 없습니다."
-            );
-        }
+        CompatibilityResult savedResult = persisted.savedResult();
+        MatchCalculationInput calculationInput = persisted.calculationInput();
+        MatchCalculationResult calculationResult = persisted.calculationResult();
 
         // 8. 목표 달성 가능성 축 reason 생성·저장 (LLM 미사용 · 결정론적)
         goalFeasibilityScoreService.generateAndSave(
@@ -155,6 +134,15 @@ public class MatchService {
         );
         financialValueScoreService.generateAndSave(savedResult.getId(), financialValueReasonInput);
 
+        // 12. 절세 활용도 축 reason 생성·저장 (LLM 사용)
+        TaxStrategyReasonInput taxStrategyReasonInput = new TaxStrategyReasonInput(
+                memberA.getMemberName(),
+                memberB.getMemberName(),
+                buildTaxSavingProfile(calculationInput.getMemberA()),
+                buildTaxSavingProfile(calculationInput.getMemberB())
+        );
+        taxStrategyScoreService.generateAndSave(savedResult.getId(), taxStrategyReasonInput);
+
         return savedResult;
     }
 
@@ -189,5 +177,25 @@ public class MatchService {
         }
 
         return result;
+    }
+
+    // 절세 계산기(calculateTaxStrategyScore)와 같은 한도 상수를 쓴다 — IRP는 계산기가 연금저축·DC와
+    // 합산 900만원 한도로 계산하지만(calculatePensionUtilization), reason 문구는 팀 확정대로
+    // 연금저축(600만)·IRP(900만)를 독립된 두 계좌처럼 각각 표시한다.
+    private TaxSavingProfile buildTaxSavingProfile(MemberCalculationInput member) {
+        TaxAccountInput isa = new TaxAccountInput(
+                member.isHasIsa(), member.getIsaAnnualDeposit(), MatchCalculator.ISA_ANNUAL_LIMIT_AMOUNT);
+
+        TaxAccountInput irp = new TaxAccountInput(
+                member.isHasIrp(),
+                member.getIrpAnnualPayment().add(member.getDcAnnualPayment()),
+                MatchCalculator.PENSION_IRP_ANNUAL_LIMIT);
+
+        TaxAccountInput pension = new TaxAccountInput(
+                member.isHasPensionSaving(),
+                member.getPensionAnnualPayment(),
+                MatchCalculator.PENSION_SAVING_ANNUAL_LIMIT);
+
+        return new TaxSavingProfile(isa, irp, pension);
     }
 }

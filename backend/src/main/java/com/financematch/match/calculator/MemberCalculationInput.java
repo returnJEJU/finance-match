@@ -37,4 +37,7 @@ public class MemberCalculationInput {
     private BigDecimal isaAnnualDeposit;
     private String taxEligibilityStatus;
     private String isaEligibilityStatus;
+    private boolean hasIsa;
+    private boolean hasIrp;
+    private boolean hasPensionSaving;
 }

@@ -22,10 +22,12 @@
 
             cr.goal_feasibility_score,
             r.goal_feasibility_reason,
+            r.expected_asset,
 
             cr.tax_strategy_score,
             r.tax_strategy_reason,
 
+            cs.target_amount,
             cs.target_period_months  AS target_months,
             cs.loan_purpose,
 

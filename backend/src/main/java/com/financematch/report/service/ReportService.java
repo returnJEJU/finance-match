@@ -2,6 +2,7 @@ package com.financematch.report.service;
 
 import com.financematch.common.ErrorCode;
 import com.financematch.exception.ApiException;
+import com.financematch.report.dto.GoalProgress;
 import com.financematch.report.dto.InvestmentProfile;
 import com.financematch.report.dto.ReportResponse;
 import com.financematch.report.dto.ScoreAxis;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 public class ReportService {
 
     private final ReportMapper reportMapper;
+    private final GoalProgressFormatter goalProgressFormatter;
 
     public ReportResponse getReport(Long memberId) {
         ReportRow row = reportMapper.findReportRowByMemberId(memberId);
@@ -64,6 +66,12 @@ public class ReportService {
                         row.getInvestmentProfileYou(),
                         row.getInvestmentProfileWe());
 
+        // expected_asset 은 report 컬럼 추가(V20260801_0900) 이전 행에는 없을 수 있어 null-safe 하게 처리한다.
+        GoalProgress goalProgress =
+                row.getExpectedAsset() == null || row.getTargetAmount() == null
+                        ? null
+                        : goalProgressFormatter.format(row.getExpectedAsset(), row.getTargetAmount());
+
         return new ReportResponse(
                 row.getMemberName(),
                 row.getPartnerName(),
@@ -71,6 +79,7 @@ public class ReportService {
                 scoreAxes,
                 row.getTargetMonths(),
                 row.getLoanPurpose(),
-                investmentProfile);
+                investmentProfile,
+                goalProgress);
     }
 }

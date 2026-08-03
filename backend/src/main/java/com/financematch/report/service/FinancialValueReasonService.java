@@ -42,7 +42,13 @@ public class FinancialValueReasonService {
         String expected = fallback(input);
 
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-            String candidate = llmClient.generateReason(prompt);
+            String candidate;
+            try {
+                candidate = llmClient.generateReason(prompt);
+            } catch (ReportLlmClient.LlmCallException e) {
+                log.warn("가치관 축 reason LLM 호출 실패(시도 {}/{}): {}", attempt, MAX_ATTEMPTS, e.getMessage());
+                continue;
+            }
             if (isValid(candidate, expected)) {
                 return candidate;
             }

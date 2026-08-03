@@ -32,6 +32,12 @@ public class MatchCalculator {
     private static final double PENSION_TOTAL_LIMIT = 9_000_000.0;
     private static final double ISA_ANNUAL_LIMIT = 20_000_000.0;
 
+    // report 도메인의 절세 축 reason 문구(TaxStrategyReasonService)가 "한도 금액"을 그대로
+    // 노출할 때 쓴다. 위 계산용 double 상수와 같은 값 — 소스는 하나로 유지한다.
+    public static final BigDecimal PENSION_SAVING_ANNUAL_LIMIT = BigDecimal.valueOf((long) PENSION_SAVING_LIMIT);
+    public static final BigDecimal PENSION_IRP_ANNUAL_LIMIT = BigDecimal.valueOf((long) PENSION_TOTAL_LIMIT);
+    public static final BigDecimal ISA_ANNUAL_LIMIT_AMOUNT = BigDecimal.valueOf((long) ISA_ANNUAL_LIMIT);
+
     private static final String ELIGIBLE = "ELIGIBLE";
     private static final String INELIGIBLE = "INELIGIBLE";
 

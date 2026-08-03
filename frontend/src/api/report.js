@@ -15,6 +15,17 @@ const investmentProfileSchema = z.object({
   we: z.string(),
 })
 
+// expected_asset 이 없는(마이그레이션 이전) report 행은 백엔드가 null 을 내려준다.
+const goalProgressSchema = z
+  .object({
+    achieved: z.boolean(),
+    amountLabel: z.string(),
+    barLabel: z.string(),
+    availableAsset: z.string(),
+    achievementRate: z.string(),
+  })
+  .nullable()
+
 const reportResponseSchema = z.object({
   name: z.string(),
   partnerName: z.string(),
@@ -23,6 +34,7 @@ const reportResponseSchema = z.object({
   targetMonths: z.number(),
   loanPurpose: z.string(),
   investmentProfile: investmentProfileSchema,
+  goalProgress: goalProgressSchema,
 })
 
 export async function getReport() {

@@ -16,4 +16,5 @@ public class ReportResponse {
     private final Integer targetMonths;
     private final String loanPurpose;
     private final InvestmentProfile investmentProfile;
+    private final GoalProgress goalProgress;
 }

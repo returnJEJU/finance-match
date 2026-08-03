@@ -49,19 +49,12 @@ const {
   queryFn: getReport,
 })
 
-// 목표 달성 가능성 카드의 진행 현황 — 계산 엔진(백엔드)이 아직 없어 목데이터.
-// isAchieved=false(부족)면 마젠타(warn 토큰), true(초과)면 초록(good 토큰)으로 갈린다.
-// API 붙으면 이 객체를 report.scoreAxes 의 GOAL_FEASIBILITY 응답으로 교체한다.
-const goalProgress = ref({
-  isAchieved: false,
-  amountLabel: '-8,000만원',
-  barLabel: '8,000만원 부족',
-  availableAsset: '1억 2,000만원',
-  achievementRate: '60%',
-})
+// 목표 달성 가능성 카드의 진행 현황 — report API 의 goalProgress 를 그대로 쓴다.
+// achieved=false(부족)면 마젠타(warn 토큰), true(초과)면 초록(good 토큰)으로 갈린다.
+const goalProgress = computed(() => report.value.goalProgress)
 
 const goalDifferenceLabel = computed(() =>
-  goalProgress.value.isAchieved ? '목표를 넘어선 예상액' : '목표까지 부족한 금액',
+  goalProgress.value?.achieved ? '목표를 넘어선 예상액' : '목표까지 부족한 금액',
 )
 
 const coupleTypeLabel = computed(() => investmentTypeMeta[report.value.investmentProfile.we].label)
@@ -86,6 +79,8 @@ const sliderPosition = computed(() => {
 const closedKeys = ref(new Set())
 
 const isOpen = (key) => !closedKeys.value.has(key)
+
+const roundScore = (score) => Math.round(score)
 
 const toggleCard = (key) => {
   const next = new Set(closedKeys.value)
@@ -170,7 +165,7 @@ const toggleCard = (key) => {
               </span>
               <span class="flex items-center gap-1.5">
                 <span class="text-[15px] font-bold text-good"
-                  >{{ axis.score }}/{{ axis.maxScore }}</span
+                  >{{ roundScore(axis.score) }}/{{ axis.maxScore }}</span
                 >
                 <ChevronUp v-if="isOpen(axis.key)" :size="16" class="text-muted" />
                 <ChevronDown v-else :size="16" class="text-muted" />
@@ -180,17 +175,17 @@ const toggleCard = (key) => {
             <div v-if="isOpen(axis.key)" class="mt-3">
               <p class="text-[12px] leading-[1.6] text-ink-sub">{{ axis.reason }}</p>
 
-              <!-- 목표 달성 가능성 카드 전용: 초과/부족 진행 현황 (목데이터) -->
-              <div v-if="axis.key === 'GOAL_FEASIBILITY'" class="mt-3">
+              <!-- 목표 달성 가능성 카드 전용: 초과/부족 진행 현황 -->
+              <div v-if="axis.key === 'GOAL_FEASIBILITY' && goalProgress" class="mt-3">
                 <p
                   class="text-[12px] font-medium"
-                  :class="goalProgress.isAchieved ? 'text-good' : 'text-warn'"
+                  :class="goalProgress.achieved ? 'text-good' : 'text-warn'"
                 >
                   {{ goalDifferenceLabel }}
                 </p>
                 <p
                   class="mt-1 text-[26px] font-extrabold"
-                  :class="goalProgress.isAchieved ? 'text-good' : 'text-warn'"
+                  :class="goalProgress.achieved ? 'text-good' : 'text-warn'"
                 >
                   {{ goalProgress.amountLabel }}
                 </p>
@@ -198,15 +193,15 @@ const toggleCard = (key) => {
                 <div class="relative mt-3 h-10 overflow-hidden rounded-full bg-line-card">
                   <div
                     class="absolute inset-y-0 left-0 rounded-full"
-                    :class="goalProgress.isAchieved ? 'bg-good' : 'bg-warn'"
+                    :class="goalProgress.achieved ? 'bg-good' : 'bg-warn'"
                     :style="{
-                      width: goalProgress.isAchieved ? '100%' : goalProgress.achievementRate,
+                      width: goalProgress.achieved ? '100%' : goalProgress.achievementRate,
                     }"
                   />
                   <div class="relative flex h-full items-center justify-end px-4">
                     <span
                       class="text-[12px] font-semibold"
-                      :class="goalProgress.isAchieved ? 'text-white' : 'text-ink'"
+                      :class="goalProgress.achieved ? 'text-white' : 'text-ink'"
                       >{{ goalProgress.barLabel }}</span
                     >
                   </div>
@@ -223,7 +218,7 @@ const toggleCard = (key) => {
                     <p class="text-[11px] text-muted">달성률</p>
                     <p
                       class="mt-1 text-[16px] font-bold"
-                      :class="goalProgress.isAchieved ? 'text-good' : 'text-warn'"
+                      :class="goalProgress.achieved ? 'text-good' : 'text-warn'"
                     >
                       {{ goalProgress.achievementRate }}
                     </p>
