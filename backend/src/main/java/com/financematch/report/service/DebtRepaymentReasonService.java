@@ -37,7 +37,7 @@ public class DebtRepaymentReasonService {
             try {
                 candidate = llmClient.generateReason(prompt);
             } catch (ReportLlmClient.LlmCallException e) {
-                log.warn("부채 축 reason LLM 호출 실패(시도 {}/{}): {}", attempt, MAX_ATTEMPTS, e.getMessage());
+                log.warn("부채 축 reason LLM 호출 실패(시도 {}/{})", attempt, MAX_ATTEMPTS, e);
                 continue;
             }
             if (isValid(candidate, input)) {

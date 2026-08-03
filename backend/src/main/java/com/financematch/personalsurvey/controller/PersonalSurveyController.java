@@ -26,8 +26,7 @@ public class PersonalSurveyController {
     }
 
     @GetMapping("")
-    public ApiResponse<PersonalSurveyResponse> getPersonalSurveyResult(
-            @LoginMember Long memberId) {
+    public ApiResponse<PersonalSurveyResponse> getPersonalSurveyResult(@LoginMember Long memberId) {
         PersonalSurveyResponse response = personalSurveyService.getPersonalSurveyResult(memberId);
         return ApiResponse.ok(response);
     }
