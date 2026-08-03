@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import {
   ChevronDown,
@@ -148,6 +148,28 @@ const toggleDescription = (who) => {
   openDescription.value = openDescription.value === who ? null : who
 }
 
+// 말풍선이 열려있을 때 화면의 다른 곳을 클릭하면 닫는다. 세 트리거(커플·나·파트너) 중
+// 클릭한 지점이 하나에도 안 속해있으면 바깥 클릭으로 보고 닫는다.
+const coupleDescriptionRef = ref(null)
+const meDescriptionRef = ref(null)
+const partnerDescriptionRef = ref(null)
+const handleOutsideClick = (event) => {
+  if (!openDescription.value) {
+    return
+  }
+  const containers = [
+    coupleDescriptionRef.value,
+    meDescriptionRef.value,
+    partnerDescriptionRef.value,
+  ]
+  const clickedInside = containers.some((el) => el?.contains(event.target))
+  if (!clickedInside) {
+    openDescription.value = null
+  }
+}
+onMounted(() => document.addEventListener('click', handleOutsideClick))
+onUnmounted(() => document.removeEventListener('click', handleOutsideClick))
+
 // 두 캐릭터 사이의 "글래스 하트" — 얇은 하트 SVG를 여러 겹 쌓아 Z축으로 펼치고 rotateY 로 돌려서
 // 3D처럼 보이게 만든다(Claude Design "Glass heart rotation effect" 포팅). 정적인 값이라 매 렌더마다
 // 다시 계산할 필요 없이 한 번만 만들어둔다.
@@ -197,7 +219,7 @@ const toggleCard = (key) => {
 
     <template v-else>
       <!-- 커플 성향 히어로 -->
-      <div class="relative text-center">
+      <div ref="coupleDescriptionRef" class="relative text-center">
         <p class="text-[13px] font-medium text-ink-sub">우리 커플의 금융 스타일은</p>
         <button
           type="button"
@@ -231,7 +253,7 @@ const toggleCard = (key) => {
       </div>
 
       <div class="mt-2 flex items-center justify-center gap-4">
-        <div class="relative">
+        <div ref="meDescriptionRef" class="relative">
           <button
             type="button"
             class="block cursor-pointer"
@@ -337,7 +359,7 @@ const toggleCard = (key) => {
           </div>
         </div>
 
-        <div class="relative">
+        <div ref="partnerDescriptionRef" class="relative">
           <button
             type="button"
             class="block cursor-pointer"
