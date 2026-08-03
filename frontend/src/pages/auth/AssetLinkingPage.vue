@@ -1,41 +1,64 @@
 <script setup>
 // 자산 연동 중 · 레이아웃: BlankLayout
 //
-// 실제 연동이 없으므로 진행률·금액은 디자인 값 그대로 둔다.
-// 타이머로 가짜 진행을 만들지 않고, 대기 화면이 멈춰 보이지 않게 CSS 애니메이션만 넣는다.
+// 화면에 들어오면 자산 연동 API 를 부르고, 응답이 오면 완료 화면으로 넘어간다.
+//
+// 항목이 하나씩 채워지는 것처럼 보이지만 서버는 그렇게 주지 않는다 — 한 번의 호출로 전부 한꺼번에
+// 온다. 그래서 없는 진행 상황을 지어내지 않고, 응답 전에는 모두 '찾는 중'으로 둔다.
+// 응답이 너무 빨리 와도 화면이 번쩍 지나가지 않도록 최소 표시 시간을 둔다(MatchCalculatingPage 와 같은 방식).
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { CreditCard, Landmark, Lock, TrendingUp, Wallet, X } from 'lucide-vue-next'
+import { linkAssets } from '@/api/asset'
+import { useAssetLinkStore } from '@/stores/assetLink'
+import { useAuthStore } from '@/stores/auth'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import PageTitle from '@/components/ui/PageTitle.vue'
 
-// 불러오는 항목. done 이 false 면 금액 대신 스켈레톤을 보여준다.
+/** 응답이 빨라도 이만큼은 화면을 보여준다. */
+const MINIMUM_DISPLAY_MS = 2000
+
+// 불러오는 항목. 금액은 응답이 와야 알 수 있으므로 여기서는 이름·아이콘만 정한다.
 const ITEMS = [
-  {
-    key: 'cash',
-    name: '계좌·현금',
-    icon: Wallet,
-    tint: '#FFF3D6',
-    done: true,
-    amount: '12,630,000원',
-  },
-  {
-    key: 'saving',
-    name: '예적금',
-    icon: Landmark,
-    tint: '#E3F7E8',
-    done: true,
-    amount: '50,520,000원',
-  },
-  { key: 'invest', name: '투자', icon: TrendingUp, tint: '#FFE9E9', done: false, skeleton: 96 },
-  { key: 'loan', name: '대출', icon: CreditCard, tint: '#E8EEFF', done: false, skeleton: 72 },
+  { key: 'cash', name: '계좌·현금', icon: Wallet, tint: '#FFF3D6', skeleton: 96 },
+  { key: 'saving', name: '예적금', icon: Landmark, tint: '#E3F7E8', skeleton: 88 },
+  { key: 'invest', name: '투자', icon: TrendingUp, tint: '#FFE9E9', skeleton: 96 },
+  { key: 'loan', name: '대출', icon: CreditCard, tint: '#E8EEFF', skeleton: 72 },
 ]
 
 const router = useRouter()
+const assetLinkStore = useAssetLinkStore()
+const authStore = useAuthStore()
+
+const linkError = ref('')
+
+const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
+
+onMounted(async () => {
+  try {
+    const [result] = await Promise.all([linkAssets(), wait(MINIMUM_DISPLAY_MS)])
+
+    assetLinkStore.setResult(result)
+    router.replace({ name: 'signup-asset-done' })
+  } catch (error) {
+    // 이미 연동한 회원이 뒤로 가기·새로고침으로 다시 들어온 경우. 연동 자체는 끝나 있으므로
+    // 막지 않고 다음 단계로 보낸다. 완료 화면은 응답이 있어야 그릴 수 있어 건너뛴다.
+    if (error.code === 'ASSET_ALREADY_LINKED') {
+      router.replace({ name: 'couple-start' })
+      return
+    }
+    linkError.value = error.message || '자산을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'
+  }
+})
 
 // 연동을 중단하고 이전 화면으로. 앱 안에 기록이 없으면 자산 불러오기로 보낸다.
 function close() {
   if (window.history.state?.back) router.back()
   else router.replace({ name: 'signup-asset' })
+}
+
+function retry() {
+  router.replace({ name: 'signup-asset' })
 }
 </script>
 
@@ -53,7 +76,9 @@ function close() {
     </div>
 
     <div class="flex flex-1 flex-col px-7">
-      <PageTitle class="mt-3.5">임민지님의 자산을<br />불러오고 있어요</PageTitle>
+      <PageTitle class="mt-3.5"
+        >{{ authStore.member?.name ?? '회원' }}님의 자산을<br />불러오고 있어요</PageTitle
+      >
       <p class="text-muted mt-2 text-[13px] leading-[1.5]">
         금융보안 규격에 따라 안전하게 연결 중이에요.
       </p>
@@ -81,19 +106,10 @@ function close() {
             </span>
             <span>
               <span class="block text-[14px] font-bold">{{ item.name }}</span>
-              <span
-                class="mt-0.5 block text-[11.5px]"
-                :class="item.done ? 'text-ink' : 'text-muted'"
-              >
-                {{ item.done ? '완료' : '찾는 중' }}
-              </span>
+              <span class="text-muted mt-0.5 block text-[11.5px]">찾는 중</span>
             </span>
             <span class="flex-1"></span>
-            <span v-if="item.done" class="text-[15px] font-extrabold tracking-[-0.3px]">
-              {{ item.amount }}
-            </span>
             <span
-              v-else
               class="skeleton h-[13px] rounded-full"
               :style="{ width: `${item.skeleton}px` }"
             ></span>
@@ -109,8 +125,13 @@ function close() {
       </p>
     </div>
 
-    <div class="flex flex-none flex-col px-7 pb-14">
-      <BaseButton variant="disabled">잠시만 기다려 주세요</BaseButton>
+    <div class="flex flex-none flex-col gap-3 px-7 pb-14">
+      <p v-if="linkError" class="text-center text-[12px] font-medium text-red-500">
+        {{ linkError }}
+      </p>
+
+      <BaseButton v-if="linkError" @click="retry">다시 시도하기</BaseButton>
+      <BaseButton v-else variant="disabled">잠시만 기다려 주세요</BaseButton>
     </div>
   </div>
 </template>

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAssetLinkStore } from '@/stores/assetLink'
 import { useSignupStore } from '@/stores/signup'
 import BlankLayout from '@/layouts/BlankLayout.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
@@ -75,6 +76,10 @@ const routes = [
         name: 'signup-asset-done',
         component: () => import('@/pages/auth/AssetLinkedPage.vue'),
         meta: { public: true },
+        // 연동 응답이 있어야 그릴 수 있는 화면이다. 자산 조회 API 가 없어 다시 불러올 수도 없으므로,
+        // 새로고침 등으로 스토어가 빈 채 들어오면 연동 화면으로 되돌린다.
+        // (화면이 뜬 뒤에 이동을 걸면 진행 중인 내비게이션과 충돌한다 — signup-cert 와 같은 이유)
+        beforeEnter: () => (useAssetLinkStore().hasResult ? true : { name: 'signup-asset' }),
       },
       {
         path: 'login',
