@@ -13,6 +13,8 @@ const packageProductSchema = z
     comparisonValue: optionalTextSchema,
     riskLevel: z.number().int().min(1).max(6).nullable(),
     riskLabel: optionalTextSchema,
+    loanPurpose: z.enum(['JEONSE', 'HOUSING', 'CAR', 'BUSINESS']).nullable(),
+    aum: z.number().int().nonnegative().nullable(),
   })
   .refine(
     ({ comparisonLabel, comparisonValue }) =>
@@ -43,6 +45,7 @@ const investmentProductSchema = z.object({
   productUrl: z.string(),
   riskLevel: z.number().int().min(1).max(6),
   riskLabel: z.enum(['초고위험', '고위험', '위험', '중립', '안정']),
+  aum: z.number().int().nonnegative(),
 })
 
 const personalTaxSavingSchema = z.object({
