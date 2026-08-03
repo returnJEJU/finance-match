@@ -35,15 +35,21 @@ export function resolveNextRoute({ isFirstLogin, progress }, redirect = null) {
   }
 
   if (!coupleConnected) {
-    // 초대코드를 만들려면 공동설문을 먼저 해야 한다.
+    // 아직 아무것도 하지 않은 사람. <b>코드를 만들 사람인지 받을 사람인지 알 수 없다.</b> 그래서
+    // 초대 화면으로 보내 직접 고르게 한다 — 그 화면이 코드 입력과 공동설문(=코드 만들기) 양쪽으로
+    // 이어준다. 공동설문으로 바로 보내면 만드는 쪽으로 단정하게 되어, 상대가 이미 보낸 코드를
+    // 입력할 길이 사라진다.
     if (!hasInvitation) {
-      return { name: 'survey-couple' }
+      return { name: 'couple-invite' }
     }
     // 초대는 보냈고 상대가 아직 오지 않은 상태.
     //
     // 개인설문 전이라면 개인설문이 아니라 <b>생성된 초대코드 화면</b>으로 보낸다. 상대에게 코드를
     // 전달하는 것이 먼저이기 때문이다(그 화면이 코드를 직접 조회해 보여주고, 다음 버튼이
     // 개인설문으로 이어준다). 개인설문으로 바로 보내면 코드를 다시 찾아볼 길이 없다.
+    //
+    // 개인설문까지 마쳤다면 지금 할 수 있는 일이 없으니 대기 화면으로 보낸다. 그 화면은 커플이
+    // 아직 연결되지 않았음을 알아보고 문구를 바꾸며, 내 초대코드를 다시 볼 수 있는 길을 준다.
     return personalSurveyCompleted
       ? { name: 'dashboard-waiting' }
       : { name: 'couple-invite-created' }

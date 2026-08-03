@@ -2,8 +2,9 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import { ArrowRight, Check, ClipboardList, Copy, LoaderCircle } from 'lucide-vue-next'
+import { ArrowRight, Check, ClipboardList, Copy, KeyRound, LoaderCircle } from 'lucide-vue-next'
 import { getCommonSurvey, getInvitation } from '@/api/invitation'
+import { getOnboardingStatus } from '@/api/onboarding'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import characterExcited from '@/assets/images/characters/character-excited.png'
 
@@ -50,9 +51,22 @@ const {
   queryFn: getCommonSurvey,
 })
 
+// 진행 상태는 두 곳에 쓰인다 — 아래 '진행 상태' 목록과, 마지막 버튼이 어디로 갈지.
+const { data: onboardingStatus, isLoading: isOnboardingStatusLoading } = useQuery({
+  queryKey: ['onboardingStatus'],
+  queryFn: getOnboardingStatus,
+})
+
+const personalSurveyCompleted = computed(
+  () => onboardingStatus.value?.personalSurveyCompleted === true,
+)
+const coupleConnected = computed(() => onboardingStatus.value?.coupleConnected === true)
+
 const inviteCode = computed(() => routeInviteCode.value || invitation.value?.inviteCode || '')
 
-const isLoading = computed(() => isInvitationLoading.value || isCommonSurveyLoading.value)
+const isLoading = computed(
+  () => isInvitationLoading.value || isCommonSurveyLoading.value || isOnboardingStatusLoading.value,
+)
 const hasLoadError = computed(() => isInvitationError.value || isCommonSurveyError.value)
 
 const summaryItems = computed(() => [
@@ -76,11 +90,11 @@ const summaryItems = computed(() => [
   },
 ])
 
-const progressSteps = [
+const progressSteps = computed(() => [
   { label: '공동 설문 완료', done: true },
-  { label: '내 개인 설문', done: false },
-  { label: '파트너 연결', done: false },
-]
+  { label: '내 개인 설문', done: personalSurveyCompleted.value },
+  { label: '파트너 연결', done: coupleConnected.value },
+])
 
 function formatWon(amount) {
   if (!amount) return '-'
@@ -105,8 +119,21 @@ async function copyInviteCode() {
   }, 1600)
 }
 
-function goToPersonalSurvey() {
-  router.push({ name: 'survey-personal' })
+/**
+ * 마지막 버튼.
+ *
+ * 개인설문 전이라면 그것이 다음 할 일이다. 이미 마쳤다면(대기 화면에서 코드를 다시 보러 온
+ * 경우) 설문을 또 시킬 수 없으니 대기 화면으로 돌려보낸다.
+ */
+function goToNextStep() {
+  router.push(
+    personalSurveyCompleted.value ? { name: 'dashboard-waiting' } : { name: 'survey-personal' },
+  )
+}
+
+// 코드를 만들어 두고도 파트너가 먼저 코드를 보낸 경우가 있다. 그때 입력할 화면으로 갈 길을 준다.
+function goToInviteCodeInput() {
+  router.push({ name: 'couple-invite' })
 }
 </script>
 
@@ -209,12 +236,21 @@ function goToPersonalSurvey() {
       </template>
     </main>
 
-    <BaseButton
-      class="mt-7 flex-none shadow-[0_8px_18px_rgba(250,230,77,0.28)]"
-      @click="goToPersonalSurvey"
-    >
-      개인 설문 시작하기
-      <ArrowRight :size="18" :stroke-width="2.4" />
-    </BaseButton>
+    <div class="mt-7 flex flex-none flex-col gap-3">
+      <!-- 진행 상태를 불러오기 전에는 어디로 갈지 정할 수 없어 누를 수 없게 둔다 -->
+      <BaseButton
+        class="shadow-[0_8px_18px_rgba(250,230,77,0.28)]"
+        :variant="isLoading ? 'disabled' : 'primary'"
+        @click="goToNextStep"
+      >
+        {{ personalSurveyCompleted ? '파트너 기다리기' : '개인 설문 시작하기' }}
+        <ArrowRight :size="18" :stroke-width="2.4" />
+      </BaseButton>
+
+      <BaseButton v-if="!coupleConnected" variant="ghost" @click="goToInviteCodeInput">
+        <KeyRound :size="17" :stroke-width="2.2" />
+        파트너 코드 입력하기
+      </BaseButton>
+    </div>
   </section>
 </template>

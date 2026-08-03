@@ -67,7 +67,7 @@ const steps = [
 
     <!-- 시작 버튼 -->
     <BaseButton
-      :to="{ name: 'couple-start' }"
+      :to="{ name: 'couple-invite' }"
       class="mt-8 h-[58px] shrink-0 rounded-full text-[18px]"
     >
       시작하기
