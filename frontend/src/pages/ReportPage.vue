@@ -19,16 +19,23 @@ import typeRiskNeutral from '@/assets/images/characters/types/type-risk-neutral.
 import typeActive from '@/assets/images/characters/types/type-active.png'
 import typeAggressive from '@/assets/images/characters/types/type-aggressive.png'
 
-// 투자성향 코드값 순서(안정형 → 공격투자형) — 슬라이더 위치·캐릭터 이미지 매핑에 공용으로 쓴다.
-// (db/README.md 가정 코드값: STABLE·STABLE_SEEKING·NEUTRAL·AGGRESSIVE·VERY_AGGRESSIVE)
-const investmentTypeOrder = ['STABLE', 'STABLE_SEEKING', 'NEUTRAL', 'AGGRESSIVE', 'VERY_AGGRESSIVE']
-
 const investmentTypeMeta = {
   STABLE: { label: '안정형', character: typeStable },
   STABLE_SEEKING: { label: '안정추구형', character: typeStabilitySeeking },
   NEUTRAL: { label: '위험중립형', character: typeRiskNeutral },
   AGGRESSIVE: { label: '적극투자형', character: typeActive },
   VERY_AGGRESSIVE: { label: '공격투자형', character: typeAggressive },
+}
+
+// 커플 공통 성향(investmentProfile.we)은 개인 성향과 다른 값이다 — 두 사람의 개인 성향 단계
+// 차이(0~4)를 나타내는 CoupleInvestmentType(DIFF_0~DIFF_4, 백엔드 CoupleInvestmentTypeCalculator)다.
+// TEMP: 실제 디자인·문구가 아직 기획되지 않아 임시 라벨로 연결해둔다. 확정되면 여기만 교체하면 된다.
+const coupleInvestmentTypeMeta = {
+  DIFF_0: { label: '찰떡궁합형' },
+  DIFF_1: { label: '비슷한 성향형' },
+  DIFF_2: { label: '적당히 다른 성향형' },
+  DIFF_3: { label: '많이 다른 성향형' },
+  DIFF_4: { label: '정반대 성향형' },
 }
 
 // 점수 축(key)별 아이콘 — report API 의 scoreAxes[].key 와 매핑한다.
@@ -44,10 +51,15 @@ const {
   data: report,
   isLoading,
   isError,
+  error,
 } = useQuery({
   queryKey: ['report'],
   queryFn: getReport,
 })
+
+// 리포트가 아직 없는 건(파트너 설문 미완료·계산 전) 진짜 오류가 아니라 "준비 중" 상태다.
+// ReportService 가 이때 NOT_FOUND 로 응답한다(GET /v1/members/me/report).
+const isNotReady = computed(() => error.value?.code === 'NOT_FOUND')
 
 // 목표 달성 가능성 카드의 진행 현황 — report API 의 goalProgress 를 그대로 쓴다.
 // achieved=false(부족)면 마젠타(warn 토큰), true(초과)면 초록(good 토큰)으로 갈린다.
@@ -57,7 +69,9 @@ const goalDifferenceLabel = computed(() =>
   goalProgress.value?.achieved ? '목표를 넘어선 예상액' : '목표까지 부족한 금액',
 )
 
-const coupleTypeLabel = computed(() => investmentTypeMeta[report.value.investmentProfile.we].label)
+const coupleTypeLabel = computed(
+  () => coupleInvestmentTypeMeta[report.value.investmentProfile.we].label,
+)
 
 const me = computed(() => ({
   name: report.value.name,
@@ -68,10 +82,13 @@ const partner = computed(() => ({
   ...investmentTypeMeta[report.value.investmentProfile.you],
 }))
 
-// 슬라이더 위치(%) — 안정형(0%) ~ 공격투자형(100%) 5단계 중 커플 성향의 인덱스로 계산.
+// 슬라이더 위치(%) — DIFF_0(0%, 성향 거의 같음) ~ DIFF_4(100%, 성향 정반대) 5단계.
+// TEMP: "안정형~공격형" 축 라벨은 원래 개인 성향 스펙트럼용이라 의미가 완전히 들어맞진 않지만,
+// 실제 디자인이 나오기 전까지 슬라이더가 최소한 정상 범위(0~100%) 안에서 움직이게만 해둔다.
+const coupleInvestmentTypeOrder = ['DIFF_0', 'DIFF_1', 'DIFF_2', 'DIFF_3', 'DIFF_4']
 const sliderPosition = computed(() => {
-  const index = investmentTypeOrder.indexOf(report.value.investmentProfile.we)
-  return (index / (investmentTypeOrder.length - 1)) * 100
+  const index = coupleInvestmentTypeOrder.indexOf(report.value.investmentProfile.we)
+  return (index / (coupleInvestmentTypeOrder.length - 1)) * 100
 })
 
 // 카드별 펼침 상태(복수 개 동시에 펼칠 수 있음). 기본은 전부 펼친 상태라, "닫힌 것만" 기록한다
@@ -96,6 +113,9 @@ const toggleCard = (key) => {
 <template>
   <section class="px-4 pb-8 pt-4">
     <p v-if="isLoading" class="py-10 text-center text-[13px] text-muted">불러오는 중...</p>
+    <p v-else-if="isNotReady" class="py-10 text-center text-[13px] text-muted">
+      리포트를 준비하고 있어요. 두 분의 설문이 모두 끝나면 확인할 수 있어요.
+    </p>
     <p v-else-if="isError" class="py-10 text-center text-[13px] text-warn">
       리포트를 불러오지 못했어요.
     </p>

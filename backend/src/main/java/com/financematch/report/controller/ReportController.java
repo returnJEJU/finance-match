@@ -1,5 +1,6 @@
 package com.financematch.report.controller;
 
+import com.financematch.auth.annotation.LoginMember;
 import com.financematch.common.ApiResponse;
 import com.financematch.report.dto.ReportResponse;
 import com.financematch.report.service.ReportService;
@@ -13,17 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ReportController {
 
-    // 임시 ID
-    private static final Long TEMP_MEMBER_ID = 1L;
-
     private final ReportService reportService;
 
     @GetMapping("")
-    public ApiResponse<ReportResponse> getReport() {
-        // JWT 인증 구현 후 임시 ID 대신 인증된 회원 ID를 주입받음
-        // 예: getReport(@LoginMember Long memberId)
-        Long memberId = TEMP_MEMBER_ID;
-
+    public ApiResponse<ReportResponse> getReport(@LoginMember Long memberId) {
         return ApiResponse.ok(reportService.getReport(memberId));
     }
 }

@@ -46,7 +46,7 @@ public class TaxStrategyReasonService {
             try {
                 candidate = llmClient.generateReason(prompt);
             } catch (ReportLlmClient.LlmCallException e) {
-                log.warn("절세 축 reason LLM 호출 실패(시도 {}/{}): {}", attempt, MAX_ATTEMPTS, e.getMessage());
+                log.warn("절세 축 reason LLM 호출 실패(시도 {}/{})", attempt, MAX_ATTEMPTS, e);
                 continue;
             }
             if (isValid(candidate, input)) {
@@ -179,7 +179,9 @@ public class TaxStrategyReasonService {
         addUnderLimitClause(underLimitClauses, "연금저축", profile.getPension());
 
         if (!underLimitClauses.isEmpty()) {
-            return name + "님은 " + String.join("·", underLimitClauses) + "을 다 채우지 않았어요. "
+            // "한도"만 쓰면 계좌 잔액(예: irp_balance) 한도로 오해할 수 있다 — 실제로는 연간 납입
+            // 한도(irp_annual_payment 같은 올해 납입액과 비교)라 "올해"를 명시한다.
+            return name + "님은 올해 " + String.join("·", underLimitClauses) + "을 다 채우지 않았어요. "
                     + "더 채우고 세제 혜택 받으세요.";
         }
 

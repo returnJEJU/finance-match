@@ -46,7 +46,7 @@ public class FinancialValueReasonService {
             try {
                 candidate = llmClient.generateReason(prompt);
             } catch (ReportLlmClient.LlmCallException e) {
-                log.warn("가치관 축 reason LLM 호출 실패(시도 {}/{}): {}", attempt, MAX_ATTEMPTS, e.getMessage());
+                log.warn("가치관 축 reason LLM 호출 실패(시도 {}/{})", attempt, MAX_ATTEMPTS, e);
                 continue;
             }
             if (isValid(candidate, expected)) {

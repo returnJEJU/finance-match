@@ -21,6 +21,8 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -53,8 +55,26 @@ import org.apache.ibatis.annotations.Mapper;
                         type = FilterType.ANNOTATION,
                         classes = {Controller.class, RestControllerAdvice.class}))
 @EnableTransactionManagement
+@EnableAsync
 @Slf4j
 public class RootConfig {
+
+    /**
+     * {@code @Async} 메서드가 도는 전용 스레드풀. 커플 양쪽 설문이 끝난 시점에 리포트(LLM 3회 호출,
+     * 수십 초~수 분 소요)를 백그라운드로 생성하는 데 쓴다 — HTTP 요청 스레드를 막지 않기 위함
+     * ({@code CoupleReportTriggerListener} 참고). 빈 이름을 "taskExecutor"로 두면 {@code @Async}가
+     * 별도 지정 없이도 이 executor 를 기본으로 쓴다.
+     */
+    @Bean
+    public ThreadPoolTaskExecutor taskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(50);
+        executor.setThreadNamePrefix("async-report-");
+        executor.initialize();
+        return executor;
+    }
 
     /**
      * {@code @Value} 의 {@code ${...}} 치환기. {@code @PropertySource} 로 읽은 값을 {@code @Value} 에서

@@ -10,8 +10,10 @@ import com.financematch.personalsurvey.domain.PersonalSurveyCalculationContext;
 import com.financematch.personalsurvey.domain.PersonalSurveyResult;
 import com.financematch.personalsurvey.dto.PersonalSurveyRequest;
 import com.financematch.personalsurvey.dto.PersonalSurveyResponse;
+import com.financematch.personalsurvey.event.PersonalSurveyCompletedEvent;
 import com.financematch.personalsurvey.mapper.PersonalSurveyMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ public class PersonalSurveyService {
     private final PersonalSurveyMapper personalSurveyMapper;
     private final PersonalInvestmentTypeCalculator calculator;
     private final CoupleInvestmentTypeService coupleInvestmentTypeService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void save(Long memberId, PersonalSurveyRequest request) {
@@ -79,6 +82,9 @@ public class PersonalSurveyService {
 
         coupleInvestmentTypeService.calculateAndSaveIfReady(memberId);
 
+        // 커플 궁합도(리포트) 계산 트리거. 파트너까지 끝났는지는 트랜잭션 커밋 후
+        // CoupleReportTriggerListener 가 직접 다시 조회해 판단한다.
+        eventPublisher.publishEvent(new PersonalSurveyCompletedEvent(memberId));
     }
 
     public PersonalSurveyResponse getPersonalSurveyResult(Long memberId) {
