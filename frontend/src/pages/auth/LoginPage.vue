@@ -3,7 +3,7 @@
 //
 // 로그인에 성공하면 토큰은 authStore 가 저장하고, 어느 화면으로 갈지는 resolveNextRoute 가 정한다.
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useMutation } from '@tanstack/vue-query'
 import { Eye, EyeOff, LoaderCircle } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
@@ -13,8 +13,21 @@ import characterMarried from '@/assets/images/characters/character-married.png'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+
+/**
+ * 인증 가드가 붙여 보낸 원래 목적지.
+ *
+ * 앱 안의 경로만 받는다 — 주소창으로 외부 주소를 넣어 다른 사이트로 튕기게 하는 것을 막는다.
+ */
+const redirectTo = computed(() => {
+  const value = route.query.redirect
+  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//')
+    ? value
+    : null
+})
 
 const form = ref({
   email: '',
@@ -31,7 +44,10 @@ const loginMutation = useMutation({
   onSuccess: (result) => {
     // 로그인 화면을 히스토리에 남기지 않는다. 다음 화면에서 뒤로 가면 로그인으로 돌아오는 대신
     // 그 이전(온보딩)으로 나가야 한다.
-    router.replace(resolveNextRoute(result))
+    //
+    // redirect 는 온보딩을 다 끝낸 사람에게만 적용된다(resolveNextRoute 안에서 판단). 퍼널 중간에
+    // 있는 사람을 원하는 곳으로 보내면 볼 것이 없는 화면에 떨어진다.
+    router.replace(resolveNextRoute(result, redirectTo.value))
   },
   onError: (error) => {
     // 백엔드는 "없는 이메일"·"비밀번호 불일치"·"탈퇴 회원"을 INVALID_CREDENTIALS 하나로 응답한다
