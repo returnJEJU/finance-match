@@ -5,9 +5,10 @@
 <mapper namespace="com.financematch.report.mapper.ReportWriteMapper">
 
     <insert id="upsertGoalFeasibilityReason">
-        INSERT INTO report (compatibility_result_id, goal_feasibility_reason)
-        VALUES (#{compatibilityResultId}, #{reason})
-        ON DUPLICATE KEY UPDATE goal_feasibility_reason = VALUES(goal_feasibility_reason)
+        INSERT INTO report (compatibility_result_id, goal_feasibility_reason, expected_asset)
+        VALUES (#{compatibilityResultId}, #{reason}, #{expectedAsset})
+        ON DUPLICATE KEY UPDATE goal_feasibility_reason = VALUES(goal_feasibility_reason),
+                                 expected_asset = VALUES(expected_asset)
     </insert>
 
     <insert id="upsertAssetStabilityReason">
@@ -26,5 +27,11 @@
         INSERT INTO report (compatibility_result_id, financial_value_reason)
         VALUES (#{compatibilityResultId}, #{reason})
         ON DUPLICATE KEY UPDATE financial_value_reason = VALUES(financial_value_reason)
+    </insert>
+
+    <insert id="upsertTaxStrategyReason">
+        INSERT INTO report (compatibility_result_id, tax_strategy_reason)
+        VALUES (#{compatibilityResultId}, #{reason})
+        ON DUPLICATE KEY UPDATE tax_strategy_reason = VALUES(tax_strategy_reason)
     </insert>
 </mapper>

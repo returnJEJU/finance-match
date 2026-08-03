@@ -135,6 +135,9 @@ tasks.withType(JavaCompile).configureEach {
 
 test {
     useJUnitPlatform()
+    // 실제 LLM 호출 실험 테스트(TaxStrategyPipelineExperimentTest 등)를 켜는 스위치.
+    // -DrunLlmExperiment=true 로 실행하지 않으면 기본적으로 스킵된다(비용·지연 있는 실제 API 호출이라).
+    systemProperty 'runLlmExperiment', System.getProperty('runLlmExperiment', 'false')
 }
 
 // Flyway 설정 (flywayInfo · flywayMigrate · flywayValidate · flywayRepair)

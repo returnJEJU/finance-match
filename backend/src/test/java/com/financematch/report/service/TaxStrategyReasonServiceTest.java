@@ -19,7 +19,7 @@ class TaxStrategyReasonServiceTest {
                     (ReportLlmClient) null, (ReportPromptBuilder) null, (ReasonRuleValidator) null);
 
     private static final TaxAccountInput OPEN_FULL =
-            new TaxAccountInput(true, new BigDecimal(20_000_000), new BigDecimal(20_000_000), new BigDecimal(2_000_000));
+            new TaxAccountInput(true, new BigDecimal(20_000_000), new BigDecimal(20_000_000));
 
     @Test
     void 한_명만_계좌_한개_미개설이면_그_사람만_언급하고_추천탭을_안내한다() {
@@ -36,17 +36,17 @@ class TaxStrategyReasonServiceTest {
     }
 
     @Test
-    void 한도_미달이면_한도와_혜택_금액을_명시한다() {
+    void 한도_미달이면_한도_금액을_명시하고_혜택_금액은_언급하지_않는다() {
         // TAX-02: me ISA 한도 미달(1200만원 납입/2000만원 한도), 전부 개설
         TaxAccountInput underLimitIsa =
-                new TaxAccountInput(true, new BigDecimal(12_000_000), new BigDecimal(20_000_000), new BigDecimal(2_000_000));
+                new TaxAccountInput(true, new BigDecimal(12_000_000), new BigDecimal(20_000_000));
         TaxSavingProfile me = new TaxSavingProfile(underLimitIsa, OPEN_FULL, OPEN_FULL);
         TaxSavingProfile partner = new TaxSavingProfile(OPEN_FULL, OPEN_FULL, OPEN_FULL);
         TaxStrategyReasonInput input = new TaxStrategyReasonInput("김철수", "이영희", me, partner);
 
         String reason = service.fallback(input);
 
-        assertEquals("철수님은 ISA 한도 2000만원 중 200만원 혜택 가능 더 채우면 혜택을 더 받을 수 있어요.", reason);
+        assertEquals("철수님은 ISA 한도 2000만원을 다 채우지 않았어요. 더 채우고 세제 혜택 받으세요.", reason);
         assertTrue(!reason.contains("영희"));
         assertTrue(!reason.contains("추천탭")); // 규칙 3번: 한도 미달만 있을 땐 추천탭 언급 불필요
     }

@@ -1,7 +1,10 @@
 package com.financematch.report.service;
 
 import com.financematch.report.dto.reason.TaxAccountInput;
+import com.financematch.report.dto.reason.TaxAccountPromptInput;
 import com.financematch.report.dto.reason.TaxSavingProfile;
+import com.financematch.report.dto.reason.TaxSavingProfilePromptInput;
+import com.financematch.report.dto.reason.TaxStrategyPromptInput;
 import com.financematch.report.dto.reason.TaxStrategyReasonInput;
 import com.financematch.report.llm.ReasonRuleValidator;
 import com.financematch.report.llm.ReportLlmClient;
@@ -36,10 +39,16 @@ public class TaxStrategyReasonService {
     private final ReasonRuleValidator ruleValidator;
 
     public String generate(TaxStrategyReasonInput input) {
-        String prompt = promptBuilder.buildTaxStrategyPrompt(withAbbreviatedNames(input));
+        String prompt = promptBuilder.buildTaxStrategyPrompt(toPromptInput(withAbbreviatedNames(input)));
 
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-            String candidate = llmClient.generateReason(prompt);
+            String candidate;
+            try {
+                candidate = llmClient.generateReason(prompt);
+            } catch (ReportLlmClient.LlmCallException e) {
+                log.warn("절세 축 reason LLM 호출 실패(시도 {}/{}): {}", attempt, MAX_ATTEMPTS, e.getMessage());
+                continue;
+            }
             if (isValid(candidate, input)) {
                 return candidate;
             }
@@ -56,6 +65,33 @@ public class TaxStrategyReasonService {
                 KoreanNameFormatter.abbreviate(input.getPartnerName()),
                 input.getMe(),
                 input.getPartner());
+    }
+
+    // LLM에는 원 단위 raw 숫자를 아예 보여주지 않는다 — 이미 "900만원" 형태로 포맷해서 넘겨야, LLM이
+    // 그 숫자를 원 단위로 베껴 쓰는 것 자체가 불가능해진다.
+    private TaxStrategyPromptInput toPromptInput(TaxStrategyReasonInput input) {
+        return new TaxStrategyPromptInput(
+                input.getMeName(),
+                input.getPartnerName(),
+                toPromptProfile(input.getMe()),
+                toPromptProfile(input.getPartner()));
+    }
+
+    private TaxSavingProfilePromptInput toPromptProfile(TaxSavingProfile profile) {
+        return new TaxSavingProfilePromptInput(
+                toPromptAccount(profile.getIsa()),
+                toPromptAccount(profile.getIrp()),
+                toPromptAccount(profile.getPension()));
+    }
+
+    private TaxAccountPromptInput toPromptAccount(TaxAccountInput account) {
+        if (!account.isOpened()) {
+            return new TaxAccountPromptInput(false, null, null);
+        }
+        return new TaxAccountPromptInput(
+                true,
+                WonAmountFormatter.format(account.getContributed()),
+                WonAmountFormatter.format(account.getAnnualLimit()));
     }
 
     private boolean isValid(String reason, TaxStrategyReasonInput input) {
@@ -143,7 +179,8 @@ public class TaxStrategyReasonService {
         addUnderLimitClause(underLimitClauses, "연금저축", profile.getPension());
 
         if (!underLimitClauses.isEmpty()) {
-            return name + "님은 " + String.join(", ", underLimitClauses) + " 더 채우면 혜택을 더 받을 수 있어요.";
+            return name + "님은 " + String.join("·", underLimitClauses) + "을 다 채우지 않았어요. "
+                    + "더 채우고 세제 혜택 받으세요.";
         }
 
         return null;
@@ -165,13 +202,7 @@ public class TaxStrategyReasonService {
 
     private void addUnderLimitClause(List<String> clauses, String accountName, TaxAccountInput account) {
         if (account.isUnderLimit()) {
-            clauses.add(
-                    accountName
-                            + " 한도 "
-                            + WonAmountFormatter.format(account.getAnnualLimit())
-                            + " 중 "
-                            + WonAmountFormatter.format(account.getMaxBenefit())
-                            + " 혜택 가능");
+            clauses.add(accountName + " 한도 " + WonAmountFormatter.format(account.getAnnualLimit()));
         }
     }
 }

@@ -12,10 +12,9 @@ public class TaxAccountInput {
     private final boolean opened;
     private final BigDecimal contributed;
     private final BigDecimal annualLimit;
-    private final BigDecimal maxBenefit;
 
     public static TaxAccountInput unopened() {
-        return new TaxAccountInput(false, null, null, null);
+        return new TaxAccountInput(false, null, null);
     }
 
     public boolean isUnderLimit() {

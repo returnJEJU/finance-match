@@ -23,6 +23,6 @@ public class GoalFeasibilityScoreService {
             BigDecimal targetAmount,
             int targetPeriodMonths) {
         String reason = formatter.format(expectedAsset, targetAmount, targetPeriodMonths);
-        reportWriteMapper.upsertGoalFeasibilityReason(compatibilityResultId, reason);
+        reportWriteMapper.upsertGoalFeasibilityReason(compatibilityResultId, reason, expectedAsset);
     }
 }
