@@ -4,9 +4,9 @@
  * 판단 재료는 로그인 응답의 `isFirstLogin` 과 `progress` 4개뿐이다. <b>위에서부터 먼저 걸리는
  * 조건이 답이다</b> — 순서를 바꾸면 결과가 달라진다.
  *
- * 초대를 "보낸 사람"과 "받은 사람"을 따로 구분하지 않는다. 두 흐름이 같은 표를 다르게 지날 뿐이다.
+ * 초대를 "보낸 사람"과 "받은 사람"은 같은 표를 다르게 지난다.
  *   - 보낸 사람: 공동설문 → 초대코드 생성(hasInvitation=true) → 개인설문 → 상대 대기
- *   - 받은 사람: 코드 입력(coupleConnected=true) → 개인설문 → 결과
+ *   - 받은 사람: 코드 입력(coupleConnected=true) → 연결 완료(공동 목표 확인) → 개인설문 → 결과
  * 즉 `hasInvitation` 이 "내가 초대를 보냈다"는 표시 역할을 한다.
  *
  * 설문을 막 끝냈을 때의 이동(개인설문 → 개인성향 → 계산중 → 대시보드)은 각 화면이 이미 담당한다.
@@ -55,8 +55,19 @@ export function resolveNextRoute({ isFirstLogin, progress }, redirect = null) {
       : { name: 'couple-invite-created' }
   }
 
+  // 커플은 연결됐고 개인설문만 남았다.
+  //
+  // 초대를 <b>받은 사람</b>은 공동설문을 하지 않는다. 파트너가 정해 둔 공동 목표를 아직 본 적이
+  // 없으므로 연결 완료 화면에서 확인시킨 뒤 개인설문으로 넘긴다(이동은 그 화면이 담당한다).
+  // 보낸 사람은 자기가 만든 목표라 다시 보여줄 이유가 없어 바로 개인설문으로 간다.
+  //
+  // ⚠️ 지금은 백엔드가 <b>연결되는 순간 초대코드를 USED 로 바꾸고</b>(`markInvitationUsed`)
+  // `hasInvitation` 은 ACTIVE 인 것만 세기 때문에, 연결 후에는 보낸 사람도 false 가 되어 두
+  // 사람이 갈리지 않는다 — 둘 다 연결 완료 화면으로 간다. 보낸 사람이 목표를 한 번 더 보게 될
+  // 뿐이라 해는 없다. 백엔드에서 ACTIVE 조건을 빼기로 했고(담당자 조율 완료), 들어오면 이
+  // 코드는 그대로 둔 채 의도대로 갈린다.
   if (!personalSurveyCompleted) {
-    return { name: 'survey-personal' }
+    return hasInvitation ? { name: 'survey-personal' } : { name: 'couple-connected' }
   }
 
   // 둘 다 끝났으면 계산 화면을 거쳐 대시보드로 간다(계산 화면이 대시보드로 넘긴다).
