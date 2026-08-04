@@ -80,9 +80,9 @@ INSERT INTO common_survey (id,member_id,first_goal_type,second_goal_type,target_
 INSERT INTO invitation_code (id,common_survey_id,code_value,status) VALUES
 (1,1,'DEMO2026','USED');
 
--- couple.investment_type = 리포트 매트릭스 중간(안정추구+적극투자 → 위험중립형)
+-- couple.investment_type = CoupleInvestmentTypeCalculator 기준(안정추구=1, 적극투자=3 → |1-3|=2 → DIFF_2)
 INSERT INTO couple (id,inviter_id,invitee_id,invitation_code_id,investment_type) VALUES
-(1,1,2,1,'NEUTRAL');
+(1,1,2,1,'DIFF_2');
 
 -- ─── 마이데이터: 자산·부채 요약 ───
 INSERT INTO financial_summary (member_id,financial_asset,total_debt,available_balance,annual_debt_payment,average_interest_rate,has_high_rate_debt) VALUES
