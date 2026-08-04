@@ -80,13 +80,13 @@ const goToCreatedInviteCode = () => {
 
 <template>
   <section class="flex min-h-screen flex-col px-6 pt-5 pb-8">
-    <header class="text-center text-[15px]">커플 연동</header>
+    <header class="text-center text-[18px]">커플 연동</header>
 
     <main class="mt-16 flex flex-1 flex-col">
       <div class="text-center">
-        <PageTitle align="center">초대 코드 입력</PageTitle>
+        <PageTitle align="center" class="!text-[32px]">초대 코드 입력</PageTitle>
 
-        <p class="text-muted mt-4 text-[13px] leading-[1.55]">
+        <p class="text-muted mt-4 text-[16px] leading-[1.55]">
           연인으로부터 받은 8자리 초대 코드를 입력하여<br />
           두 분의 소중한 인연을 연결해 보세요!
         </p>
@@ -119,7 +119,7 @@ const goToCreatedInviteCode = () => {
             <span
               v-for="(character, index) in codeCharacters"
               :key="index"
-              class="flex h-9 items-center justify-center rounded-[7px] border border-line-soft bg-surface-muted text-center font-mono text-[18px] font-extrabold text-ink-sub"
+              class="flex h-9 items-center justify-center rounded-[7px] border border-line-soft bg-surface-muted text-center font-mono text-[20px] font-extrabold text-ink-sub"
               :class="character !== '-' ? 'border-brand-deep bg-white text-ink' : ''"
             >
               {{ character }}
@@ -127,13 +127,13 @@ const goToCreatedInviteCode = () => {
           </div>
         </div>
 
-        <p v-if="inviteCodeError" class="mt-3 text-center text-[12px] font-medium text-red-500">
+        <p v-if="inviteCodeError" class="mt-3 text-center text-[16px] font-medium text-red-500">
           {{ inviteCodeError }}
         </p>
       </div>
 
       <BaseButton
-        class="mt-8"
+        class="mt-8 text-[20px]"
         :variant="isConnecting || !isInviteCodeValid ? 'disabled' : 'primary'"
         @click="submitInviteCode"
       >
@@ -144,7 +144,7 @@ const goToCreatedInviteCode = () => {
 
       <div class="mt-6 flex items-center gap-3">
         <div class="bg-line-soft h-px flex-1"></div>
-        <span class="text-muted text-[10px] font-semibold">OR</span>
+        <span class="text-muted text-[16px] font-semibold">OR</span>
         <div class="bg-line-soft h-px flex-1"></div>
       </div>
 
@@ -162,10 +162,10 @@ const goToCreatedInviteCode = () => {
           </span>
 
           <span class="ml-3 min-w-0 flex-1">
-            <span class="block text-[13px] font-extrabold text-gray-900">
+            <span class="block text-[16px] font-extrabold text-gray-900">
               공동 목표 설정하고 초대 코드 만들기
             </span>
-            <span class="mt-0.5 block text-[11px] font-medium text-gray-500">
+            <span class="mt-0.5 block text-[16px] font-medium text-gray-500">
               아직 코드가 없다면 새로 생성
             </span>
           </span>
@@ -186,10 +186,10 @@ const goToCreatedInviteCode = () => {
           </span>
 
           <span class="ml-3 min-w-0 flex-1">
-            <span class="block text-[13px] font-extrabold text-gray-900">
+            <span class="block text-[18px] font-extrabold text-gray-900">
               내가 만든 초대 코드 확인하기
             </span>
-            <span class="mt-0.5 block text-[11px] font-medium text-gray-500">
+            <span class="mt-0.5 block text-[16px] font-medium text-gray-500">
               이미 생성한 내 코드를 공유하기
             </span>
           </span>
