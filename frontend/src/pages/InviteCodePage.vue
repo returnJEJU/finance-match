@@ -2,7 +2,14 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMutation, useQuery } from '@tanstack/vue-query'
-import { ChevronRight, CirclePlus, Heart, LoaderCircle, Ticket } from 'lucide-vue-next'
+import {
+  ChevronRight,
+  CirclePlus,
+  Heart,
+  HeartHandshake,
+  LoaderCircle,
+  Ticket,
+} from 'lucide-vue-next'
 import { createCouple } from '@/api/couple'
 import { getOnboardingStatus } from '@/api/onboarding'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -14,6 +21,7 @@ const INVITE_CODE_PATTERN = /^[A-Z0-9]{8}$/
 const router = useRouter()
 const inviteCode = ref('')
 const inviteCodeError = ref('')
+const isSurveyNoticeOpen = ref(false)
 
 const { data: onboardingStatus } = useQuery({
   queryKey: ['onboardingStatus'],
@@ -70,6 +78,15 @@ const focusInviteCodeInput = () => {
 }
 
 const goToCoupleSurvey = () => {
+  isSurveyNoticeOpen.value = true
+}
+
+const closeSurveyNotice = () => {
+  isSurveyNoticeOpen.value = false
+}
+
+const startCoupleSurvey = () => {
+  isSurveyNoticeOpen.value = false
   router.push({ name: 'survey-couple' })
 }
 
@@ -198,5 +215,75 @@ const goToCreatedInviteCode = () => {
         </button>
       </div>
     </main>
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="isSurveyNoticeOpen"
+          class="fixed inset-0 z-50 flex items-end justify-center bg-black/45 px-5 pb-6 sm:items-center sm:pb-0"
+          role="presentation"
+          @click.self="closeSurveyNotice"
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="survey-notice-title"
+            aria-describedby="survey-notice-description"
+            class="w-full max-w-[390px] rounded-[24px] bg-white px-6 pt-7 pb-5 shadow-xl"
+          >
+            <div
+              class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FFF56E] text-gray-900"
+            >
+              <HeartHandshake :size="29" :stroke-width="2" />
+            </div>
+
+            <div class="mt-5 text-center">
+              <h2 id="survey-notice-title" class="text-[20px] font-extrabold text-gray-950">
+                공동 설문은 초대자가 대표로 답해요
+              </h2>
+
+              <p
+                id="survey-notice-description"
+                class="mt-3 text-[14px] leading-[1.7] font-medium text-gray-600"
+              >
+                두 분 모두 작성하더라도 공동 결과에는<br />
+                <strong class="font-extrabold text-gray-900">
+                  초대 코드를 만든 분의 답변만 반영돼요.
+                </strong>
+              </p>
+            </div>
+
+            <div class="mt-5 rounded-[14px] bg-[#FFFDE8] px-4 py-3">
+              <p class="text-center text-[14px] leading-[1.6] font-semibold text-gray-700">
+                그래서 한 분만 작성해도<br />
+                궁합·추천·리포트를 함께 이용할 수 있어요.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              class="mt-5 flex h-[52px] w-full items-center justify-center rounded-[14px] bg-[#FFF56E] text-[14px] font-extrabold text-gray-950 transition active:scale-[0.99]"
+              @click="startCoupleSurvey"
+            >
+              확인했어요, 설문 시작하기
+            </button>
+
+            <button
+              type="button"
+              class="mt-2 flex h-10 w-full items-center justify-center text-[14px] font-bold text-gray-500"
+              @click="closeSurveyNotice"
+            >
+              다음에 할게요
+            </button>
+          </section>
+        </div>
+      </Transition>
+    </Teleport>
   </section>
 </template>
