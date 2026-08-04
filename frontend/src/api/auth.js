@@ -34,6 +34,12 @@ const loginResponseSchema = z.object({
   progress: onboardingStatusSchema,
 })
 
+const withdrawResponseSchema = z.object({
+  memberId: z.number(),
+  status: z.literal('WITHDRAWN'),
+  withdrawnAt: z.string(),
+})
+
 /**
  * 회원가입.
  *
@@ -66,4 +72,23 @@ export async function login({ email, password }) {
 export async function logout() {
   const data = await api.post('/v1/auth/logout')
   return z.null().parse(data)
+}
+
+/**
+ * 회원탈퇴.
+ *
+ * axios delete 의 두 번째 인자는 config 이므로 요청 본문은 반드시 data 안에 넣는다.
+ *
+ * @throws {ApiError} INVALID_PASSWORD(400) · INVALID_CONFIRMATION(400) ·
+ *   MEMBER_ALREADY_WITHDRAWN(409) · UNAUTHORIZED(401) · MEMBER_NOT_FOUND(404)
+ */
+export async function withdraw({ password, confirmationText }) {
+  const data = await api.delete('/v1/members/me', {
+    data: {
+      password,
+      confirmationText: confirmationText.trim(),
+    },
+  })
+
+  return withdrawResponseSchema.parse(data)
 }

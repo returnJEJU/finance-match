@@ -1,7 +1,11 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
-import { login as requestLogin, logout as requestLogout } from '@/api/auth'
+import {
+  login as requestLogin,
+  logout as requestLogout,
+  withdraw as requestWithdraw,
+} from '@/api/auth'
 import { clearAccessToken, getAccessToken, setAccessToken } from '@/api/client'
 
 /**
@@ -81,9 +85,33 @@ export const useAuthStore = defineStore('auth', () => {
         throw error
       }
     } finally {
-      clearAccessToken()
-      accessToken.value = null
-      member.value = null
+      clearSession()
+    }
+  }
+
+  /**
+   * 회원탈퇴.
+   *
+   * 성공하면 서버가 계정을 WITHDRAWN 으로 바꾸지만, 이미 발급된 JWT 는 프론트가 직접 지워야 한다.
+   * 400 입력 오류는 화면에서 다시 입력받아야 하므로 그대로 던지고, 세션이 더 이상 유효하지 않은
+   * 상태만 여기서 정리한다.
+   */
+  async function withdrawAccount(payload) {
+    try {
+      const result = await requestWithdraw(payload)
+      clearSession()
+      return result
+    } catch (error) {
+      if (
+        error?.status === 401 ||
+        error?.code === 'UNAUTHORIZED' ||
+        error?.code === 'MEMBER_ALREADY_WITHDRAWN' ||
+        error?.code === 'MEMBER_NOT_FOUND'
+      ) {
+        clearSession()
+      }
+
+      throw error
     }
   }
 
@@ -93,5 +121,20 @@ export const useAuthStore = defineStore('auth', () => {
     member.value = sessionMember
   }
 
-  return { accessToken, member, isAuthenticated, syncFromStorage, login, applySignup, logout }
+  function clearSession() {
+    clearAccessToken()
+    accessToken.value = null
+    member.value = null
+  }
+
+  return {
+    accessToken,
+    member,
+    isAuthenticated,
+    syncFromStorage,
+    login,
+    applySignup,
+    logout,
+    withdrawAccount,
+  }
 })

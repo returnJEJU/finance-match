@@ -39,26 +39,34 @@ const form = ref({
 const showPassword = ref(false)
 
 const loginError = ref('')
-const logoutToastMessage = ref('')
-let logoutToastTimer = null
+const toastMessage = ref('')
+let toastTimer = null
 
 onMounted(() => {
-  if (route.query.logout !== 'success') return
-
-  logoutToastMessage.value = '로그아웃되었습니다.'
-
   const query = { ...route.query }
-  delete query.logout
+
+  if (route.query.logout === 'success') {
+    toastMessage.value = '로그아웃되었습니다.'
+    delete query.logout
+  }
+
+  if (route.query.withdraw === 'success') {
+    toastMessage.value = '탈퇴가 완료되었습니다.'
+    delete query.withdraw
+  }
+
+  if (!toastMessage.value) return
+
   router.replace({ name: 'login', query })
 
-  logoutToastTimer = window.setTimeout(() => {
-    logoutToastMessage.value = ''
+  toastTimer = window.setTimeout(() => {
+    toastMessage.value = ''
   }, 2400)
 })
 
 onBeforeUnmount(() => {
-  if (logoutToastTimer) {
-    window.clearTimeout(logoutToastTimer)
+  if (toastTimer) {
+    window.clearTimeout(toastTimer)
   }
 })
 
@@ -96,10 +104,10 @@ function submit() {
 <template>
   <div class="flex min-h-dvh flex-col">
     <div
-      v-if="logoutToastMessage"
+      v-if="toastMessage"
       class="fixed left-1/2 top-5 z-[120] w-[calc(100%-40px)] max-w-[360px] -translate-x-1/2 rounded-xl bg-gray-900 px-4 py-3 text-center text-[13px] font-semibold text-white shadow-lg"
     >
-      {{ logoutToastMessage }}
+      {{ toastMessage }}
     </div>
 
     <AppHeader variant="plain" title="로그인" :fallback-to="{ name: 'onboarding' }" />
