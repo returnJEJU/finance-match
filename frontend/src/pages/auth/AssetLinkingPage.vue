@@ -193,7 +193,7 @@ function goNext() {
             <span>
               <span class="block text-[14px] font-bold">{{ item.name }}</span>
               <span
-                class="mt-0.5 block text-[11.5px]"
+                class="mt-0.5 block text-[12px]"
                 :class="index < revealedCount ? 'text-ink' : 'text-muted'"
               >
                 {{ index < revealedCount ? '완료' : '찾는 중' }}
@@ -202,7 +202,7 @@ function goNext() {
             <span class="flex-1"></span>
             <span
               v-if="index < revealedCount"
-              class="reveal text-[15px] font-extrabold tracking-[-0.3px]"
+              class="reveal text-[16px] font-extrabold tracking-[-0.3px]"
             >
               {{ amountOf(item) }}
             </span>
