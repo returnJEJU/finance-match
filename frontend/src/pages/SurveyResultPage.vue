@@ -21,27 +21,27 @@ import typeActive from '@/assets/images/characters/types/type-active.png'
 import typeAggressive from '@/assets/images/characters/types/type-aggressive.png'
 
 const investmentTypeMeta = {
-  안정형: {
+  든든지킴형: {
     character: typeStable,
     icon: ShieldCheck,
     accentClass: 'text-[#80D39C]',
   },
-  안정추구형: {
+  차곡성장형: {
     character: typeStabilitySeeking,
     icon: HandCoins,
     accentClass: 'text-[#FFABEC]',
   },
-  위험중립형: {
+  균형설계형: {
     character: typeRiskNeutral,
     icon: Scale,
     accentClass: 'text-[#80C7F1]',
   },
-  적극투자형: {
+  적극성장형: {
     character: typeActive,
     icon: ChartNoAxesCombined,
     accentClass: 'text-[#FFB231]',
   },
-  공격투자형: {
+  과감도전형: {
     character: typeAggressive,
     icon: Rocket,
     accentClass: 'text-[#EF4744]',
