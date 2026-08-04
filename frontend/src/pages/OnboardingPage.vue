@@ -8,15 +8,16 @@ import PageTitle from '@/components/ui/PageTitle.vue'
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
-    <!-- 본문 — 버튼 영역을 뺀 남은 공간을 모두 차지하고, 그 안에서 가운데 정렬.
-         버튼 여백을 바꾸면 남는 공간이 달라져 본문도 함께 움직인다. -->
-    <div class="flex flex-1 flex-col items-center justify-center px-5 text-center">
-      <img :src="logoWordmark" alt="찰떡귱합" class="mb-1.5 w-[260px]" />
-      <p class="text-muted mb-1.5 text-[12.5px]">"우리의 금융 궁합도 계산기"</p>
-      <img :src="characterMarried" alt="" class="w-[236px]" />
+  <div class="flex min-h-dvh flex-col">
+    <!-- pt-* 는 가운데 정렬을 유지한 채 덩어리를 내리는 손잡이다. 위쪽에만 여백이 생기므로
+         남는 공간이 위아래로 나뉘는 지점이 내려가고, 실제로는 <b>준 값의 절반</b>만큼 내려온다.
+         (pt-16 = 64px → 약 32px 아래로) -->
+    <div class="flex flex-1 flex-col items-center justify-center px-5 pt-16 text-center">
+      <img :src="logoWordmark" alt="찰떡귱합" class="mb-2 w-[260px]" />
+      <p class="text-muted mb-2.5 text-[12.5px]">"우리의 금융 궁합도 계산기"</p>
+      <img :src="characterMarried" alt="" class="-mt-5 -mb-7 w-[210px]" />
 
-      <PageTitle class="mt-0.5">예비 부부를 위한<br />달콤한 금융 궁합</PageTitle>
+      <PageTitle class="mt-2.5">예비 부부를 위한<br />달콤한 금융 궁합</PageTitle>
       <p class="text-muted mt-2.5 text-[13px] leading-[1.5]">
         서로 다른 두 사람의 경제력을 하나로,<br />찰떡같이 붙는 자산 관리를 시작해보세요.
       </p>

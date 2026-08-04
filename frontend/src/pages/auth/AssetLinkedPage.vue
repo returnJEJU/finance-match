@@ -5,7 +5,7 @@
 // 자산 조회 API 가 없고(연동·갱신뿐), 카테고리별 금액은 응답을 만들 때만 쪼개 주는 값이라
 // DB 에도 남지 않아서 이 화면이 스스로 다시 불러올 수 없다.
 import { computed } from 'vue'
-import { ChevronRight, CreditCard, Landmark, Lock, TrendingUp, Wallet } from 'lucide-vue-next'
+import { ChevronRight, CreditCard, Landmark, TrendingUp, Wallet } from 'lucide-vue-next'
 import { useAssetLinkStore } from '@/stores/assetLink'
 import logoWordmark from '@/assets/images/logo/logo-wordmark.png'
 import characterExcited from '@/assets/images/characters/character-excited.png'
@@ -100,25 +100,27 @@ const items = computed(() => [
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
+  <div class="flex min-h-dvh flex-col">
     <div class="flex flex-none justify-center px-7 pt-4 pb-3">
       <img :src="logoWordmark" alt="찰떡귱합" class="w-24" />
     </div>
 
     <div class="flex flex-1 flex-col px-7">
-      <img :src="characterExcited" alt="" class="mt-6 w-[136px] self-center" />
+      <!-- 이미지가 정사각형인데 그림은 그 안을 다 채우지 않는다(위 약 8%·아래 약 14%가 투명).
+           mt 를 줄이는 것만으로는 안 좁혀져서, 그 빈 자리만큼 음수 마진으로 당긴다. -->
+      <img :src="characterExcited" alt="" class="mt-1 -mb-2 w-[136px] self-center" />
 
       <h1 class="mt-0.5 text-center text-[21px] leading-[1.38] font-extrabold tracking-[-0.4px]">
         자산 연동 완료!
       </h1>
-      <p class="text-muted mt-1.5 text-center text-[13px] leading-[1.5]">
+      <p class="text-muted mt-1.5 text-center text-[14px] leading-[1.5]">
         <b class="text-ink font-bold">계좌 {{ result?.assetCount ?? 0 }}개</b>를 한 번에 불러왔어요
       </p>
 
       <!-- 총 자산 -->
       <div class="border-line-card rounded-card mt-6 border bg-white px-4 py-4">
         <div class="flex items-center">
-          <span class="text-ink-sub rounded-md bg-[#F2F2F2] px-2.5 py-1 text-[11px] font-bold">
+          <span class="text-ink-sub rounded-md bg-[#F2F2F2] px-2.5 py-1 text-[12px] font-bold">
             총 자산
           </span>
           <span class="flex-1"></span>
@@ -138,7 +140,7 @@ const items = computed(() => [
           ></i>
         </div>
 
-        <div class="text-ink-sub mt-2.5 flex gap-3.5 text-[11px]">
+        <div class="text-ink-sub mt-2.5 flex gap-3.5 text-[12px]">
           <span v-for="part in composition" :key="part.key" class="flex items-center gap-1">
             <i class="h-1.5 w-1.5 rounded-full" :style="{ backgroundColor: part.dot }"></i>
             {{ part.label }}
@@ -148,10 +150,10 @@ const items = computed(() => [
       </div>
 
       <!-- 불러온 내역 -->
-      <div class="mt-6.5 mb-0.5 flex items-center">
-        <span class="text-[13px] font-extrabold">불러온 내역</span>
+      <div class="mt-6.5 mb-1.5 flex items-center">
+        <span class="text-[14px] font-extrabold">불러온 내역</span>
         <span class="flex-1"></span>
-        <button type="button" class="text-muted flex cursor-pointer items-center text-[11.5px]">
+        <button type="button" class="text-muted flex cursor-pointer items-center text-[12px]">
           전체 보기
           <ChevronRight class="h-3.5 w-3.5" />
         </button>
@@ -172,20 +174,12 @@ const items = computed(() => [
               <span class="block text-[14px] font-bold">{{ item.name }}</span>
             </span>
             <span class="flex-1"></span>
-            <span class="text-[15px] font-extrabold tracking-[-0.3px]">{{ item.amount }}</span>
+            <span class="text-[16px] font-extrabold tracking-[-0.3px]">{{ item.amount }}</span>
           </div>
         </template>
       </div>
 
       <div class="flex-1"></div>
-
-      <p class="text-muted flex gap-[7px] pb-3 text-[11px] leading-[1.55]">
-        <Lock class="mt-px h-[13px] w-[13px] flex-none" />
-        <span>
-          연동된 정보는 파트너와 함께 실시간으로 업데이트되며,
-          <b class="text-ink font-bold">개인 식별 정보는 암호화</b>되어 안전하게 관리됩니다.
-        </span>
-      </p>
     </div>
 
     <div class="flex flex-none flex-col px-7 pb-14">
