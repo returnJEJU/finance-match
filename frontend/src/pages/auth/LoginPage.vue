@@ -2,7 +2,7 @@
 // 로그인 · 레이아웃: BlankLayout
 //
 // 로그인에 성공하면 토큰은 authStore 가 저장하고, 어느 화면으로 갈지는 resolveNextRoute 가 정한다.
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { Eye, EyeOff, LoaderCircle } from 'lucide-vue-next'
@@ -39,6 +39,28 @@ const form = ref({
 const showPassword = ref(false)
 
 const loginError = ref('')
+const logoutToastMessage = ref('')
+let logoutToastTimer = null
+
+onMounted(() => {
+  if (route.query.logout !== 'success') return
+
+  logoutToastMessage.value = '로그아웃되었습니다.'
+
+  const query = { ...route.query }
+  delete query.logout
+  router.replace({ name: 'login', query })
+
+  logoutToastTimer = window.setTimeout(() => {
+    logoutToastMessage.value = ''
+  }, 2400)
+})
+
+onBeforeUnmount(() => {
+  if (logoutToastTimer) {
+    window.clearTimeout(logoutToastTimer)
+  }
+})
 
 const loginMutation = useMutation({
   mutationFn: () => authStore.login(form.value),
@@ -73,6 +95,13 @@ function submit() {
 
 <template>
   <div class="flex min-h-dvh flex-col">
+    <div
+      v-if="logoutToastMessage"
+      class="fixed left-1/2 top-5 z-[120] w-[calc(100%-40px)] max-w-[360px] -translate-x-1/2 rounded-xl bg-gray-900 px-4 py-3 text-center text-[13px] font-semibold text-white shadow-lg"
+    >
+      {{ logoutToastMessage }}
+    </div>
+
     <AppHeader variant="plain" title="로그인" :fallback-to="{ name: 'onboarding' }" />
 
     <div class="flex flex-1 flex-col px-7">

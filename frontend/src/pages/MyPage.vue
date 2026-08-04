@@ -323,20 +323,32 @@ const finishDisconnect = () => {
 // ========================================
 
 const isLogoutModalOpen = ref(false)
+const isLoggingOut = ref(false)
 
 const openLogoutModal = () => {
   isLogoutModalOpen.value = true
 }
 
 const closeLogoutModal = () => {
+  if (isLoggingOut.value) return
   isLogoutModalOpen.value = false
 }
 
-const confirmLogout = () => {
-  authStore.logout()
-  queryClient.clear()
-  isLogoutModalOpen.value = false
-  router.replace({ name: 'login' })
+const confirmLogout = async () => {
+  if (isLoggingOut.value) return
+
+  isLoggingOut.value = true
+
+  try {
+    await authStore.logout()
+  } catch {
+    // 서버 호출 실패와 관계없이 현재 브라우저 세션은 로그아웃 상태로 정리한다.
+  } finally {
+    queryClient.clear()
+    isLogoutModalOpen.value = false
+    router.replace({ name: 'login', query: { logout: 'success' } })
+    isLoggingOut.value = false
+  }
 }
 
 // ========================================
@@ -1168,7 +1180,8 @@ const confirmWithdraw = () => {
         <!-- 취소 -->
         <button
           type="button"
-          class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[18px] font-bold text-gray-600 transition hover:bg-gray-200"
+          class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[18px] font-bold text-gray-600 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="isLoggingOut"
           @click="closeLogoutModal"
         >
           취소
@@ -1177,10 +1190,11 @@ const confirmWithdraw = () => {
         <!-- 로그아웃 -->
         <button
           type="button"
-          class="h-12 flex-1 cursor-pointer rounded-xl bg-yellow-300 text-[18px] font-bold text-gray-900 transition hover:bg-yellow-400"
+          class="h-12 flex-1 cursor-pointer rounded-xl bg-yellow-300 text-[18px] font-bold text-gray-900 transition hover:bg-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="isLoggingOut"
           @click="confirmLogout"
         >
-          로그아웃
+          {{ isLoggingOut ? '로그아웃 중' : '로그아웃' }}
         </button>
       </div>
     </div>
