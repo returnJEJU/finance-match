@@ -34,16 +34,19 @@ const visibleProducts = computed(() =>
 </script>
 
 <template>
-  <section v-if="hasTaxSaving || hasInvestment" class="mt-7">
-    <div class="flex items-center justify-between">
-      <h2 class="text-[15px] font-bold">{{ targetName }}님을 위한 추천 목록</h2>
+  <section v-if="hasTaxSaving || hasInvestment" class="mt-8">
+    <div class="flex items-center justify-between gap-3">
+      <h2 class="min-w-0 flex-1 text-[18px] leading-6 font-bold">
+        {{ targetName }}님을 위한 추천 목록
+      </h2>
+
       <div
         v-if="hasBoth"
-        class="mr-2 flex overflow-hidden rounded-xl border border-[#BDBDBD] bg-[#F1F1F1] text-[11px]"
+        class="mr-1 flex shrink-0 overflow-hidden rounded-xl border border-[#BDBDBD] bg-[#F1F1F1] text-[14px]"
       >
         <button
           type="button"
-          class="relative min-w-9 px-1.5 py-1.5 transition-colors"
+          class="relative min-w-12 px-2 py-2 transition-colors"
           :class="
             activeType === 'tax'
               ? 'font-bold text-ink before:absolute before:inset-y-0 before:-inset-x-1 before:rounded-xl before:border before:border-[#D8CD3F] before:bg-[#FFF56E]'
@@ -53,9 +56,10 @@ const visibleProducts = computed(() =>
         >
           <span class="relative z-10">절세</span>
         </button>
+
         <button
           type="button"
-          class="relative min-w-9 px-1.5 py-1.5 transition-colors"
+          class="relative min-w-12 px-2 py-2 transition-colors"
           :class="
             activeType === 'investment'
               ? 'font-bold text-ink before:absolute before:inset-y-0 before:-inset-x-1 before:rounded-xl before:border before:border-[#D8CD3F] before:bg-[#FFF56E]'
@@ -68,7 +72,7 @@ const visibleProducts = computed(() =>
       </div>
     </div>
 
-    <div class="mt-3 space-y-3">
+    <div class="mt-4 space-y-4">
       <RecommendationProductCard
         v-for="product in visibleProducts"
         :key="product.productId"
