@@ -4,11 +4,10 @@ import { useQuery } from '@tanstack/vue-query'
 import {
   ChevronDown,
   ChevronUp,
-  Wallet,
-  BarChart3,
-  Heart,
-  Search,
-  Building2,
+  BadgeDollarSign,
+  Landmark,
+  HeartHandshake,
+  Target,
 } from 'lucide-vue-next'
 
 import { getReport } from '@/api/report'
@@ -77,12 +76,13 @@ const coupleInvestmentTypeMeta = {
 }
 
 // 점수 축(key)별 아이콘 — report API 의 scoreAxes[].key 와 매핑한다.
-const scoreIcons = {
-  ASSET_STABILITY: Wallet,
-  DEBT_REPAYMENT: BarChart3,
-  FINANCIAL_VALUE: Heart,
-  GOAL_FEASIBILITY: Search,
-  TAX_STRATEGY: Building2,
+// DashboardPage.vue 의 scoreCards 아이콘·색상과 동일하게 맞춘다(같은 축은 페이지가 달라도 같은 아이콘).
+const scoreIconMeta = {
+  ASSET_STABILITY: { icon: BadgeDollarSign, iconClass: 'bg-brand-soft text-brand-ink' },
+  DEBT_REPAYMENT: { icon: Landmark, iconClass: 'bg-[#fff3e9] text-[#a94700]' },
+  FINANCIAL_VALUE: { icon: HeartHandshake, iconClass: 'bg-[#f5f5dc] text-[#777000]' },
+  GOAL_FEASIBILITY: { icon: Target, iconClass: 'bg-[#eef7e9] text-[#46763b]' },
+  TAX_STRATEGY: { icon: BadgeDollarSign, iconClass: 'bg-[#f5f0ff] text-[#66528c]' },
 }
 
 const {
@@ -408,8 +408,8 @@ const toggleCard = (key) => {
             }"
           />
           <span
-            class="group absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full bg-[#78f2dc]"
-            style="box-shadow: 0 0 0 6px rgba(120, 242, 220, 0.3)"
+            class="group absolute top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full border-[3px] border-[#3fc9ae] bg-[#bff5ea]"
+            style="box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18)"
             :style="{ left: `${lowerPosition}%` }"
           >
             <span
@@ -419,8 +419,8 @@ const toggleCard = (key) => {
             </span>
           </span>
           <span
-            class="group absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full bg-[#fff44f]"
-            style="box-shadow: 0 0 0 6px rgba(255, 244, 79, 0.35)"
+            class="group absolute top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full border-[3px] border-[#e0c400] bg-[#fff9b3]"
+            style="box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18)"
             :style="{ left: `${higherPosition}%` }"
           >
             <span
@@ -450,9 +450,10 @@ const toggleCard = (key) => {
             >
               <span class="flex items-center gap-2.5">
                 <span
-                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand"
+                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px]"
+                  :class="scoreIconMeta[axis.key]?.iconClass"
                 >
-                  <component :is="scoreIcons[axis.key]" :size="16" class="text-ink" />
+                  <component :is="scoreIconMeta[axis.key]?.icon" :size="19" :stroke-width="2" />
                 </span>
                 <span class="text-[16px] font-bold text-ink">{{ axis.name }}</span>
               </span>
