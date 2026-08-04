@@ -677,11 +677,11 @@ public class MatchCalculator {
                 isTaxStrategyCalculated(input);
 
         BigDecimal scoreSum =
-                assetStabilityScore
-                        .add(debtRepaymentScore)
-                        .add(financialValueScore)
-                        .add(goalFeasibilityScore)
-                        .add(taxStrategyScore);
+                assetStabilityScore.setScale(0, RoundingMode.HALF_UP)
+                        .add(debtRepaymentScore.setScale(0, RoundingMode.HALF_UP))
+                        .add(financialValueScore.setScale(0, RoundingMode.HALF_UP))
+                        .add(goalFeasibilityScore.setScale(0, RoundingMode.HALF_UP))
+                        .add(taxStrategyScore.setScale(0, RoundingMode.HALF_UP));
 
         BigDecimal calculatedMaxScore =
                 taxStrategyCalculated
@@ -693,7 +693,7 @@ public class MatchCalculator {
                         .multiply(new BigDecimal("100"))
                         .divide(
                                 calculatedMaxScore,
-                                2,
+                                0,
                                 RoundingMode.HALF_UP
                         );
 

@@ -38,6 +38,52 @@ const formattedTargetAmount = computed(() => {
   return Number(targetAmount.value).toLocaleString('ko-KR')
 })
 
+function formatKoreanAmount(value) {
+  if (value === '') {
+    return '금액 입력'
+  }
+
+  const amount = Number(value)
+
+  if (!Number.isFinite(amount) || amount < 0) {
+    return '금액 입력'
+  }
+
+  if (amount === 0) {
+    return '0원'
+  }
+
+  const jo = Math.floor(amount / 1_000_000_000_000)
+  const eok = Math.floor((amount % 1_000_000_000_000) / 100_000_000)
+  const man = Math.floor((amount % 100_000_000) / 10_000)
+  const won = amount % 10_000
+  const parts = []
+
+  if (jo > 0) {
+    parts.push(`${jo}조`)
+  }
+
+  if (eok > 0) {
+    parts.push(`${eok}억`)
+  }
+
+  if (man > 0) {
+    parts.push(`${man}만`)
+  }
+
+  if (won > 0) {
+    parts.push(`${won}원`)
+  }
+
+  if (won === 0) {
+    return `${parts.join(' ')} 원`
+  }
+
+  return parts.join(' ')
+}
+
+const targetAmountSummary = computed(() => formatKoreanAmount(targetAmount.value))
+
 const periodSummary = computed(() => {
   const months = Number(targetPeriodMonths.value)
   if (!months) return ''
@@ -118,7 +164,11 @@ function selectGoal(value) {
 }
 
 function updateAmount(event) {
-  targetAmount.value = event.target.value.replace(/\D/g, '').slice(0, 15)
+  const limitedValue = event.target.value.replace(/\D/g, '').slice(0, 15)
+
+  targetAmount.value = limitedValue
+  event.target.value = limitedValue ? Number(limitedValue).toLocaleString('ko-KR') : ''
+
   formError.value = ''
 }
 
@@ -162,66 +212,68 @@ function submitSurvey() {
 </script>
 
 <template>
-  <section class="mx-auto flex min-h-screen flex-col bg-canvas px-4 pt-3 pb-7">
-    <header class="flex flex-none items-center">
-      <button
-        type="button"
-        class="flex h-8 w-8 cursor-pointer items-center justify-start"
-        aria-label="뒤로 가기"
-        @click="goBack"
-      >
-        <ChevronLeft :size="20" :stroke-width="2" />
-      </button>
-      <h1 class="-ml-8 flex-1 text-center text-[13px] font-semibold text-ink">공동 설문</h1>
-    </header>
+  <section class="mx-auto flex min-h-screen flex-col bg-canvas px-5 pb-7">
+    <div class="sticky top-0 z-30 -mx-5 bg-canvas px-5 pt-3 pb-4">
+      <header class="flex flex-none items-center">
+        <button
+          type="button"
+          class="relative z-10 flex h-8 w-8 cursor-pointer items-center justify-start"
+          aria-label="뒤로 가기"
+          @click="goBack"
+        >
+          <ChevronLeft :size="20" :stroke-width="2" />
+        </button>
+        <h1 class="-ml-8 flex-1 text-center text-[20px] font-semibold text-ink">공동 설문</h1>
+      </header>
 
-    <div class="mt-5">
-      <div class="flex items-center justify-between">
-        <span class="text-brand-ink text-[10px] font-extrabold">{{ progressLabel }}</span>
-      </div>
-      <div class="mt-2 grid h-1 grid-cols-5 gap-1">
-        <div
-          v-for="(_, index) in questionCompletion"
-          :key="index"
-          class="h-full rounded-full transition-colors"
-          :class="index < completedQuestionCount ? 'bg-brand-deep' : 'bg-line-card'"
-        ></div>
+      <div class="mt-8">
+        <div class="flex items-center justify-between">
+          <span class="text-brand-ink text-[16px] font-extrabold">{{ progressLabel }}</span>
+        </div>
+        <div class="mt-2 grid h-1.5 grid-cols-5 gap-1">
+          <div
+            v-for="(_, index) in questionCompletion"
+            :key="index"
+            class="h-full rounded-full transition-colors"
+            :class="index < completedQuestionCount ? 'bg-brand-deep' : 'bg-line-card'"
+          ></div>
+        </div>
       </div>
     </div>
 
-    <main class="mt-8 flex-1">
-      <div class="rounded-field flex items-center gap-3 bg-brand px-3 py-3">
-        <img :src="characterExcited" alt="" class="h-12 w-12 flex-none object-contain" />
-        <p class="text-[13px] leading-[1.45] font-bold text-brand-ink">
+    <main class="mt-7 flex-1">
+      <div class="rounded-field flex items-center gap-4 bg-brand px-4 py-4">
+        <img :src="characterExcited" alt="" class="h-14 w-14 flex-none object-contain" />
+        <p class="text-[16px] leading-[1.45] font-bold text-brand-ink">
           두 사람의 함께 준비하고 싶은 목표를<br />
           알려주세요.
         </p>
       </div>
 
-      <form class="mt-8 space-y-7" @submit.prevent="submitSurvey">
+      <form class="mt-7 space-y-7" @submit.prevent="submitSurvey">
         <fieldset>
-          <legend class="text-[13px] leading-[1.45] font-extrabold text-ink">
+          <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
             Q1. 지금 돈을 모으는 가장 큰 이유는?<br />
             <span class="font-semibold">(1순위, 2순위 선택)</span>
           </legend>
 
-          <div class="mt-3 space-y-2">
+          <div class="mt-3 space-y-2.5">
             <button
               v-for="option in goalOptions"
               :key="option.value"
               type="button"
-              class="rounded-chip flex h-10 w-full items-center justify-between border px-3 text-left text-[13px] font-semibold transition"
+              class="rounded-chip flex min-h-12 w-full items-center justify-between border px-4 py-3 text-left text-[18px] font-semibold transition"
               :class="
                 selectedGoalRank(option.value)
                   ? 'border-good bg-mint text-ink'
-                  : 'border-gray-900 bg-white text-ink'
+                  : 'border-line-card bg-white text-ink'
               "
               @click="selectGoal(option.value)"
             >
               <span>{{ option.label }}</span>
               <span
                 v-if="selectedGoalRank(option.value)"
-                class="rounded-[4px] bg-white/70 px-1.5 py-0.5 text-[10px] font-extrabold text-good"
+                class="rounded-[4px] bg-white/70 px-1.5 py-0.5 text-[16px] font-extrabold text-good"
               >
                 {{ selectedGoalRank(option.value) }}
               </span>
@@ -229,50 +281,50 @@ function submitSurvey() {
           </div>
         </fieldset>
 
-        <fieldset>
-          <label for="target-amount" class="text-[13px] font-extrabold text-ink">
+        <fieldset class="min-w-0">
+          <label for="target-amount" class="text-[20px] font-extrabold text-ink">
             Q2. 1순위 목표를 위해 필요한 금액은?
           </label>
 
-          <div class="border-line-field rounded-field mt-3 bg-white px-3 py-3">
-            <div class="flex h-11 items-center border border-line-field bg-white px-3">
+          <div class="rounded-field mt-4 border border-ink bg-white px-5 py-5">
+            <div class="flex h-12 items-center border border-line-field bg-white px-3">
               <input
                 id="target-amount"
                 :value="formattedTargetAmount"
                 type="text"
                 inputmode="numeric"
-                class="min-w-0 flex-1 bg-transparent text-right text-[16px] font-semibold text-ink outline-none"
+                class="min-w-0 flex-1 bg-transparent text-right text-[22px] font-semibold text-ink outline-none"
                 @input="updateAmount"
               />
-              <span class="ml-2 text-[13px] font-medium text-ink">원</span>
+              <span class="ml-5 text-[16px] font-medium text-ink">원</span>
             </div>
             <div class="mt-2 flex justify-end">
-              <span class="rounded-[4px] bg-mint px-2 py-1 text-[11px] font-extrabold text-good">
-                {{ targetAmount ? `${Number(targetAmount) / 100000000}억원` : '금액 입력' }}
+              <span class="rounded-[4px] bg-mint px-2 py-1 text-[16px] font-extrabold text-good">
+                {{ targetAmountSummary }}
               </span>
             </div>
           </div>
         </fieldset>
 
-        <fieldset>
-          <label for="target-period" class="text-[13px] font-extrabold text-ink">
+        <fieldset class="min-w-0">
+          <label for="target-period" class="text-[20px] font-extrabold text-ink">
             Q3. 1순위 목표를 이루고 싶은 기간은?
           </label>
 
-          <div class="border-line-field rounded-field mt-3 bg-white px-3 py-3">
-            <div class="flex h-11 items-center border border-line-field bg-white px-3">
+          <div class="rounded-field mt-4 border border-ink bg-white px-5 py-5">
+            <div class="flex h-12 items-center border border-line-field bg-white px-3">
               <input
                 id="target-period"
                 :value="targetPeriodMonths"
                 type="text"
                 inputmode="numeric"
-                class="min-w-0 flex-1 bg-transparent text-right text-[16px] font-semibold text-ink outline-none"
+                class="min-w-0 flex-1 bg-transparent text-right text-[22px] font-semibold text-ink outline-none"
                 @input="updatePeriod"
               />
-              <span class="ml-2 text-[13px] font-medium text-ink">개월</span>
+              <span class="ml-5 text-[16px] font-medium text-ink">개월</span>
             </div>
             <div class="mt-2 flex justify-end">
-              <span class="rounded-[4px] bg-mint px-2 py-1 text-[11px] font-extrabold text-good">
+              <span class="rounded-[4px] bg-mint px-2 py-1 text-[16px] font-extrabold text-good">
                 {{ periodSummary || '0개월' }}
               </span>
             </div>
@@ -280,20 +332,20 @@ function submitSurvey() {
         </fieldset>
 
         <fieldset>
-          <legend class="text-[13px] font-extrabold text-ink">
+          <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
             Q4. 앞으로 대출이 필요한 일이 있다면?
           </legend>
 
-          <div class="mt-3 space-y-2">
+          <div class="mt-3 space-y-2.5">
             <button
               v-for="option in loanPurposeOptions"
               :key="option.value"
               type="button"
-              class="rounded-chip flex h-10 w-full items-center border px-3 text-left text-[13px] font-semibold transition"
+              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[18px] font-semibold transition"
               :class="
                 loanPurpose === option.value
                   ? 'border-good bg-mint text-ink'
-                  : 'border-gray-900 bg-white text-ink'
+                  : 'border-line-card bg-white text-ink'
               "
               @click="selectLoanPurpose(option.value)"
             >
@@ -303,18 +355,18 @@ function submitSurvey() {
         </fieldset>
 
         <fieldset>
-          <legend class="text-[13px] leading-[1.45] font-extrabold text-ink">
+          <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
             Q5. 최근 1개월 이내 대출을 받았거나, 앞으로 1개월 이내 대출을 받을 예정인가요?
           </legend>
 
           <div class="mt-3 grid grid-cols-2 gap-3">
             <button
               type="button"
-              class="rounded-chip h-12 border text-[13px] font-extrabold transition"
+              class="rounded-chip h-12 border text-[18px] font-extrabold transition"
               :class="
                 hasLoanWithinOneMonth === true
                   ? 'border-good bg-mint text-ink'
-                  : 'border-line-field bg-white text-ink'
+                  : 'border-line-card bg-white text-ink'
               "
               @click="selectLoanPlan(true)"
             >
@@ -322,11 +374,11 @@ function submitSurvey() {
             </button>
             <button
               type="button"
-              class="rounded-chip h-12 border text-[13px] font-extrabold transition"
+              class="rounded-chip h-12 border text-[18px] font-extrabold transition"
               :class="
                 hasLoanWithinOneMonth === false
                   ? 'border-good bg-mint text-ink'
-                  : 'border-line-field bg-white text-ink'
+                  : 'border-line-card bg-white text-ink'
               "
               @click="selectLoanPlan(false)"
             >
@@ -335,17 +387,15 @@ function submitSurvey() {
           </div>
         </fieldset>
 
-        <div class="pt-2">
-          <p
-            v-if="formError"
-            class="mb-3 min-h-4 text-center text-[12px] font-semibold text-red-500"
-          >
+        <div class="pt-1">
+          <p v-if="formError" class="mb-3 min-h-4 text-center text-[16px] font-semibold text-warn">
             {{ formError }}
           </p>
 
-          <div class="mx-auto w-full max-w-[337px]">
+          <div class="w-full">
             <BaseButton
-              class="w-full shadow-[0_8px_18px_rgba(250,230,77,0.28)]"
+              class="w-full rounded-full text-[20px] shadow-lg"
+              :class="isFormValid && !isSubmitting ? 'shadow-brand-deep/30' : 'shadow-gray-300/60'"
               :variant="isFormValid && !isSubmitting ? 'primary' : 'disabled'"
               @click="submitSurvey"
             >
@@ -356,7 +406,7 @@ function submitSurvey() {
             </BaseButton>
           </div>
 
-          <p class="text-muted-soft mt-4 text-center text-[10px] leading-[1.5] font-medium">
+          <p class="text-muted-soft mt-4 text-center text-[16px] leading-[1.5] font-medium">
             입력한 정보는 파트너와 공유되어<br />
             금융 궁합 분석에 사용됩니다.
           </p>

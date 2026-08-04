@@ -19,12 +19,12 @@ const steps = [
     <section class="flex flex-1 flex-col items-center justify-center text-center">
       <img :src="characterMarried" alt="함께 금융 관리를 시작하는 커플" class="w-[230px]" />
 
-      <h1 class="mt-5 text-[26px] leading-[1.35] font-bold tracking-[-0.04em]">
+      <h1 class="mt-5 text-[32px] leading-[1.35] font-bold tracking-[-0.04em]">
         둘이서 함께 그려보는<br />
         <span class="text-[#706914]">달콤한 금융 미래</span>
       </h1>
 
-      <p class="text-ink-sub mt-5 text-[15px] leading-[1.7]">
+      <p class="text-ink-sub mt-5 text-[18px] leading-[1.7]">
         찰떡귱합이 당신의 소중한 파트너와<br />
         함께하는 자산 관리를 시작합니다.
       </p>
@@ -57,7 +57,7 @@ const steps = [
               <span v-else class="h-2 w-2 rounded-full bg-[#555]" aria-hidden="true"></span>
             </div>
 
-            <span class="mt-2 text-[12px] font-medium tracking-[-0.03em]">
+            <span class="mt-2 text-[16px] font-medium tracking-[-0.03em]">
               {{ step.label }}
             </span>
           </li>
@@ -68,7 +68,7 @@ const steps = [
     <!-- 시작 버튼 -->
     <BaseButton
       :to="{ name: 'couple-invite' }"
-      class="mt-8 h-[58px] shrink-0 rounded-full text-[18px]"
+      class="mt-8 h-[58px] shrink-0 rounded-full text-[20px]"
     >
       시작하기
       <ArrowRight class="h-6 w-6" stroke-width="2.3" aria-hidden="true" />

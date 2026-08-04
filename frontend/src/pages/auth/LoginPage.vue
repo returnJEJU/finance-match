@@ -4,7 +4,7 @@
 // 로그인에 성공하면 토큰은 authStore 가 저장하고, 어느 화면으로 갈지는 resolveNextRoute 가 정한다.
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useMutation } from '@tanstack/vue-query'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { Eye, EyeOff, LoaderCircle } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { resolveNextRoute } from '@/router/resolveNextRoute'
@@ -15,6 +15,7 @@ import AppHeader from '@/components/layout/AppHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
+const queryClient = useQueryClient()
 const authStore = useAuthStore()
 
 /**
@@ -42,6 +43,8 @@ const loginError = ref('')
 const loginMutation = useMutation({
   mutationFn: () => authStore.login(form.value),
   onSuccess: (result) => {
+    queryClient.clear()
+
     // 로그인 화면을 히스토리에 남기지 않는다. 다음 화면에서 뒤로 가면 로그인으로 돌아오는 대신
     // 그 이전(온보딩)으로 나가야 한다.
     //

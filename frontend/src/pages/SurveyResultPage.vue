@@ -83,7 +83,7 @@ async function handleNext() {
 <template>
   <main class="flex min-h-screen flex-col px-5 pt-6 pb-6">
     <header class="text-center">
-      <h1 class="text-[18px] font-bold">나의 금융 스타일 결과</h1>
+      <h1 class="text-[20px] font-bold">나의 금융 스타일 결과</h1>
     </header>
 
     <!-- 오류 UI -->
@@ -95,7 +95,7 @@ async function handleNext() {
 
       <button
         type="button"
-        class="border-line-field mt-5 rounded-full border bg-white px-6 py-3 text-[15px] font-semibold"
+        class="border-line-field mt-5 rounded-full border bg-white px-6 py-3 text-[18px] font-semibold"
         @click="refetch"
       >
         다시 시도하기
@@ -105,14 +105,14 @@ async function handleNext() {
     <section v-else-if="result && resultMeta" class="flex flex-1 flex-col">
       <!-- 결과 문구 -->
       <div class="mt-10 text-center">
-        <p class="text-[19px] font-medium tracking-[-0.2px]">{{ result.name }}님의 금융 스타일은</p>
+        <p class="text-[18px] font-medium tracking-[-0.2px]">{{ result.name }}님의 금융 스타일은</p>
 
         <p class="mt-2 flex items-baseline justify-center gap-2 tracking-[-1px]">
-          <strong class="text-[44px] leading-[1.2] font-extrabold" :class="resultMeta.accentClass">
+          <strong class="text-[48px] leading-[1.2] font-extrabold" :class="resultMeta.accentClass">
             {{ result.investmentType }}
           </strong>
 
-          <span class="text-[26px] font-medium">입니다.</span>
+          <span class="text-[28px] font-medium">입니다.</span>
         </p>
       </div>
 
@@ -142,13 +142,13 @@ async function handleNext() {
             aria-hidden="true"
           />
 
-          <h2 class="text-[18px] leading-[1.4] font-bold">
+          <h2 class="text-[20px] leading-[1.4] font-bold">
             {{ result.headline }}
           </h2>
         </div>
 
         <div
-          class="text-ink-sub mt-4 min-h-0 flex-1 overflow-y-auto pr-2 text-[16px] leading-[1.7]"
+          class="text-ink-sub mt-4 min-h-0 flex-1 overflow-y-auto pr-2 text-[18px] leading-[1.7]"
         >
           <p>{{ result.description }}</p>
         </div>
@@ -157,7 +157,7 @@ async function handleNext() {
 
     <!-- 하단 CTA -->
     <div v-if="result && resultMeta" class="mt-5 flex-none">
-      <BaseButton class="w-full rounded-full text-[18px]" @click="handleNext">
+      <BaseButton class="w-full rounded-full text-[20px]" @click="handleNext">
         금융 궁합도 확인하러 가기
         <ArrowRight class="h-[19px] w-[19px]" :stroke-width="2.2" aria-hidden="true" />
       </BaseButton>
