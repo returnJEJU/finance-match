@@ -61,18 +61,17 @@ const financialKnowledgeOptions = [
   },
   {
     value: 'VERY_HIGH',
-    label:
-      '매우 높음 - ELS/ELF 등 파생상품을 포함한 대부분의 금융투자상품의 구조 및 위험을 이해하고 있음',
+    label: '매우 높음 - 파생상품을 포함한 대부분의 금융투자상품의 구조 및 위험을 이해하고 있음',
   },
 ]
 
 const capitalPreservationOptions = [
-  { value: 'ZERO', label: '원금보존 추구' },
-  { value: 'UNDER_10', label: '10% 이내 손실 감내가능' },
-  { value: 'UNDER_20', label: '20% 이내 손실 감내가능' },
-  { value: 'UNDER_50', label: '50% 이내 손실 감내가능' },
-  { value: 'UNDER_70', label: '70% 이내 손실 감내가능' },
-  { value: 'FULL', label: '전액손실 감내가능' },
+  { value: 'ZERO', label: '원금 보존 추구' },
+  { value: 'UNDER_10', label: '10% 이내 손실 감내 가능' },
+  { value: 'UNDER_20', label: '20% 이내 손실 감내 가능' },
+  { value: 'UNDER_50', label: '50% 이내 손실 감내 가능' },
+  { value: 'UNDER_70', label: '70% 이내 손실 감내 가능' },
+  { value: 'FULL', label: '전액손실 감내 가능' },
 ]
 
 // 빈 문자열과 빈 배열로 시작하므로 처음에는 아무 선택도 되지 않는다.
@@ -283,11 +282,11 @@ function submitSurvey() {
 
     <main class="mt-7 flex-1">
       <div class="rounded-field flex items-center gap-4 bg-brand px-4 py-4">
-        <img :src="characterExcited" alt="" class="h-14 w-14 flex-none object-contain" />
+        <img :src="characterExcited" alt="" class="h-16 w-16 flex-none object-contain" />
 
         <p class="text-[16px] leading-[1.45] font-bold text-brand-ink">
-          찰떡같은 맞춤 리포트를 위해 개인별<br />
-          추가 정보가 필요해요.
+          찰떡같은 금융 궁합 진단을 위해 아래 개인 질문에 답해 주세요. 각자의 금융 여력과 투자
+          성향을 바탕으로 두 분의 궁합을 분석해요.
         </p>
       </div>
 
@@ -295,7 +294,8 @@ function submitSurvey() {
         <!-- Q1 -->
         <fieldset class="min-w-0">
           <label for="annual-income" class="text-[20px] font-extrabold text-ink">
-            Q1. 최근 1년 동안 나의 연소득은?
+            <span class="text-[22px]">Q1.</span> 최근 <span class="text-good">1년</span>간 세전
+            <span class="text-good">총소득</span>은 얼마인가요?
           </label>
 
           <div class="rounded-field mt-4 border border-ink bg-white px-5 py-5">
@@ -323,7 +323,9 @@ function submitSurvey() {
         <!-- Q2 -->
         <fieldset class="min-w-0">
           <label for="monthly-amount" class="text-[20px] font-extrabold text-ink">
-            Q2. 한 달에 무리 없이 모을 수 있는 돈은?
+            <span class="text-[22px]">Q2.</span> <span class="text-good">매달</span> 무리 없이
+            <span class="text-good">저축</span>하거나 <span class="text-good">투자</span>할 수 있는
+            금액은 얼마인가요?
           </label>
 
           <div class="rounded-field mt-4 border border-ink bg-white px-5 py-5">
@@ -351,8 +353,9 @@ function submitSurvey() {
         <!-- Q3 -->
         <fieldset>
           <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
-            Q3. 총 자산(부동산 등을 포함) 중 금융자산의<br />
-            비중은?
+            <span class="text-[22px]">Q3.</span> 총 자산(부동산 등을 포함) 중
+            <span class="text-good">금융자산</span>이 차지하는 <span class="text-good">비중</span>은
+            어느 정도인가요?
           </legend>
 
           <div class="mt-3 space-y-2.5">
@@ -376,13 +379,10 @@ function submitSurvey() {
         <!-- Q4: 복수 선택 -->
         <fieldset>
           <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
-            Q4. 다음 중 자신의 투자경험과 가까운 항목은?
+            <span class="text-[22px]">Q4.</span> 지금까지 거래하거나 가입해 본
+            <span class="text-good">금융상품</span>을 <span class="text-good">모두</span> 선택해
+            주세요.
           </legend>
-
-          <p class="text-muted-soft mt-1 text-[16px] font-semibold">
-            해당하는 항목을 모두 선택해 주세요.
-          </p>
-
           <div class="mt-3 space-y-2.5">
             <button
               v-for="option in investmentExperienceOptions"
@@ -405,7 +405,8 @@ function submitSurvey() {
         <!-- Q5 -->
         <fieldset>
           <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
-            Q5. 자신의 금융투자상품에 대한 이해도는?
+            <span class="text-[22px]">Q5.</span> 금융투자상품에 대한
+            <span class="text-good">이해도</span>는 어느 정도인가요?
           </legend>
 
           <div class="mt-3 space-y-2.5">
@@ -429,7 +430,8 @@ function submitSurvey() {
         <!-- Q6 -->
         <fieldset>
           <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
-            Q6. 다음 중 현재 투자목적을 고려한 원금보존 태도는?
+            <span class="text-[22px]">Q6.</span> 현재 금융 목표를 위해 투자한다고 가정했을 때,
+            <span class="text-good">원금 보존 태도</span>는 무엇인가요?
           </legend>
 
           <div class="mt-3 space-y-2.5">

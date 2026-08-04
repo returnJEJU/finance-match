@@ -18,11 +18,11 @@ const goalOptions = [
 ]
 
 const loanPurposeOptions = [
-  { value: 'NONE', label: '대출 계획은 없음' },
-  { value: 'JEONSE', label: '전세자금 마련 목적' },
-  { value: 'HOUSING', label: '주택 구입 자금 마련 목적' },
-  { value: 'CAR', label: '자동차 구입 자금 마련 목적' },
-  { value: 'BUSINESS', label: '사업이나 창업 자금 마련 목적' },
+  { value: 'NONE', label: '현재 대출 계획 없음' },
+  { value: 'JEONSE', label: '전세 자금 마련' },
+  { value: 'HOUSING', label: '주택 구입 자금 마련' },
+  { value: 'CAR', label: '자동차 구입 자금 마련' },
+  { value: 'BUSINESS', label: '사업 또는 창업 자금 마련' },
 ]
 
 const firstGoal = ref('')
@@ -243,18 +243,19 @@ function submitSurvey() {
 
     <main class="mt-7 flex-1">
       <div class="rounded-field flex items-center gap-4 bg-brand px-4 py-4">
-        <img :src="characterExcited" alt="" class="h-14 w-14 flex-none object-contain" />
+        <img :src="characterExcited" alt="" class="h-16 w-16 flex-none object-contain" />
         <p class="text-[16px] leading-[1.45] font-bold text-brand-ink">
-          두 사람의 함께 준비하고 싶은 목표를<br />
-          알려주세요.
+          두 분이 함께 준비하고 싶은 공동 목표를 알려주세요. 목표 달성 가능성 진단과 두 분에게 맞는
+          금융상품을 추천하는 데 활용돼요.
         </p>
       </div>
 
       <form class="mt-7 space-y-7" @submit.prevent="submitSurvey">
         <fieldset>
           <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
-            Q1. 지금 돈을 모으는 가장 큰 이유는?<br />
-            <span class="font-semibold">(1순위, 2순위 선택)</span>
+            <span class="text-[22px]">Q1.</span> 두 분이 우선으로 생각하는
+            <span class="text-good">금융 목표</span>는 무엇인가요? 중요한 순서대로
+            <span class="text-good">2개</span>를 골라 주세요.
           </legend>
 
           <div class="mt-3 space-y-2.5">
@@ -283,7 +284,8 @@ function submitSurvey() {
 
         <fieldset class="min-w-0">
           <label for="target-amount" class="text-[20px] font-extrabold text-ink">
-            Q2. 1순위 목표를 위해 필요한 금액은?
+            <span class="text-[22px]">Q2.</span> <span class="text-good">1순위</span> 공동 목표를
+            위해 <span class="text-good">필요한 금액</span>은 얼마인가요?
           </label>
 
           <div class="rounded-field mt-4 border border-ink bg-white px-5 py-5">
@@ -308,7 +310,8 @@ function submitSurvey() {
 
         <fieldset class="min-w-0">
           <label for="target-period" class="text-[20px] font-extrabold text-ink">
-            Q3. 1순위 목표를 이루고 싶은 기간은?
+            <span class="text-[22px]">Q3.</span> <span class="text-good">1순위</span> 공동 목표를
+            <span class="text-good">몇 개월 안에</span> 이루고 싶으신가요?
           </label>
 
           <div class="rounded-field mt-4 border border-ink bg-white px-5 py-5">
@@ -333,7 +336,9 @@ function submitSurvey() {
 
         <fieldset>
           <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
-            Q4. 앞으로 대출이 필요한 일이 있다면?
+            <span class="text-[22px]">Q4.</span> 두 분이 앞으로
+            <span class="text-good">대출</span>을 받는다면, 주된
+            <span class="text-good">목적</span>은 무엇인가요?
           </legend>
 
           <div class="mt-3 space-y-2.5">
@@ -356,7 +361,9 @@ function submitSurvey() {
 
         <fieldset>
           <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
-            Q5. 최근 1개월 이내 대출을 받았거나, 앞으로 1개월 이내 대출을 받을 예정인가요?
+            <span class="text-[22px]">Q5.</span> <span class="text-good">최근 1개월</span> 이내
+            대출을 받았거나, <span class="text-good">앞으로 1개월</span> 이내 대출을 받을
+            예정인가요?
           </legend>
 
           <div class="mt-3 grid grid-cols-2 gap-3">
