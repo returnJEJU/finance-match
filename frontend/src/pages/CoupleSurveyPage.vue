@@ -241,12 +241,12 @@ function submitSurvey() {
       </div>
     </div>
 
-    <main class="mt-7 flex-1">
+    <main class="mt-1 flex-1">
       <div class="rounded-field flex items-center gap-4 bg-brand px-4 py-4">
         <img :src="characterExcited" alt="" class="h-16 w-16 flex-none object-contain" />
         <p class="text-[16px] leading-[1.45] font-bold text-brand-ink">
-          두 분이 함께 준비하고 싶은 공동 목표를 알려주세요. 목표 달성 가능성 진단과 두 분에게 맞는
-          금융상품을 추천하는 데 활용돼요.
+          두 분이 함께 준비하고 싶은 공동 목표를 알려주세요. 목표 달성 가능성 진단과 맞춤형 금융상품
+          추천에 활용돼요.
         </p>
       </div>
 

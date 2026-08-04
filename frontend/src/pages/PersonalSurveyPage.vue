@@ -280,13 +280,13 @@ function submitSurvey() {
       </div>
     </div>
 
-    <main class="mt-7 flex-1">
+    <main class="mt-1 flex-1">
       <div class="rounded-field flex items-center gap-4 bg-brand px-4 py-4">
         <img :src="characterExcited" alt="" class="h-16 w-16 flex-none object-contain" />
 
         <p class="text-[16px] leading-[1.45] font-bold text-brand-ink">
-          찰떡같은 금융 궁합 진단을 위해 아래 개인 질문에 답해 주세요. 각자의 금융 여력과 투자
-          성향을 바탕으로 두 분의 궁합을 분석해요.
+          찰떡같은 금융 궁합 진단을 위해 개인 질문에 답해 주세요. 두 분의 금융 상황과 투자 가치관을
+          바탕으로 금융 궁합을 분석해요.
         </p>
       </div>
 
