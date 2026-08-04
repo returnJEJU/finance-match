@@ -90,9 +90,9 @@ function goToInviteCodeInput() {
 </script>
 
 <template>
-  <section class="flex min-h-screen flex-col bg-canvas px-4 pt-4 pb-7">
+  <section class="flex min-h-screen flex-col bg-canvas px-5 pt-6 pb-7">
     <header class="flex justify-center">
-      <img :src="logoWordmark" alt="찰떡귱합" class="h-6 w-auto" />
+      <img :src="logoWordmark" alt="찰떡귱합" class="w-[74px]" />
     </header>
 
     <main class="mt-5 flex flex-1 flex-col">
@@ -112,7 +112,7 @@ function goToInviteCodeInput() {
       </div>
 
       <template v-else>
-        <p v-if="hasLoadError" class="mt-5 text-center text-[16px] font-semibold text-red-500">
+        <p v-if="hasLoadError" class="mt-5 text-center text-[16px] font-semibold text-warn">
           공동 목표 정보를 불러오지 못했어요.
         </p>
 

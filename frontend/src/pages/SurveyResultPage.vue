@@ -81,9 +81,9 @@ async function handleNext() {
 </script>
 
 <template>
-  <main class="flex min-h-screen flex-col px-5 pt-6 pb-6">
-    <header class="text-center">
-      <h1 class="text-[20px] font-bold">나의 금융 스타일 결과</h1>
+  <main class="flex min-h-screen flex-col px-5 pt-3 pb-6">
+    <header class="flex h-8 flex-none items-center justify-center">
+      <h1 class="text-center text-[20px] font-semibold text-ink">나의 금융 스타일 결과</h1>
     </header>
 
     <!-- 오류 UI -->
@@ -132,7 +132,7 @@ async function handleNext() {
 
       <!-- 설명 카드 -->
       <article
-        class="border-line-card rounded-card mt-auto flex h-[285px] flex-none flex-col overflow-hidden border bg-white px-6 py-6"
+        class="border-line-card rounded-card mt-auto flex h-[210px] flex-none flex-col overflow-hidden border bg-white px-6 py-6"
       >
         <div class="flex flex-none items-start gap-2">
           <component
@@ -157,7 +157,7 @@ async function handleNext() {
 
     <!-- 하단 CTA -->
     <div v-if="result && resultMeta" class="mt-5 flex-none">
-      <BaseButton class="w-full rounded-full text-[20px]" @click="handleNext">
+      <BaseButton class="w-full text-[20px]" @click="handleNext">
         금융 궁합도 확인하러 가기
         <ArrowRight class="h-[19px] w-[19px]" :stroke-width="2.2" aria-hidden="true" />
       </BaseButton>

@@ -42,7 +42,7 @@ function goToPersonalSurvey() {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col px-4 pt-6 pb-14">
+  <div class="flex min-h-screen flex-col px-5 pt-6 pb-14">
     <div class="flex flex-1 flex-col">
       <div class="text-center">
         <img :src="logoWordmark" alt="찰떡귱합" class="mx-auto w-[74px]" />
@@ -60,7 +60,7 @@ function goToPersonalSurvey() {
       </div>
 
       <template v-else>
-        <p v-if="isError" class="mt-5 text-center text-[16px] font-semibold text-red-500">
+        <p v-if="isError" class="mt-5 text-center text-[16px] font-semibold text-warn">
           공동 목표 정보를 불러오지 못했어요.
         </p>
 
