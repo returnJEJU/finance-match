@@ -91,6 +91,22 @@
         WHERE id = #{memberId}
     </update>
 
+    <!-- 로그인 회원 자신의 기본 정보. 탈퇴 회원은 조회하지 않는다. -->
+    <select id="findById" resultType="com.financematch.auth.domain.Member">
+        SELECT
+            id,
+            email,
+            name,
+            gender,
+            birth_date,
+            last_login_at,
+            status
+        FROM member
+        WHERE id = #{memberId}
+          AND status != 'WITHDRAWN'
+          AND deleted_at IS NULL
+    </select>
+
     <!--
       회원탈퇴 전용. findByEmail 과 달리 탈퇴 회원도 조회한다.
       제외해 버리면 이미 탈퇴한 회원이 "없는 회원"(404)으로 보여 409 를 구분할 수 없다.

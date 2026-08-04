@@ -34,6 +34,11 @@ const loginResponseSchema = z.object({
   progress: onboardingStatusSchema,
 })
 
+const memberProfileSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+})
+
 const withdrawResponseSchema = z.object({
   memberId: z.number(),
   status: z.literal('WITHDRAWN'),
@@ -62,6 +67,14 @@ export async function signup(payload) {
 export async function login({ email, password }) {
   const data = await api.post('/v1/auth/login', { email, password })
   return loginResponseSchema.parse(data)
+}
+
+/**
+ * 로그인 회원 자신의 기본 프로필.
+ */
+export async function getCurrentMember() {
+  const data = await api.get('/v1/members/me')
+  return memberProfileSchema.parse(data)
 }
 
 /**

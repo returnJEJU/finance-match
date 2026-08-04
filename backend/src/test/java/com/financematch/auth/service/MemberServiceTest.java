@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.financematch.auth.domain.Member;
 import com.financematch.auth.domain.MemberStatus;
+import com.financematch.auth.dto.MemberProfileResponse;
 import com.financematch.auth.dto.WithdrawRequest;
 import com.financematch.auth.dto.WithdrawResponse;
 import com.financematch.auth.mapper.MemberMapper;
@@ -50,6 +51,26 @@ class MemberServiceTest {
     @InjectMocks private MemberService memberService;
 
     @Captor private ArgumentCaptor<LocalDateTime> withdrawnAtCaptor;
+
+    @Test
+    void 내_프로필은_회원_ID_와_이름을_응답한다() {
+        when(memberMapper.findById(MEMBER_ID)).thenReturn(member(MemberStatus.ACTIVE));
+
+        MemberProfileResponse response = memberService.getProfile(MEMBER_ID);
+
+        assertEquals(MEMBER_ID, response.getId());
+        assertEquals("홍길동", response.getName());
+    }
+
+    @Test
+    void 내_프로필_조회에서_회원이_없으면_MEMBER_NOT_FOUND_이다() {
+        when(memberMapper.findById(MEMBER_ID)).thenReturn(null);
+
+        ApiException e =
+                assertThrows(ApiException.class, () -> memberService.getProfile(MEMBER_ID));
+
+        assertEquals(ErrorCode.MEMBER_NOT_FOUND, e.getErrorCode());
+    }
 
     @Test
     void 탈퇴하면_회원_ID_와_상태와_처리_시각을_응답한다() throws Exception {

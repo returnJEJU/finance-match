@@ -18,6 +18,9 @@ public interface MemberMapper {
     /** 로그인 대상 회원. 탈퇴 회원은 조회되지 않으므로 결과가 null 이면 로그인 실패로 처리한다. */
     Member findByEmail(String email);
 
+    /** 로그인 회원 자신의 기본 정보. 탈퇴 회원은 조회되지 않는다. */
+    Member findById(Long memberId);
+
     int updateLastLoginAt(Long memberId);
 
     /**
