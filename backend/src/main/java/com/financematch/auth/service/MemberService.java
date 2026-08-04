@@ -1,6 +1,7 @@
 package com.financematch.auth.service;
 
 import com.financematch.auth.domain.Member;
+import com.financematch.auth.dto.MemberProfileResponse;
 import com.financematch.auth.dto.WithdrawRequest;
 import com.financematch.auth.dto.WithdrawResponse;
 import com.financematch.auth.mapper.MemberMapper;
@@ -27,6 +28,17 @@ public class MemberService {
 
     private final MemberMapper memberMapper;
     private final PasswordEncoder passwordEncoder;
+
+    @Transactional(readOnly = true)
+    public MemberProfileResponse getProfile(Long memberId) {
+        Member member = memberMapper.findById(memberId);
+
+        if (member == null) {
+            throw new ApiException(ErrorCode.MEMBER_NOT_FOUND);
+        }
+
+        return MemberProfileResponse.from(member);
+    }
 
     /**
      * 회원을 탈퇴 상태로 바꾼다(soft delete).

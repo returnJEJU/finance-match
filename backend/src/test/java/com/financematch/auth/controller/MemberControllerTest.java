@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.financematch.auth.dto.MemberProfileResponse;
 import com.financematch.auth.dto.WithdrawRequest;
 import com.financematch.auth.dto.WithdrawResponse;
 import com.financematch.auth.service.MemberService;
@@ -26,6 +27,18 @@ class MemberControllerTest {
     @Mock private MemberService memberService;
 
     @InjectMocks private MemberController memberController;
+
+    @Test
+    void 내_프로필을_그대로_감싸_반환한다() {
+        MemberProfileResponse profileResponse = MemberProfileResponse.of(1L, "홍길동");
+        when(memberService.getProfile(1L)).thenReturn(profileResponse);
+
+        ApiResponse<MemberProfileResponse> response = memberController.getProfile(1L);
+
+        verify(memberService).getProfile(1L);
+        assertTrue(response.isSuccess());
+        assertSame(profileResponse, response.getData());
+    }
 
     @Test
     void 탈퇴_결과를_그대로_감싸_반환한다() throws Exception {

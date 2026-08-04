@@ -1,6 +1,7 @@
 package com.financematch.auth.controller;
 
 import com.financematch.auth.annotation.LoginMember;
+import com.financematch.auth.dto.MemberProfileResponse;
 import com.financematch.auth.dto.WithdrawRequest;
 import com.financematch.auth.dto.WithdrawResponse;
 import com.financematch.auth.service.MemberService;
@@ -8,6 +9,7 @@ import com.financematch.common.ApiResponse;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +29,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberController {
 
     private final MemberService memberService;
+
+    @GetMapping
+    public ApiResponse<MemberProfileResponse> getProfile(@LoginMember Long memberId) {
+        return ApiResponse.ok(memberService.getProfile(memberId));
+    }
 
     /**
      * 회원탈퇴. 행을 지우지 않고 상태만 {@code WITHDRAWN} 으로 바꾼다.

@@ -4,6 +4,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { getCurrentMember } from '@/api/auth'
 import { disconnectCouple, getCoupleProfileMessage, updateCoupleProfileMessage } from '@/api/couple'
 import { getPersonalSurveyResult } from '@/api/personalSurvey'
 import { investmentTypeMeta } from '@/constants/investmentTypeMeta'
@@ -46,18 +47,38 @@ const isEditModalOpen = ref(false)
 const profileMessageError = ref('')
 const coupleProfileQueryKey = computed(() => ['coupleProfileMessage', authStore.member?.id ?? 'me'])
 
-const { data: coupleProfileMessage, isError: isProfileMessageLoadError } = useQuery({
+const {
+  data: coupleProfileMessage,
+  isError: isProfileMessageLoadError,
+  error: coupleProfileMessageError,
+} = useQuery({
   queryKey: coupleProfileQueryKey,
   queryFn: getCoupleProfileMessage,
 })
 
+const { data: currentMember } = useQuery({
+  queryKey: ['currentMember'],
+  queryFn: getCurrentMember,
+})
+
+const hasCoupleProfile = computed(() => {
+  const profile = coupleProfileMessage.value
+  return Boolean(profile?.myName && profile?.partnerName)
+})
+
+const shouldShowProfileMessageLoadError = computed(
+  () =>
+    isProfileMessageLoadError.value &&
+    coupleProfileMessageError.value?.code !== 'COUPLE_NOT_CONNECTED',
+)
+
 const coupleDisplayName = computed(() => {
   const profile = coupleProfileMessage.value
-  if (profile?.myName && profile?.partnerName) {
+  if (hasCoupleProfile.value) {
     return `${profile.myName} ♡ ${profile.partnerName}`
   }
 
-  return '내 프로필'
+  return currentMember.value?.name ?? authStore.member?.name ?? '내 프로필'
 })
 
 watch(
@@ -467,13 +488,17 @@ const confirmWithdraw = async () => {
       <div class="ml-3 flex-1">
         <div class="text-[20px] leading-tight font-bold text-gray-900">{{ coupleDisplayName }}</div>
 
-        <div class="mt-1 flex items-center text-[13px] text-gray-500">
-          <span>{{ profileMessage }}</span>
-          <span v-if="isProfileMessageLoadError" class="ml-1 text-red-400">
+        <div
+          v-if="profileMessage || shouldShowProfileMessageLoadError || hasCoupleProfile"
+          class="mt-1 flex items-center text-[13px] text-gray-500"
+        >
+          <span v-if="profileMessage">{{ profileMessage }}</span>
+          <span v-if="shouldShowProfileMessageLoadError" class="ml-1 text-red-400">
             저장된 소개를 불러오지 못했어요
           </span>
 
           <button
+            v-if="hasCoupleProfile"
             type="button"
             class="ml-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100"
             @click="openEditModal"
