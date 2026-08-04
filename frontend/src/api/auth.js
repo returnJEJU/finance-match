@@ -57,3 +57,13 @@ export async function login({ email, password }) {
   const data = await api.post('/v1/auth/login', { email, password })
   return loginResponseSchema.parse(data)
 }
+
+/**
+ * 로그아웃.
+ *
+ * 백엔드는 성공 시 data:null 을 반환한다. 토큰 삭제는 호출자가 처리한다.
+ */
+export async function logout() {
+  const data = await api.post('/v1/auth/logout')
+  return z.null().parse(data)
+}

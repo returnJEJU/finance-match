@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
-import { login as requestLogin } from '@/api/auth'
+import { login as requestLogin, logout as requestLogout } from '@/api/auth'
 import { clearAccessToken, getAccessToken, setAccessToken } from '@/api/client'
 
 /**
@@ -70,13 +70,21 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * 로그아웃.
    *
-   * 서버에는 지울 세션이 없다(JWT). 실제 무효화는 저장된 토큰을 지우는 것으로 이뤄진다.
-   * 서버 로그아웃 API 호출은 로그아웃 버튼을 붙일 때 함께 추가한다.
+   * 서버 로그아웃 API를 호출한 뒤 로컬 토큰을 지운다. 네트워크 오류나 만료 토큰처럼 서버 호출이
+   * 실패해도, 사용자가 로그아웃을 누른 이상 현재 브라우저 세션은 반드시 정리한다.
    */
-  function logout() {
-    clearAccessToken()
-    accessToken.value = null
-    member.value = null
+  async function logout() {
+    try {
+      await requestLogout()
+    } catch (error) {
+      if (error?.status !== 401) {
+        throw error
+      }
+    } finally {
+      clearAccessToken()
+      accessToken.value = null
+      member.value = null
+    }
   }
 
   function applySession(token, sessionMember) {
