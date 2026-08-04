@@ -10,6 +10,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Component;
  * <p>주의: gpt-5 계열은 chat completions 파라미터 지원 범위가 gpt-4o 계열과 다를 수 있다(예:
  * temperature 미지원 가능성). 실제 키로 첫 호출 테스트 시 확인이 필요하다.
  */
+@Slf4j
 @Component
 public class ReportLlmClient {
 
@@ -40,7 +42,8 @@ public class ReportLlmClient {
         this.model = model;
     }
 
-    public String generateReason(String prompt) {
+    // axisLabel 은 호출부(부채·투자가치관·절세 ReasonService)를 구분해 소요 시간을 로그로 남기기 위한 값이다.
+    public String generateReason(String axisLabel, String prompt) {
         // gpt-5 계열(gpt-5-nano 포함)은 기본값(1) 외의 temperature 를 거부한다(HTTP 400) —
         // 모델 종류를 가리지 않는 공통 클라이언트이므로 temperature 는 아예 지정하지 않는다.
         Map<String, Object> body =
@@ -48,6 +51,7 @@ public class ReportLlmClient {
                         "model", model,
                         "messages", List.of(Map.of("role", "user", "content", prompt)));
 
+        long startedAt = System.currentTimeMillis();
         try {
             String requestJson = mapper.writeValueAsString(body);
 
@@ -78,6 +82,9 @@ public class ReportLlmClient {
                 Thread.currentThread().interrupt();
             }
             throw new LlmCallException("OpenAI 호출 중 오류", e);
+        } finally {
+            long elapsedMs = System.currentTimeMillis() - startedAt;
+            log.info("[LLM-TIMING] {} 축 호출 소요 {}ms", axisLabel, elapsedMs);
         }
     }
 

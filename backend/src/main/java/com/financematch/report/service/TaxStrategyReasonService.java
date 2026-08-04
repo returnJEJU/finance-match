@@ -44,7 +44,7 @@ public class TaxStrategyReasonService {
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
             String candidate;
             try {
-                candidate = llmClient.generateReason(prompt);
+                candidate = llmClient.generateReason("절세", prompt);
             } catch (ReportLlmClient.LlmCallException e) {
                 log.warn("절세 축 reason LLM 호출 실패(시도 {}/{})", attempt, MAX_ATTEMPTS, e);
                 continue;
