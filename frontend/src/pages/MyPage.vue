@@ -35,8 +35,8 @@ const router = useRouter()
 const queryClient = useQueryClient()
 const authStore = useAuthStore()
 
-// 실제 화면에 표시되는 소개 문구
-const profileMessage = ref('우리의 금융 여정')
+// 실제 화면에 표시되는 소개 문구. 기본 문구는 백엔드 응답을 기준으로 한다.
+const profileMessage = ref('')
 
 // 모달 입력창에서 임시로 사용하는 값
 const editMessage = ref('')
@@ -63,9 +63,7 @@ const coupleDisplayName = computed(() => {
 watch(
   coupleProfileMessage,
   (response) => {
-    if (response?.profileMessage) {
-      profileMessage.value = response.profileMessage
-    }
+    profileMessage.value = response?.profileMessage ?? ''
   },
   { immediate: true },
 )
@@ -477,10 +475,10 @@ const confirmWithdraw = async () => {
 
           <button
             type="button"
-            class="cursor-pointer ml-1 flex items-center justify-center"
+            class="ml-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100"
             @click="openEditModal"
           >
-            <Pencil :size="11" :stroke-width="2" class="text-gray-500" />
+            <Pencil :size="16" :stroke-width="2" />
           </button>
         </div>
       </div>
