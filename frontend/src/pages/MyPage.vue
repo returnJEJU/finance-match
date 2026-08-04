@@ -1296,7 +1296,8 @@ const confirmWithdraw = async () => {
 
       <!-- 설명 -->
       <p class="mt-3 text-center text-[12px] leading-[1.7] text-gray-400">
-        탈퇴 시 계정 정보와 연결 정보가 삭제되며<br />
+        탈퇴 시 계정 정보와 커플 연결,<br />
+        함께 만든 리포트와 추천 결과가 삭제됩니다.<br />
         같은 이메일로 다시 가입할 수 없습니다.
       </p>
 

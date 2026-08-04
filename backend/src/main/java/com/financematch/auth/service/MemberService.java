@@ -5,6 +5,7 @@ import com.financematch.auth.dto.WithdrawRequest;
 import com.financematch.auth.dto.WithdrawResponse;
 import com.financematch.auth.mapper.MemberMapper;
 import com.financematch.common.ErrorCode;
+import com.financematch.couple.service.CoupleService;
 import com.financematch.exception.ApiException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -27,12 +28,13 @@ public class MemberService {
 
     private final MemberMapper memberMapper;
     private final PasswordEncoder passwordEncoder;
+    private final CoupleService coupleService;
 
     /**
      * 회원을 탈퇴 상태로 바꾼다(soft delete).
      *
-     * <p>커플 연결은 건드리지 않는다 — 명세가 탈퇴의 범위를 상태 변경으로 한정하고 있고, 커플 해제는 상대방의
-     * 리포트·추천까지 지우는 동작이라 커플 도메인에서 결정할 일이다.
+     * <p>탈퇴 전 커플 연결이 있으면 함께 해제한다. 탈퇴한 회원이 커플 row 에 남으면 상대방의 대시보드와
+     * 리포트에 과거 커플 데이터가 계속 보이고, 새 커플 연결도 막힐 수 있기 때문이다.
      *
      * <p>검사 순서는 의도적이다. 문자열 비교로 걸러낼 수 있는 확인 문구를 비밀번호보다 먼저 본다. BCrypt
      * 검증은 무차별 대입을 늦추려고 일부러 느리게 만든 연산이라, 어차피 실패할 요청에 굳이 치르지 않는다.
@@ -57,6 +59,8 @@ public class MemberService {
         if (!passwordEncoder.matches(request.getPassword(), member.getPassword())) {
             throw new ApiException(ErrorCode.INVALID_PASSWORD);
         }
+
+        coupleService.disconnectCoupleIfConnected(memberId);
 
         // member.deleted_at 은 소수점 이하가 없는 datetime 이다. 자르지 않으면 MySQL 이 반올림해
         // 응답으로 알려준 시각과 저장된 값이 최대 1초까지 어긋난다.

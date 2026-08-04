@@ -17,6 +17,7 @@ import com.financematch.auth.dto.WithdrawRequest;
 import com.financematch.auth.dto.WithdrawResponse;
 import com.financematch.auth.mapper.MemberMapper;
 import com.financematch.common.ErrorCode;
+import com.financematch.couple.service.CoupleService;
 import com.financematch.exception.ApiException;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,8 @@ class MemberServiceTest {
 
     @Mock private PasswordEncoder passwordEncoder;
 
+    @Mock private CoupleService coupleService;
+
     @InjectMocks private MemberService memberService;
 
     @Captor private ArgumentCaptor<LocalDateTime> withdrawnAtCaptor;
@@ -56,6 +59,7 @@ class MemberServiceTest {
 
         assertEquals(MEMBER_ID, response.getMemberId());
         assertEquals(MemberStatus.WITHDRAWN, response.getStatus());
+        verify(coupleService).disconnectCoupleIfConnected(MEMBER_ID);
         verify(memberMapper).withdraw(eq(MEMBER_ID), any(LocalDateTime.class));
     }
 
@@ -96,6 +100,7 @@ class MemberServiceTest {
                         () -> memberService.withdraw(MEMBER_ID, request(CONFIRMATION_TEXT)));
 
         assertEquals(ErrorCode.MEMBER_NOT_FOUND, e.getErrorCode());
+        verifyNoInteractions(coupleService);
         verify(memberMapper, never()).withdraw(any(), any());
     }
 
@@ -110,6 +115,7 @@ class MemberServiceTest {
                         () -> memberService.withdraw(MEMBER_ID, request(CONFIRMATION_TEXT)));
 
         assertEquals(ErrorCode.MEMBER_ALREADY_WITHDRAWN, e.getErrorCode());
+        verifyNoInteractions(coupleService);
         verify(memberMapper, never()).withdraw(any(), any());
     }
 
@@ -124,6 +130,7 @@ class MemberServiceTest {
                         () -> memberService.withdraw(MEMBER_ID, request("탈퇴할래요")));
 
         assertEquals(ErrorCode.INVALID_CONFIRMATION, e.getErrorCode());
+        verifyNoInteractions(coupleService);
     }
 
     /**
@@ -139,6 +146,7 @@ class MemberServiceTest {
                 ApiException.class, () -> memberService.withdraw(MEMBER_ID, request("탈퇴할래요")));
 
         verifyNoInteractions(passwordEncoder);
+        verifyNoInteractions(coupleService);
     }
 
     @Test
@@ -153,6 +161,7 @@ class MemberServiceTest {
                         () -> memberService.withdraw(MEMBER_ID, request(CONFIRMATION_TEXT)));
 
         assertEquals(ErrorCode.INVALID_PASSWORD, e.getErrorCode());
+        verifyNoInteractions(coupleService);
         verify(memberMapper, never()).withdraw(any(), any());
     }
 

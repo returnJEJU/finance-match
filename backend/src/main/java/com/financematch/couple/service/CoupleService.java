@@ -72,6 +72,26 @@ public class CoupleService {
             throw new ApiException(ErrorCode.COUPLE_NOT_CONNECTED);
         }
 
+        disconnectCouple(target, memberId);
+    }
+
+    @Transactional
+    public void disconnectCoupleIfConnected(Long memberId) {
+        if (memberId == null) {
+            throw new ApiException(ErrorCode.INVALID_INPUT);
+        }
+
+        CoupleDisconnectTarget target =
+                coupleMapper.findDisconnectTargetByMemberId(memberId);
+
+        if (target == null) {
+            return;
+        }
+
+        disconnectCouple(target, memberId);
+    }
+
+    private void disconnectCouple(CoupleDisconnectTarget target, Long memberId) {
         // 개인 추천은 member_id 기준 테이블이라 couple 삭제 cascade 대상이 아니다.
         coupleMapper.deletePersonalTaxSavingByCoupleMembers(
                 target.getInviterId(),
