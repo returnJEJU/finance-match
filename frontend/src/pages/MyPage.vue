@@ -355,21 +355,95 @@ const confirmLogout = async () => {
 // 회원 탈퇴 바텀시트
 // ========================================
 
+const WITHDRAW_CONFIRMATION_TEXT = '회원 탈퇴'
 const isWithdrawSheetOpen = ref(false)
+const isWithdrawing = ref(false)
+const withdrawPassword = ref('')
+const withdrawConfirmationText = ref('')
+const withdrawPasswordError = ref('')
+const withdrawConfirmationError = ref('')
+const withdrawGeneralError = ref('')
+
+const resetWithdrawState = () => {
+  withdrawPassword.value = ''
+  withdrawConfirmationText.value = ''
+  withdrawPasswordError.value = ''
+  withdrawConfirmationError.value = ''
+  withdrawGeneralError.value = ''
+}
 
 const openWithdrawSheet = () => {
+  resetWithdrawState()
   isWithdrawSheetOpen.value = true
 }
 
 const closeWithdrawSheet = () => {
+  if (isWithdrawing.value) return
+  resetWithdrawState()
   isWithdrawSheetOpen.value = false
 }
 
-// 현재는 화면 확인용
-const confirmWithdraw = () => {
-  console.log('회원 탈퇴 - 추후 API 연결')
-
+const moveToLoginAfterWithdraw = (query) => {
+  queryClient.clear()
   isWithdrawSheetOpen.value = false
+  router.replace({ name: 'login', query })
+}
+
+const confirmWithdraw = async () => {
+  if (isWithdrawing.value) return
+
+  withdrawPasswordError.value = ''
+  withdrawConfirmationError.value = ''
+  withdrawGeneralError.value = ''
+
+  const password = withdrawPassword.value
+  const confirmationText = withdrawConfirmationText.value.trim()
+  let hasInputError = false
+
+  if (!password) {
+    withdrawPasswordError.value = '비밀번호를 입력해 주세요.'
+    hasInputError = true
+  }
+
+  if (!confirmationText) {
+    withdrawConfirmationError.value = '확인 문구를 입력해 주세요.'
+    hasInputError = true
+  }
+
+  if (hasInputError) return
+
+  isWithdrawing.value = true
+
+  try {
+    await authStore.withdrawAccount({ password, confirmationText })
+    resetWithdrawState()
+    moveToLoginAfterWithdraw({ withdraw: 'success' })
+  } catch (error) {
+    if (error?.code === 'INVALID_PASSWORD') {
+      withdrawPasswordError.value = error.message || '비밀번호가 일치하지 않습니다.'
+      return
+    }
+
+    if (error?.code === 'INVALID_CONFIRMATION') {
+      withdrawConfirmationError.value = error.message || '확인 문구가 일치하지 않습니다.'
+      return
+    }
+
+    if (
+      error?.status === 401 ||
+      error?.code === 'UNAUTHORIZED' ||
+      error?.code === 'MEMBER_ALREADY_WITHDRAWN' ||
+      error?.code === 'MEMBER_NOT_FOUND'
+    ) {
+      moveToLoginAfterWithdraw()
+      return
+    }
+
+    withdrawGeneralError.value =
+      error?.message || '회원 탈퇴에 실패했어요. 잠시 후 다시 시도해 주세요.'
+  } finally {
+    isWithdrawing.value = false
+  }
 }
 </script>
 
@@ -1225,7 +1299,45 @@ const confirmWithdraw = () => {
       <!-- 설명 -->
       <p class="mt-3 text-center text-[12px] leading-[1.7] text-gray-400">
         탈퇴 시 계정 정보와 연결 정보가 삭제되며<br />
-        복구할 수 없습니다.
+        같은 이메일로 다시 가입할 수 없습니다.
+      </p>
+
+      <div class="mt-6 space-y-4">
+        <div>
+          <label class="text-[13px] font-semibold text-gray-700">현재 비밀번호</label>
+          <input
+            v-model="withdrawPassword"
+            type="password"
+            autocomplete="current-password"
+            placeholder="비밀번호를 입력하세요"
+            :disabled="isWithdrawing"
+            class="mt-2 h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-[14px] text-gray-900 outline-none placeholder:text-gray-300 disabled:bg-gray-50"
+          />
+          <p v-if="withdrawPasswordError" class="mt-2 text-[13px] font-medium text-red-500">
+            {{ withdrawPasswordError }}
+          </p>
+        </div>
+
+        <div>
+          <label class="text-[13px] font-semibold text-gray-700">확인 문구</label>
+          <input
+            v-model="withdrawConfirmationText"
+            type="text"
+            placeholder="회원 탈퇴"
+            :disabled="isWithdrawing"
+            class="mt-2 h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-[14px] text-gray-900 outline-none placeholder:text-gray-300 disabled:bg-gray-50"
+          />
+          <p class="mt-2 text-[12px] leading-[1.5] text-gray-400">
+            확인을 위해 '{{ WITHDRAW_CONFIRMATION_TEXT }}'를 입력해 주세요.
+          </p>
+          <p v-if="withdrawConfirmationError" class="mt-2 text-[13px] font-medium text-red-500">
+            {{ withdrawConfirmationError }}
+          </p>
+        </div>
+      </div>
+
+      <p v-if="withdrawGeneralError" class="mt-4 text-center text-[13px] font-medium text-red-500">
+        {{ withdrawGeneralError }}
       </p>
 
       <!-- 버튼 -->
@@ -1233,7 +1345,8 @@ const confirmWithdraw = () => {
         <!-- 취소 -->
         <button
           type="button"
-          class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[18px] font-bold text-gray-600 transition hover:bg-gray-200"
+          class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[18px] font-bold text-gray-600 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="isWithdrawing"
           @click="closeWithdrawSheet"
         >
           취소
@@ -1242,10 +1355,11 @@ const confirmWithdraw = () => {
         <!-- 탈퇴 -->
         <button
           type="button"
-          class="h-12 flex-1 cursor-pointer rounded-xl bg-red-500 text-[18px] font-bold text-white transition hover:bg-red-600"
+          class="h-12 flex-1 cursor-pointer rounded-xl bg-red-500 text-[18px] font-bold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="isWithdrawing"
           @click="confirmWithdraw"
         >
-          탈퇴하기
+          {{ isWithdrawing ? '탈퇴 처리 중' : '탈퇴하기' }}
         </button>
       </div>
     </div>
