@@ -38,19 +38,21 @@ const authStore = useAuthStore()
   <div class="flex min-h-dvh flex-col">
     <FunnelHeader :step="4" :fallback-to="{ name: 'signup-cert' }" />
 
-    <div class="flex flex-1 flex-col px-7">
+    <!-- pb-10 은 안내문과 아래 버튼 사이 여백이다. 이걸 안쪽 빈 div 로 두면 내용이 길어질 때
+         flex 가 찌그러뜨려 0 이 된다 — 패딩은 그런 일이 없다. -->
+    <div class="flex flex-1 flex-col px-7 pb-10">
       <img :src="characterWorking" alt="" class="mt-1.5 w-32 self-center" />
 
       <PageTitle class="mt-2" align="center">
         {{ authStore.member?.name ?? '회원' }}님의 자산<br />한 번에 찾아볼게요
       </PageTitle>
-      <p class="text-muted mt-2 text-center text-[13px] leading-[1.5]">
+      <p class="text-muted mt-2 text-center text-[14px] leading-[1.5]">
         흩어져 있는 금융 정보를 하나로 합쳐<br />완벽한 찰떡귱합 리포트를 만들어요.
       </p>
 
       <!-- 전체 선택 -->
       <div class="mt-5.5 mb-2 flex items-center">
-        <span class="text-[13px] font-extrabold">불러올 자산</span>
+        <span class="text-[16px] font-extrabold">불러올 자산</span>
         <span class="flex-1"></span>
         <span class="text-ink-sub mr-2 text-[12px] font-semibold">전체 선택</span>
         <button
@@ -80,7 +82,7 @@ const authStore = useAuthStore()
             </span>
             <span>
               <span class="block text-[14px] font-bold">{{ type.name }}</span>
-              <span class="text-muted mt-0.5 block text-[11.5px]">{{ type.desc }}</span>
+              <span class="text-muted mt-0.5 block text-[12px]">{{ type.desc }}</span>
             </span>
             <span class="flex-1"></span>
             <button
@@ -106,14 +108,13 @@ const authStore = useAuthStore()
           궁합 결과만 공유돼요.
         </span>
       </p>
-
-      <div class="h-6 flex-1"></div>
     </div>
 
-    <div class="flex flex-none flex-col gap-2.5 px-7 pb-14">
-      <BaseButton :to="{ name: 'signup-asset-linking' }"> 자산 불러오기 </BaseButton>
+    <!-- 두 버튼을 한 줄에 둔다. 위아래로 쌓으면 버튼 영역만 130px 을 넘겨 본문이 눌린다. -->
+    <div class="flex flex-none gap-2.5 px-7 pb-14">
+      <BaseButton class="flex-1" :to="{ name: 'signup-asset-linking' }">자산 불러오기</BaseButton>
 
-      <BaseButton :to="{ name: 'signup-asset-institutions' }" variant="ghost">
+      <BaseButton class="flex-1" :to="{ name: 'signup-asset-institutions' }" variant="ghost">
         기관 직접 선택
       </BaseButton>
     </div>
