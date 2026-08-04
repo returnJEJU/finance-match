@@ -23,37 +23,44 @@ class FinancialValueReasonServiceTest {
     }
 
     @Test
-    void 전_문항_diff가_임계값_초과이고_전부_동일하면_네가지_항목_문구를_반환한다() {
-        // 5단계 문항 3개는 diff=4, 6단계 손실 감내력은 diff=5 (보정 후 4.0) → 보정 후 전부 동일
+    void 비슷한_항목이_하나도_없으면_다른_항목_전부를_나열한다() {
+        // 5단계 문항 3개는 diff=4, 6단계 손실 감내력은 diff=5 (보정 후 4.0) → 넷 다 THRESHOLD 초과
         FinancialValueReasonInput input = new FinancialValueReasonInput(1, 1, 1, 1, 5, 5, 5, 6);
 
-        assertEquals("두 분은 네 가지 항목 모두에서 가치관 차이가 있어요.", service.fallback(input));
+        assertEquals(
+                "두 분은 총자산 중 금융자산 비중·투자 경험·금융 투자 상품 이해도·손실 감내력이 차이가 나요.",
+                service.fallback(input));
     }
 
     @Test
-    void diff가_들쭉날쭉하면_최대_항목만_지목한다() {
-        // productUnderstanding diff=3(최대) — 나머지 항목은 비슷하다고 언급하지 않는다.
+    void 비슷한_항목과_다른_항목이_섞여있으면_둘_다_나열한다() {
+        // productUnderstanding diff=3(다름) — 나머지(assetRatio=0, investExperience=0, lossTolerance=0.8)는 비슷함
         FinancialValueReasonInput input = new FinancialValueReasonInput(3, 2, 4, 3, 3, 2, 1, 2);
 
-        assertEquals("두 분은 금융 투자 상품 이해도가 차이가 나요.", service.fallback(input));
+        assertEquals(
+                "두 분은 총자산 중 금융자산 비중·투자 경험·손실 감내력은 비슷하지만, 금융 투자 상품 이해도는 차이가 나요.",
+                service.fallback(input));
     }
 
     @Test
-    void 최댓값이_동점이면_고정_순서상_앞선_항목을_택한다() {
-        // productUnderstanding diff=3, lossTolerance diff=|3-6|*0.8=2.4 → 둘 다 최댓값 아님, 무관
-        // capitalPreservation 대신 investExperience diff=3으로 productUnderstanding과 동률을 만든다.
+    void 다른_항목이_여러_개면_고정_순서대로_전부_나열한다() {
+        // investExperience diff=3, productUnderstanding diff=3 → 둘 다 다름. assetRatio·lossTolerance는 비슷함.
         FinancialValueReasonInput input = new FinancialValueReasonInput(3, 2, 4, 3, 3, 5, 1, 3);
 
-        assertEquals("두 분은 투자 경험이 차이가 나요.", service.fallback(input));
+        assertEquals(
+                "두 분은 총자산 중 금융자산 비중·손실 감내력은 비슷하지만, 투자 경험·금융 투자 상품 이해도는 차이가 나요.",
+                service.fallback(input));
     }
 
     @Test
     void 손실_감내력_diff는_6단계_척도라_4대5로_비례_보정된다() {
-        // lossTolerance(1~6, 최대 diff 5) raw diff=5(최대) → 4.0으로 보정, productUnderstanding diff=4(1~5, 최대)와 동률
-        // 동률이면 고정 순서상 앞선 "금융 투자 상품 이해도"가 최댓값 항목으로 선택된다.
+        // lossTolerance(1~6, 최대 diff 5) raw diff=5 → 4.0으로 보정, productUnderstanding diff=4와 둘 다 THRESHOLD 초과
+        // assetRatio·investExperience는 diff=0으로 비슷함.
         FinancialValueReasonInput input = new FinancialValueReasonInput(3, 3, 5, 1, 3, 3, 1, 6);
 
-        assertEquals("두 분은 금융 투자 상품 이해도가 차이가 나요.", service.fallback(input));
+        assertEquals(
+                "두 분은 총자산 중 금융자산 비중·투자 경험은 비슷하지만, 금융 투자 상품 이해도·손실 감내력은 차이가 나요.",
+                service.fallback(input));
     }
 
     @Test

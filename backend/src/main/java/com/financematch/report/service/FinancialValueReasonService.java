@@ -4,6 +4,7 @@ import com.financematch.report.dto.reason.FinancialValueReasonInput;
 import com.financematch.report.llm.ReasonRuleValidator;
 import com.financematch.report.llm.ReportLlmClient;
 import com.financematch.report.llm.ReportPromptBuilder;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +45,7 @@ public class FinancialValueReasonService {
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
             String candidate;
             try {
-                candidate = llmClient.generateReason(prompt);
+                candidate = llmClient.generateReason("투자가치관", prompt);
             } catch (ReportLlmClient.LlmCallException e) {
                 log.warn("가치관 축 reason LLM 호출 실패(시도 {}/{})", attempt, MAX_ATTEMPTS, e);
                 continue;
@@ -93,24 +94,29 @@ public class FinancialValueReasonService {
             Math.abs(input.getMeLossTolerance() - input.getPartnerLossTolerance()) * (4.0 / 5.0),
         };
 
-        double maxDiff = max(diffs);
-        double minDiff = min(diffs);
+        // 항목별로 diff가 THRESHOLD 이하면 "비슷한 항목", 초과면 "다른 항목"으로 나눈다 — 한 항목만
+        // 짚어주던 이전 방식보다 정보량이 많아, 비슷한 부분과 다른 부분을 같이 알려준다.
+        List<String> similarItems = new ArrayList<>();
+        List<String> differentItems = new ArrayList<>();
+        for (int i = 0; i < diffs.length; i++) {
+            (diffs[i] <= THRESHOLD ? similarItems : differentItems).add(ITEM_ORDER.get(i));
+        }
 
-        if (maxDiff <= THRESHOLD) {
+        if (differentItems.isEmpty()) {
             return "두 분은 가치관이 비슷해요.";
         }
-        if (maxDiff == minDiff) {
-            return "두 분은 네 가지 항목 모두에서 가치관 차이가 있어요.";
+        if (similarItems.isEmpty()) {
+            return "두 분은 " + withSubjectParticle(String.join("·", differentItems)) + " 차이가 나요.";
         }
-
-        // 가장 크게 벌어진 항목 하나만 짚는다(팀 확정) — 나머지가 "비슷하다"고 같이 말하면, 동점인
-        // 항목이 여러 개일 때(예: 3개 문항이 diff=1로 묶임) 그중 하나만 골라 비슷하다고 단정하는 셈이라
-        // 오해를 줄 수 있다. 최댓값이 동점이면 위 고정 순서에서 먼저 오는 항목을 택한다.
-        String maxItem = ITEM_ORDER.get(firstIndexOf(diffs, maxDiff));
-        return "두 분은 " + withSubjectParticle(maxItem) + " 차이가 나요.";
+        return "두 분은 "
+                + withTopicParticle(String.join("·", similarItems))
+                + " 비슷하지만, "
+                + withTopicParticle(String.join("·", differentItems))
+                + " 차이가 나요.";
     }
 
-    // 받침 유무에 따라 이/가를 고른다 ("금융 투자 상품 이해도"처럼 받침 없는 항목명도 있어서 필요).
+    // 받침 유무에 따라 이/가·은/는을 고른다 ("금융 투자 상품 이해도"처럼 받침 없는 항목명도 있어서 필요).
+    // "·"로 여러 항목을 이어붙인 문자열도 마지막 글자(=마지막 항목의 끝 글자) 기준으로 그대로 적용된다.
     private static boolean hasBatchim(String word) {
         char last = word.charAt(word.length() - 1);
         return (last - 0xAC00) % 28 != 0;
@@ -120,28 +126,7 @@ public class FinancialValueReasonService {
         return word + (hasBatchim(word) ? "이" : "가");
     }
 
-    private static double max(double[] values) {
-        double max = values[0];
-        for (double value : values) {
-            max = Math.max(max, value);
-        }
-        return max;
-    }
-
-    private static double min(double[] values) {
-        double min = values[0];
-        for (double value : values) {
-            min = Math.min(min, value);
-        }
-        return min;
-    }
-
-    private static int firstIndexOf(double[] values, double target) {
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] == target) {
-                return i;
-            }
-        }
-        throw new IllegalStateException("배열에 없는 값: " + target);
+    private static String withTopicParticle(String word) {
+        return word + (hasBatchim(word) ? "은" : "는");
     }
 }

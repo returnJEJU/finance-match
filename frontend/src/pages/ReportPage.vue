@@ -210,7 +210,9 @@ const toggleCard = (key) => {
 
 <template>
   <section class="px-4 pb-8 pt-4">
-    <p v-if="isLoading" class="py-10 text-center text-[13px] text-muted">불러오는 중...</p>
+    <p v-if="isLoading" class="py-10 text-center text-[13px] text-muted">
+      불러오는 중...(약 1분 소요)
+    </p>
     <p v-else-if="isNotReady" class="py-10 text-center text-[13px] text-muted">
       리포트를 준비하고 있어요. 두 분의 설문이 모두 끝나면 확인할 수 있어요.
     </p>
