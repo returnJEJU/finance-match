@@ -35,7 +35,7 @@ const authStore = useAuthStore()
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
+  <div class="flex min-h-dvh flex-col">
     <FunnelHeader :step="4" :fallback-to="{ name: 'signup-cert' }" />
 
     <div class="flex flex-1 flex-col px-7">

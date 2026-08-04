@@ -69,7 +69,7 @@ function submit() {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
+  <div class="flex min-h-dvh flex-col">
     <AppHeader variant="plain" title="로그인" :fallback-to="{ name: 'onboarding' }" />
 
     <div class="flex flex-1 flex-col px-7">

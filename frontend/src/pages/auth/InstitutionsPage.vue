@@ -77,7 +77,7 @@ function goBack() {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
+  <div class="flex min-h-dvh flex-col">
     <!-- 상단바 — 진행바 없이 가운데 제목 -->
     <div class="flex flex-none items-center px-7 pt-4 pb-2.5">
       <button

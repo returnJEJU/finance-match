@@ -62,7 +62,7 @@ const selected = ref('kakao')
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
+  <div class="flex min-h-dvh flex-col">
     <FunnelHeader :step="3" :fallback-to="{ name: 'signup-agree' }" />
 
     <div class="flex flex-1 flex-col px-7">

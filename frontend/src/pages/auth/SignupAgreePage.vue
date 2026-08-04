@@ -93,7 +93,7 @@ function goNext() {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
+  <div class="flex min-h-dvh flex-col">
     <FunnelHeader :step="2" :fallback-to="{ name: 'signup' }" />
 
     <div class="flex flex-1 flex-col px-7">

@@ -100,7 +100,7 @@ const items = computed(() => [
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
+  <div class="flex min-h-dvh flex-col">
     <div class="flex flex-none justify-center px-7 pt-4 pb-3">
       <img :src="logoWordmark" alt="찰떡귱합" class="w-24" />
     </div>
