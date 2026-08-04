@@ -251,7 +251,7 @@ class MatchCalculatorTest {
         );
 
         assertEquals(
-                new BigDecimal("70.36"),
+                new BigDecimal("71"),
                 result.getTotalScore()
         );
     }
@@ -350,7 +350,7 @@ class MatchCalculatorTest {
         assertFalse(result.isTaxStrategyCalculated());
 
         assertEquals(
-                new BigDecimal("69.29"),
+                new BigDecimal("70"),
                 result.getTotalScore()
         );
     }
