@@ -72,12 +72,12 @@ async function handleNext() {
             {{ result.investmentType }}
           </strong>
 
-          <span class="text-[28px] font-medium">입니다.</span>
+          <!-- <span class="text-[28px] font-medium">입니다.</span> -->
         </p>
       </div>
 
       <!-- 캐릭터 -->
-      <div class="relative mt-4 flex h-[250px] items-center justify-center">
+      <div class="relative mt-0 flex h-[250px] items-center justify-center">
         <div
           class="absolute h-[250px] w-[330px] rounded-full bg-[radial-gradient(circle,_rgba(255,244,79,0.32)_0%,_rgba(255,244,79,0.14)_50%,_transparent_74%)]"
           aria-hidden="true"
@@ -92,7 +92,7 @@ async function handleNext() {
 
       <!-- 설명 카드 -->
       <article
-        class="border-line-card rounded-card mt-auto flex h-[210px] flex-none flex-col overflow-hidden border bg-white px-6 py-6"
+        class="border-line-card rounded-card mt-auto flex h-[230px] flex-none flex-col overflow-hidden border bg-white px-6 py-6"
       >
         <div class="flex flex-none items-start gap-2">
           <component
