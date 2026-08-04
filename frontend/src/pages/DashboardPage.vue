@@ -21,9 +21,12 @@ const openedHelpKey = ref(null)
 
 const totalScore = computed(() => Math.round(result.value?.totalScore ?? 0))
 
-// 점수를 0~100 범위로 제한하고 원형 그래프의 노란색 비율로 사용
-const totalProgress = computed(() => Math.min(Math.max(totalScore.value, 0), 100))
+// 원형 그래프에서 사용할 수 있도록 총점을 0~100으로 제한
+const totalProgress = computed(() => {
+  return Math.min(Math.max(totalScore.value, 0), 100)
+})
 
+// 총점에 따른 안내 문구
 const compatibilityMessage = computed(() => {
   const score = totalScore.value
 
@@ -58,6 +61,7 @@ const compatibilityMessage = computed(() => {
   }
 })
 
+// 항목별 점수
 const scoreCards = computed(() => {
   if (!result.value) {
     return []
@@ -66,23 +70,23 @@ const scoreCards = computed(() => {
   return [
     {
       key: 'asset',
-      title: '금융자산',
+      title: '금융 자산',
       description: '또래 평균과 비교해 현재 금융자산 수준을 평가했어요.',
       score: Math.round(result.value.assetStabilityScore),
       maxScore: 30,
       icon: markRaw(BadgeDollarSign),
       iconClass: 'bg-brand-soft text-brand-ink',
-      fullWidth: false,
+      progressClass: 'bg-[#707500]',
     },
     {
       key: 'debt',
-      title: '부채 관리',
+      title: '부채',
       description: '소득 대비 상환 능력과 자산 대비 부채 부담을 평가했어요.',
       score: Math.round(result.value.debtRepaymentScore),
       maxScore: 20,
       icon: markRaw(Landmark),
       iconClass: 'bg-[#fff3e9] text-[#a94700]',
-      fullWidth: false,
+      progressClass: 'bg-[#707500]',
     },
     {
       key: 'value',
@@ -92,18 +96,17 @@ const scoreCards = computed(() => {
       maxScore: 25,
       icon: markRaw(HeartHandshake),
       iconClass: 'bg-[#f5f5dc] text-[#777000]',
-      fullWidth: true,
+      progressClass: 'bg-[#707500]',
     },
     {
       key: 'goal',
-      title: '목표 달성률',
+      title: '목표달성률',
       description: '현재 자산과 저축 계획으로 목표 달성 가능성을 계산했어요.',
       score: Math.round(result.value.goalFeasibilityScore),
       maxScore: 15,
       icon: markRaw(Target),
       iconClass: 'bg-[#eef7e9] text-[#46763b]',
-      fullWidth: false,
-      showProgress: true,
+      progressClass: 'bg-[#707500]',
     },
     {
       key: 'tax',
@@ -113,12 +116,25 @@ const scoreCards = computed(() => {
       maxScore: 10,
       icon: markRaw(BadgeDollarSign),
       iconClass: 'bg-[#f5f0ff] text-[#66528c]',
-      fullWidth: false,
+      progressClass: 'bg-[#707500]',
       calculated: result.value.taxStrategyCalculated,
     },
   ]
 })
 
+// 항목별 진행 바 너비 계산
+const getProgressWidth = (card) => {
+  if (card.key === 'tax' && !card.calculated) {
+    return '0%'
+  }
+
+  const percentage = (card.score / card.maxScore) * 100
+  const limitedPercentage = Math.min(Math.max(percentage, 0), 100)
+
+  return `${limitedPercentage}%`
+}
+
+// 대시보드 데이터 조회
 const loadDashboard = async () => {
   loading.value = true
   errorMessage.value = ''
@@ -138,10 +154,12 @@ const loadDashboard = async () => {
   }
 }
 
+// 도움말 열기/닫기
 const toggleHelp = (key) => {
   openedHelpKey.value = openedHelpKey.value === key ? null : key
 }
 
+// 상세 리포트로 이동
 const moveToReport = () => {
   router.push('/report')
 }
@@ -152,7 +170,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="h-[calc(100dvh-108px)] overflow-hidden px-[18px] pt-4 pb-3">
+  <section class="h-[calc(100dvh-108px)] overflow-y-auto px-[18px] pt-3 pb-6">
     <!-- 로딩 -->
     <div v-if="loading" class="flex h-full items-center justify-center">
       <div class="h-9 w-9 animate-spin rounded-full border-4 border-line-card border-t-brand-ink" />
@@ -177,13 +195,29 @@ onMounted(() => {
     </div>
 
     <!-- 완성된 대시보드 -->
-    <div v-else-if="result" class="flex h-full flex-col">
-      <!-- 총점 영역 -->
-      <div class="flex shrink-0 flex-col items-center">
-        <div class="relative mt-3 h-[190px] w-[190px]">
+    <div v-else-if="result" class="flex min-h-full flex-col">
+      <!-- 궁합 안내 문구 -->
+      <div class="shrink-0 px-5 pt-2">
+        <p class="text-center text-[20px] leading-[1.35] font-extrabold tracking-[-0.7px] text-ink">
+          {{ compatibilityMessage.first }}<br />
+
+          {{ compatibilityMessage.second }}
+
+          <span
+            v-if="compatibilityMessage.accent"
+            class="border-b-2 border-brand-deep pb-0.5 text-brand-ink"
+          >
+            {{ compatibilityMessage.accent }}
+          </span>
+        </p>
+      </div>
+
+      <!-- 총점 원형 그래프 -->
+      <div class="flex shrink-0 justify-center pt-4">
+        <div class="relative h-[190px] w-[190px]">
           <!-- 점수 원 -->
           <div
-            class="absolute inset-0 rounded-full p-[13px]"
+            class="absolute inset-0 rounded-full p-[14px]"
             :style="{
               background: `conic-gradient(
                 from 0deg,
@@ -192,152 +226,89 @@ onMounted(() => {
               )`,
             }"
           >
+            <!-- 원 내부 -->
             <div
               class="flex h-full w-full flex-col items-center justify-center rounded-full bg-canvas"
             >
-              <span class="text-[62px] leading-none font-bold tracking-[-3px] text-[#275e50]">
+              <span class="text-[68px] leading-none font-medium tracking-[-4px] text-[#275e50]">
                 {{ totalScore }}
               </span>
 
-              <span class="mt-2 text-[13px] text-brand-deep">♥</span>
+              <span class="mt-3 text-[12px] text-brand-deep">♥</span>
             </div>
           </div>
 
           <!-- 레몬 장식 -->
-          <div class="absolute -top-3 left-1/2 z-10 -translate-x-1/2 text-[24px]">🍋</div>
-        </div>
+          <div class="absolute -top-3 left-1/2 z-10 -translate-x-1/2 text-[23px]">🍋</div>
 
-        <!-- 궁합 문구 -->
-        <div class="mt-4 w-full px-3">
-          <p
-            class="text-center text-[20px] leading-[1.35] font-extrabold tracking-[-0.7px] text-ink"
-          >
-            {{ compatibilityMessage.first }}<br />
-            {{ compatibilityMessage.second }}
-
-            <span
-              v-if="compatibilityMessage.accent"
-              class="border-b-2 border-brand-deep pb-0.5 text-brand-ink"
-            >
-              {{ compatibilityMessage.accent }}
-            </span>
-          </p>
+          <!-- 주변 하트 장식 -->
+          <span class="absolute top-9 -left-7 text-[14px] text-brand">♥</span>
+          <span class="absolute top-[92px] -right-7 text-[17px] text-brand">♥</span>
+          <span class="absolute right-2 -bottom-1 text-[12px] text-brand">♥</span>
+          <span class="absolute bottom-3 left-1 text-[11px] text-brand">♥</span>
         </div>
       </div>
 
       <!-- 항목별 점수 -->
-      <div class="mt-5 grid shrink-0 grid-cols-2 gap-2.5">
-        <article
-          v-for="card in scoreCards"
-          :key="card.key"
-          class="relative rounded-[15px] border border-line-soft bg-white px-3.5 py-3 shadow-[0_2px_7px_rgba(0,0,0,0.035)]"
-          :class="card.fullWidth ? 'col-span-2' : ''"
-        >
-          <!-- 전체 너비 카드 -->
-          <div v-if="card.fullWidth" class="flex h-[47px] items-center gap-2.5">
-            <div
-              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]"
-              :class="card.iconClass"
-            >
-              <component :is="card.icon" :size="21" :stroke-width="2" />
-            </div>
-
-            <div>
-              <p class="text-[13px] leading-none text-ink-sub">
-                {{ card.title }}
-              </p>
-
-              <p class="mt-1.5 text-[19px] leading-none font-bold text-ink">
-                {{ card.score }}점 / {{ card.maxScore }}점
-              </p>
-            </div>
-
-            <!-- 전체 너비 카드 도움말 버튼 -->
-            <button
-              type="button"
-              class="absolute top-3 right-3 z-40 block text-[#d2ccb5]"
-              :aria-label="`${card.title} 도움말`"
-              :aria-expanded="openedHelpKey === card.key"
-              @click="toggleHelp(card.key)"
-            >
-              <CircleHelp :size="15" :stroke-width="2" />
-            </button>
-          </div>
-
-          <!-- 두 칸 카드 -->
-          <template v-else>
-            <div class="flex items-start justify-between">
+      <div class="mx-auto mt-4 flex w-[92%] shrink-0 flex-col gap-[14px]">
+        <article v-for="card in scoreCards" :key="card.key" class="relative">
+          <!-- 항목 이름과 점수 -->
+          <div class="flex items-center justify-between">
+            <div class="flex min-w-0 items-center gap-2">
+              <!-- 아이콘 -->
               <div
-                class="flex h-8 w-8 items-center justify-center rounded-[9px]"
+                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[7px]"
                 :class="card.iconClass"
               >
-                <component :is="card.icon" :size="19" :stroke-width="2" />
+                <component :is="card.icon" :size="14" :stroke-width="2" />
               </div>
 
-              <!-- 두 칸 카드 도움말 버튼 -->
+              <!-- 항목 이름 -->
+              <span class="text-[13px] font-semibold text-ink">
+                {{ card.title }}
+              </span>
+
+              <!-- 도움말 버튼 -->
               <button
                 type="button"
-                class="relative z-40 block text-[#d2ccb5]"
+                class="shrink-0 text-[#c8c3ad]"
                 :aria-label="`${card.title} 도움말`"
                 :aria-expanded="openedHelpKey === card.key"
                 @click="toggleHelp(card.key)"
               >
-                <CircleHelp :size="15" :stroke-width="2" />
+                <CircleHelp :size="14" :stroke-width="2" />
               </button>
             </div>
 
-            <p class="mt-2 text-[13px] leading-none text-ink-sub">
-              {{ card.title }}
-            </p>
-
+            <!-- 점수 -->
             <p
               v-if="card.key !== 'tax' || card.calculated"
-              class="mt-1.5 whitespace-nowrap text-[18px] leading-none font-bold text-ink"
+              class="shrink-0 text-[12px] font-bold text-ink"
             >
-              {{ card.score }}점 / {{ card.maxScore }}점
+              <span class="text-[#777000]">{{ card.score }}점</span>
+              / {{ card.maxScore }}점
             </p>
 
-            <p v-else class="mt-1.5 text-[17px] leading-none font-bold text-muted">평가 제외</p>
+            <!-- 절세 평가 제외 -->
+            <p v-else class="shrink-0 text-[12px] font-bold text-muted">평가 제외</p>
+          </div>
 
-            <!-- 목표 달성률 진행바 -->
+          <!-- 진행 바 -->
+          <div class="mt-2 h-[6px] overflow-hidden rounded-full bg-[#e4e4e4]">
             <div
-              v-if="card.showProgress"
-              class="mt-2.5 h-[5px] overflow-hidden rounded-full bg-line-card"
-            >
-              <div
-                class="h-full rounded-full bg-brand-ink"
-                :style="{
-                  width: `${(card.score / card.maxScore) * 100}%`,
-                }"
-              />
-            </div>
-          </template>
+              class="h-full rounded-full transition-all duration-500"
+              :class="card.progressClass"
+              :style="{ width: getProgressWidth(card) }"
+            />
+          </div>
 
-          <!-- 공통 도움말 말풍선 -->
+          <!-- 도움말 말풍선 -->
           <div
             v-if="openedHelpKey === card.key"
             role="tooltip"
-            class="absolute top-9 z-50 whitespace-nowrap rounded-[12px] bg-[#d5fae7] px-3 py-3 text-left text-[11px] leading-none font-medium tracking-[-0.3px] text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
-            :class="{
-              'left-0 w-full': card.fullWidth,
-              'left-0 w-[calc(200%+10px)]':
-                !card.fullWidth && (card.key === 'asset' || card.key === 'goal'),
-              'right-0 w-[calc(200%+10px)]':
-                !card.fullWidth && (card.key === 'debt' || card.key === 'tax'),
-            }"
+            class="absolute top-7 left-7 z-50 max-w-[300px] rounded-[10px] bg-[#d5fae7] px-3 py-2 text-[11px] leading-4 font-medium text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
           >
-            <!-- 왼쪽 카드 말풍선 꼬리 -->
-            <span
-              v-if="!card.fullWidth && (card.key === 'asset' || card.key === 'goal')"
-              class="absolute -top-1.5 left-[calc(50%-20px)] h-3 w-3 rotate-45 bg-[#d5fae7]"
-            />
-
-            <!-- 오른쪽 및 전체 너비 카드 말풍선 꼬리 -->
-            <span v-else class="absolute -top-1.5 right-2 h-3 w-3 rotate-45 bg-[#d5fae7]" />
-
-            <span class="relative">
-              {{ card.description }}
-            </span>
+            {{ card.description }}
           </div>
         </article>
       </div>
@@ -345,7 +316,7 @@ onMounted(() => {
       <!-- 상세 리포트 버튼 -->
       <button
         type="button"
-        class="mt-auto mb-2 flex h-[52px] w-full shrink-0 items-center justify-center gap-2 rounded-full bg-brand text-[16px] font-bold text-ink shadow-[0_6px_14px_rgba(250,230,77,0.2)] transition active:scale-[0.98]"
+        class="mx-auto mt-8 mb-3 flex h-[52px] w-[92%] shrink-0 items-center justify-center gap-2 rounded-full bg-brand text-[16px] font-bold text-ink shadow-[0_6px_14px_rgba(250,230,77,0.2)] transition active:scale-[0.98]"
         @click="moveToReport"
       >
         상세 리포트 보러가기
