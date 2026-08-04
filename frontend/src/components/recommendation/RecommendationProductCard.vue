@@ -160,12 +160,12 @@ const toggleFavorite = () => {
   >
     <div class="flex items-start gap-3">
       <div
-        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg"
         :class="productIconClass"
       >
         <component
           :is="productIcon"
-          class="h-[22px] w-[22px]"
+          class="h-6 w-6"
           :class="slotType === 'SAVINGS' ? 'fill-[#F7A8B8]' : ''"
           stroke-width="2"
         />
@@ -173,7 +173,7 @@ const toggleFavorite = () => {
 
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2">
-          <h3 class="min-w-0 flex-1 text-[15px] leading-5 font-bold text-ink">
+          <h3 class="min-w-0 flex-1 text-[18px] leading-6 font-bold text-ink">
             {{ product.productName }}
           </h3>
 
@@ -186,32 +186,35 @@ const toggleFavorite = () => {
             @click.stop="toggleFavorite"
           >
             <Heart
-              class="h-4 w-4 transition-colors"
+              class="h-5 w-5 transition-colors"
               :class="
                 isFavorite ? 'fill-[#fb7185] text-[#fb7185]' : 'fill-transparent text-gray-300'
               "
             />
           </button>
+
           <div
             v-else-if="slotType === 'INVESTMENT' && product.riskLabel"
-            class="flex w-14 shrink-0 justify-center"
+            class="flex w-16 shrink-0 justify-center"
           >
             <span
-              class="rounded-md border px-1.5 py-px text-center text-[10px] font-semibold"
+              class="rounded-md border px-2 py-0.5 text-center text-[12px] font-semibold"
               :class="riskBadgeClass"
             >
               {{ product.riskLabel }}
             </span>
           </div>
+
           <span
             v-else-if="product.comparisonValue"
-            class="min-w-14 shrink-0 text-center text-[12px] leading-5 font-bold text-ink"
+            class="min-w-16 shrink-0 text-center text-[15px] leading-5 font-bold text-ink"
           >
             {{ product.comparisonValue }}
           </span>
-          <div v-else-if="product.riskLabel" class="flex w-14 shrink-0 justify-center">
+
+          <div v-else-if="product.riskLabel" class="flex w-16 shrink-0 justify-center">
             <span
-              class="rounded-md border px-1.5 py-px text-center text-[10px] font-semibold"
+              class="rounded-md border px-2 py-0.5 text-center text-[12px] font-semibold"
               :class="riskBadgeClass"
             >
               {{ product.riskLabel }}
@@ -221,20 +224,20 @@ const toggleFavorite = () => {
 
         <p
           v-if="product.description"
-          class="mt-1 flex items-start gap-1 text-[10px] leading-4 text-muted"
+          class="mt-1.5 flex items-start gap-1.5 text-[14px] leading-5 text-muted"
         >
-          <Check class="mt-0.5 h-3 w-3 shrink-0 text-muted" stroke-width="2.5" />
+          <Check class="mt-0.5 h-4 w-4 shrink-0 text-muted" stroke-width="2.5" />
           <span>{{ product.description }}</span>
         </p>
 
         <div class="mt-3 flex items-center">
           <button
             type="button"
-            class="inline-flex items-center gap-1 border-b border-ink text-[10px] font-bold text-ink"
+            class="inline-flex items-center gap-1 border-b border-ink text-[14px] font-bold text-ink"
             @click.stop="openProduct(product.productUrl)"
           >
             상품 상세 보기
-            <ArrowUpRight class="h-3 w-3" stroke-width="2.5" />
+            <ArrowUpRight class="h-4 w-4" stroke-width="2.5" />
           </button>
 
           <div
@@ -242,7 +245,7 @@ const toggleFavorite = () => {
             class="absolute flex min-w-14 -translate-y-1/2 items-center justify-center"
             :class="
               listMode && slotType === 'INVESTMENT'
-                ? 'top-[58px] right-4'
+                ? 'top-[62px] right-4'
                 : compact
                   ? 'top-1/2 right-4'
                   : 'top-1/2 right-0'
@@ -250,13 +253,13 @@ const toggleFavorite = () => {
           >
             <button
               type="button"
-              class="flex min-w-14 items-center justify-center"
+              class="flex min-h-11 min-w-14 items-center justify-center"
               :aria-label="isFavorite ? '찜 해제' : '찜하기'"
               :aria-pressed="isFavorite"
               @click.stop="toggleFavorite"
             >
               <Heart
-                class="h-4 w-4 transition-colors"
+                class="h-5 w-5 transition-colors"
                 :class="
                   isFavorite ? 'fill-[#fb7185] text-[#fb7185]' : 'fill-transparent text-gray-300'
                 "
@@ -265,25 +268,32 @@ const toggleFavorite = () => {
           </div>
         </div>
 
-        <div v-if="listMode" class="mt-4 -ml-[52px] flex min-h-5 items-center">
-          <div v-if="slotType === 'INVESTMENT' && formattedAum" class="flex items-baseline gap-1.5">
-            <span class="text-[10px] text-muted">순자산</span>
-            <strong class="text-[12px] text-ink">{{ formattedAum }}</strong>
+        <div v-if="listMode" class="mt-4 -ml-[56px] flex min-h-6 items-center">
+          <div v-if="slotType === 'INVESTMENT' && formattedAum" class="flex items-baseline gap-2">
+            <span class="text-[13px] text-muted">순자산</span>
+            <strong class="text-[15px] text-ink">{{ formattedAum }}</strong>
           </div>
-          <div v-else-if="product.comparisonValue" class="flex items-baseline gap-1.5">
-            <span class="text-[10px] text-muted">{{ product.comparisonLabel }}</span>
-            <strong class="text-[12px] text-ink">{{ product.comparisonValue }}</strong>
+
+          <div v-else-if="product.comparisonValue" class="flex items-baseline gap-2">
+            <span class="text-[13px] text-muted">
+              {{ product.comparisonLabel }}
+            </span>
+            <strong class="text-[15px] text-ink">
+              {{ product.comparisonValue }}
+            </strong>
           </div>
+
           <span
             v-else-if="product.riskLabel"
-            class="rounded-md border px-1.5 py-px text-center text-[10px] font-semibold"
+            class="rounded-md border px-2 py-0.5 text-center text-[12px] font-semibold"
             :class="riskBadgeClass"
           >
             {{ product.riskLabel }}
           </span>
+
           <span
             v-if="current"
-            class="ml-auto rounded bg-ink px-1.5 py-0.5 text-[9px] font-semibold text-[#FFF56E]"
+            class="ml-auto rounded bg-ink px-2 py-1 text-[12px] font-semibold text-[#FFF56E]"
           >
             현재 대표
           </span>

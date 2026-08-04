@@ -96,17 +96,19 @@ const addAllPackageProducts = () => {
 
 <template>
   <section class="rounded-[18px] border border-ink bg-[#FFF56E] p-3">
-    <div class="mb-2">
-      <span class="rounded-full bg-ink px-2.5 py-1 text-[9px] font-semibold text-[#A2F5E6]">
+    <div class="mb-3">
+      <span class="rounded-full bg-ink px-3 py-1.5 text-[12px] font-semibold text-[#A2F5E6]">
         찰떡 PICK 패키지
       </span>
-      <h2 class="mt-2 text-[14px] font-bold">우리 커플을 위한 맞춤 패키지</h2>
-      <p class="mt-1 text-[10px] text-brand-ink">
+
+      <h2 class="mt-3 text-[18px] font-bold">우리 커플을 위한 맞춤 패키지</h2>
+
+      <p class="mt-1.5 text-[14px] leading-5 text-brand-ink">
         현재 조건에 맞는 {{ slots.length }}가지 금융상품을 골랐어요
       </p>
     </div>
 
-    <div class="divide-y divide-line-soft rounded-card bg-[#FFFFFF] px-3">
+    <div class="divide-y divide-line-soft rounded-card bg-white px-3">
       <RecommendationProductCard
         v-for="{ slot, product } in selectedProducts"
         :key="slot.slotId"
@@ -120,7 +122,7 @@ const addAllPackageProducts = () => {
 
     <button
       type="button"
-      class="mt-3 h-11 w-full rounded-xl bg-ink text-xs font-semibold text-white"
+      class="mt-3 h-12 w-full rounded-xl bg-ink text-[15px] font-semibold text-white"
       @click="addAllPackageProducts"
     >
       이 패키지 모두 담기
@@ -141,16 +143,20 @@ const addAllPackageProducts = () => {
       >
         <header class="flex items-start gap-3">
           <div class="ml-3 min-w-0 flex-1">
-            <h2 class="text-[19px] leading-6 font-extrabold">{{ activeSlot.slotName }} 목록</h2>
-            <p class="mt-0.5 text-[10px] text-muted">원하는 상품을 선택해 변경할 수 있어요</p>
+            <h2 class="text-[20px] leading-7 font-extrabold">{{ activeSlot.slotName }} 목록</h2>
+
+            <p class="mt-1 text-[14px] leading-5 text-muted">
+              원하는 상품을 선택해 변경할 수 있어요
+            </p>
           </div>
+
           <button
             type="button"
-            class="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-muted"
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-muted"
             aria-label="상품 목록 닫기"
             @click="closeProductList"
           >
-            <X class="h-4 w-4" />
+            <X class="h-5 w-5" />
           </button>
         </header>
 
@@ -184,39 +190,46 @@ const addAllPackageProducts = () => {
       >
         <button
           type="button"
-          class="absolute top-4 right-4 flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-muted"
+          class="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-muted"
           aria-label="상품 변경 취소"
           @click="cancelProductChange"
         >
-          <X class="h-4 w-4" />
+          <X class="h-5 w-5" />
         </button>
 
         <div
           class="mx-auto flex h-14 w-14 items-center justify-center rounded-[16px] bg-[#FFF9C7] text-[#4F8EF7]"
         >
-          <span class="flex h-8 w-8 items-center justify-center rounded-full bg-white"
-            ><RefreshCw class="h-5 w-5"
-          /></span>
+          <span class="flex h-8 w-8 items-center justify-center rounded-full bg-white">
+            <RefreshCw class="h-5 w-5" />
+          </span>
         </div>
-        <h2 class="mt-4 text-[15px] leading-5 font-extrabold">
+
+        <h2 class="mt-4 text-[18px] leading-6 font-extrabold">
           패키지 내 상품을<br />
           이 상품으로 변경하시겠습니까?
         </h2>
 
         <div class="mt-5 rounded-[14px] bg-[#F8F8F8] px-4 py-4 text-left">
-          <div class="grid grid-cols-[72px_1fr] items-start gap-2">
-            <p class="text-[10px] text-[#9CA3AF]">현재 대표</p>
-            <p class="text-[11px] leading-4 font-semibold text-[#9CA3AF] line-through">
+          <div class="grid grid-cols-[76px_1fr] items-start gap-2">
+            <p class="text-[13px] text-[#9CA3AF]">현재 대표</p>
+            <p class="text-[14px] leading-5 font-semibold text-[#9CA3AF] line-through">
               {{ currentProduct?.productName }}
             </p>
           </div>
-          <div class="mt-4 grid grid-cols-[72px_1fr] items-start gap-2">
-            <p class="text-[10px] font-semibold text-[#35CBAA]">변경 후</p>
+
+          <div class="mt-4 grid grid-cols-[76px_1fr] items-start gap-2">
+            <p class="text-[13px] font-semibold text-[#35CBAA]">변경 후</p>
+
             <div>
-              <p class="text-[11px] leading-4 font-bold text-ink">
+              <p class="text-[15px] leading-5 font-bold text-ink">
                 {{ pendingProduct.productName }}
               </p>
-              <p v-if="pendingProduct.description" class="mt-1 text-[9px] leading-4 text-[#B97008]">
+
+              <p
+                v-if="pendingProduct.description"
+                class="mt-1 text-[13px] leading-5 text-[#B97008]"
+              >
                 {{ pendingProduct.description }}
               </p>
             </div>
@@ -226,14 +239,15 @@ const addAllPackageProducts = () => {
         <div class="mt-5 grid grid-cols-2 gap-2">
           <button
             type="button"
-            class="h-11 rounded-xl border border-line-card text-xs font-semibold text-muted"
+            class="h-12 rounded-xl border border-line-card text-[15px] font-semibold text-muted"
             @click="cancelProductChange"
           >
             취소
           </button>
+
           <button
             type="button"
-            class="h-11 rounded-xl bg-brand text-xs font-bold text-ink"
+            class="h-12 rounded-xl bg-brand text-[15px] font-bold text-ink"
             @click="confirmProductChange"
           >
             변경하기
