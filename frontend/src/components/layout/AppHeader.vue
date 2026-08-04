@@ -30,7 +30,7 @@ const router = useRouter()
 
 const VARIANT_CLASS = {
   fixed:
-    'border-line-soft fixed inset-x-0 top-0 z-40 mx-auto h-[50px] max-w-[393px] border-b bg-white px-4',
+    'border-line-soft fixed inset-x-0 top-0 z-40 mx-auto h-[50px] max-w-[428px] border-b bg-white px-4',
   plain: 'px-7 pt-4 pb-2.5',
 }
 

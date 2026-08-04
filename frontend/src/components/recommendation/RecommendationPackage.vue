@@ -137,7 +137,7 @@ const addAllPackageProducts = () => {
       @click.self="closeProductList"
     >
       <section
-        class="max-h-[82vh] w-full max-w-[393px] overflow-y-auto rounded-t-[24px] bg-white px-4 pt-4 pb-8"
+        class="max-h-[82vh] w-full max-w-[428px] overflow-y-auto rounded-t-[24px] bg-white px-4 pt-4 pb-8"
       >
         <header class="flex items-start gap-3">
           <div class="ml-3 min-w-0 flex-1">
