@@ -154,11 +154,8 @@ const routes = [
         path: 'dashboard/waiting',
         name: 'dashboard-waiting',
         component: () => import('@/pages/DashboardWaitingPage.vue'),
-        // 상대방이 설문을 마치기 전까지는 갈 수 있는 화면이 없다.
-        // 하단 탭(navLocked)과 마찬가지로 상단바 뒤로가기도 두지 않는다.
         meta: {
           activeTab: 'dashboard',
-          navLocked: true,
         },
       },
       {
