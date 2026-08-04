@@ -1,6 +1,7 @@
 package com.financematch.couple.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.financematch.common.ErrorCode;
@@ -101,6 +102,16 @@ class CoupleServiceTest {
 
         // then
         assertEquals(ErrorCode.COUPLE_NOT_CONNECTED, exception.getErrorCode());
+    }
+
+    @Test
+    void 탈퇴용_커플_해제는_연결된_커플이_없어도_통과한다() {
+
+        // when
+        assertDoesNotThrow(() -> coupleService.disconnectCoupleIfConnected(9999L));
+
+        // then
+        assertEquals(1, count("SELECT COUNT(*) FROM couple WHERE id = 1"));
     }
 
     private int count(String sql) {
