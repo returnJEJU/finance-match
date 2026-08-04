@@ -4,8 +4,9 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import stableImage from '@/assets/images/characters/types/type-stable.png'
 import { disconnectCouple, getCoupleProfileMessage, updateCoupleProfileMessage } from '@/api/couple'
+import { getPersonalSurveyResult } from '@/api/personalSurvey'
+import { investmentTypeMeta } from '@/constants/investmentTypeMeta'
 import { useAuthStore } from '@/stores/auth'
 
 import {
@@ -19,9 +20,7 @@ import {
   Pencil,
   ChevronRight,
   X,
-
-  // 투자성향 모달
-  ShieldCheck,
+  LoaderCircle,
 
   // 금융자산 갱신 모달
   CircleCheckBig,
@@ -116,21 +115,26 @@ const saveProfileMessage = () => {
 // ========================================
 
 const isInvestmentModalOpen = ref(false)
+const personalSurveyResultQueryKey = computed(() => [
+  'personal-survey-result',
+  authStore.member?.id ?? 'me',
+])
 
-// 지금은 화면 확인용 목데이터
-// 나중에 DB 연결하면 API 응답값으로 교체
+const {
+  data: personalSurveyResult,
+  isLoading: isPersonalSurveyResultLoading,
+  isError: isPersonalSurveyResultError,
+  refetch: refetchPersonalSurveyResult,
+} = useQuery({
+  queryKey: personalSurveyResultQueryKey,
+  queryFn: getPersonalSurveyResult,
+  enabled: isInvestmentModalOpen,
+})
 
-const investmentProfile = ref({
-  type: '안정형',
-  characterImage: stableImage,
-  description: '안정적인 조회가 중요해요!',
-  content: `
-민수님은 수익보다는 원금의 안정성을 우선으로 생각하는 타입이에요.
-큰 수익보다는 손실 가능성을 낮추고 꾸준하게 자산을 지키는 것을 중요하게 생각해요.
-투자 과정에서 가격 변동이나 원금 손실에 부담을 크게 느낄 수 있어요.
-예·적금이나 채권 등 안정적인 상품을 중심으로 구성하는 것이 좋아요.
-원금 보존을 중심으로 안정적으로 자산을 운용하는 포트폴리오가 가장 잘 맞을 거예요!
-  `.trim(),
+const personalSurveyResultMeta = computed(() => {
+  if (!personalSurveyResult.value) return null
+
+  return investmentTypeMeta[personalSurveyResult.value.investmentType] ?? null
 })
 
 const openInvestmentModal = () => {
@@ -600,7 +604,9 @@ const confirmWithdraw = () => {
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
     @click.self="closeInvestmentModal"
   >
-    <div class="relative w-full max-w-[400px] rounded-[24px] bg-white px-5 pb-6 pt-6 shadow-xl">
+    <div
+      class="relative max-h-[88vh] w-full max-w-[400px] overflow-y-auto rounded-[24px] bg-white px-5 pb-6 pt-6 shadow-xl"
+    >
       <!-- 닫기 -->
       <button
         type="button"
@@ -610,56 +616,87 @@ const confirmWithdraw = () => {
         <X :size="21" :stroke-width="1.8" />
       </button>
 
-      <!-- 제목 -->
       <h2 class="text-center text-[15px] font-bold text-gray-900">개인 투자 성향 결과</h2>
 
-      <!-- 투자 성향 -->
-      <div class="mt-7 text-center">
-        <p class="text-[13px] font-medium text-gray-500">민수님의 투자 성향은</p>
+      <div
+        v-if="isPersonalSurveyResultLoading"
+        class="flex min-h-[360px] items-center justify-center"
+      >
+        <LoaderCircle :size="28" class="animate-spin text-[#777000]" />
+      </div>
 
-        <p class="mt-1 text-[22px] font-bold text-gray-900">
-          <span class="text-emerald-400">
-            {{ investmentProfile.type }}
-          </span>
-          입니다.
+      <div
+        v-else-if="isPersonalSurveyResultError || !personalSurveyResultMeta"
+        class="flex min-h-[360px] flex-col items-center justify-center px-4 text-center"
+      >
+        <p class="text-[16px] leading-7 font-medium text-red-500">
+          금융 스타일 결과를 불러오지 못했어요.<br />
+          잠시 후 다시 시도해 주세요.
         </p>
+
+        <button
+          type="button"
+          class="mt-5 rounded-full border border-gray-200 bg-white px-6 py-3 text-[18px] font-semibold text-gray-900"
+          @click="refetchPersonalSurveyResult"
+        >
+          다시 시도하기
+        </button>
       </div>
 
-      <!-- 캐릭터 영역 -->
-      <div class="relative mx-auto mt-5 flex h-[145px] w-[145px] items-center justify-center">
-        <!-- 뒤쪽 은은한 배경 -->
-        <div class="absolute h-[130px] w-[130px] rounded-full bg-yellow-100 blur-2xl"></div>
+      <section v-else class="flex flex-col">
+        <div class="mt-7 text-center">
+          <p class="text-[18px] font-medium tracking-[-0.2px]">
+            {{ personalSurveyResult.name }}님의 금융 스타일은
+          </p>
 
-        <!--          나중에 캐릭터 이미지가 준비되면 아래 div 대신 img로 변경-->
-        <img
-          :src="investmentProfile.characterImage"
-          alt="투자성향 캐릭터"
-          class="relative z-10 h-[135px] object-contain"
-        />
+          <p class="mt-2 flex flex-wrap items-baseline justify-center gap-2 tracking-[-1px]">
+            <strong
+              class="text-[38px] leading-[1.2] font-extrabold"
+              :class="personalSurveyResultMeta.accentClass"
+            >
+              {{ personalSurveyResult.investmentType }}
+            </strong>
 
-        <!--        <div-->
-        <!--          class="relative z-10 flex h-[105px] w-[105px] items-center justify-center rounded-full bg-emerald-50"-->
-        <!--        >-->
-        <!--          <UserRound :size="52" :stroke-width="1.5" class="text-emerald-400" />-->
-        <!--        </div>-->
-      </div>
-
-      <!-- 설명 카드 -->
-      <div class="mt-5 rounded-xl border border-gray-200 bg-white px-4 py-4">
-        <!-- 설명 제목 -->
-        <div class="flex items-center justify-center gap-2">
-          <ShieldCheck :size="19" :stroke-width="1.8" class="text-gray-700" />
-
-          <h3 class="text-[18px] font-bold text-gray-800">
-            {{ investmentProfile.description }}
-          </h3>
+            <span class="text-[22px] font-medium">입니다.</span>
+          </p>
         </div>
 
-        <!-- 상세 내용 -->
-        <p class="mt-4 whitespace-pre-line text-[13px] leading-[1.9] text-gray-600">
-          {{ investmentProfile.content }}
-        </p>
-      </div>
+        <div class="relative mt-4 flex h-[190px] items-center justify-center">
+          <div
+            class="absolute h-[190px] w-[270px] rounded-full bg-[radial-gradient(circle,_rgba(255,244,79,0.32)_0%,_rgba(255,244,79,0.14)_50%,_transparent_74%)]"
+            aria-hidden="true"
+          ></div>
+
+          <img
+            :src="personalSurveyResultMeta.character"
+            :alt="`${personalSurveyResult.investmentType} 캐릭터`"
+            class="relative h-[165px] w-[165px] object-contain"
+          />
+        </div>
+
+        <article
+          class="mt-3 flex max-h-[255px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white px-4 py-4"
+        >
+          <div class="flex flex-none items-start gap-2">
+            <component
+              :is="personalSurveyResultMeta.icon"
+              class="mt-0.5 h-5 w-5 flex-none text-[#777000]"
+              :stroke-width="2"
+              aria-hidden="true"
+            />
+
+            <h3 class="text-[18px] leading-[1.4] font-bold text-gray-800">
+              {{ personalSurveyResult.headline }}
+            </h3>
+          </div>
+
+          <div
+            class="mt-4 min-h-0 flex-1 overflow-y-auto pr-2 text-[13px] leading-[1.9] text-gray-600"
+          >
+            <p>{{ personalSurveyResult.description }}</p>
+          </div>
+        </article>
+      </section>
     </div>
   </div>
 
