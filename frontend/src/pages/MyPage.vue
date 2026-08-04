@@ -499,9 +499,9 @@ const confirmWithdraw = async () => {
 
         <!-- 텍스트 -->
         <div class="ml-3 flex-1">
-          <p class="text-[18px] font-bold text-gray-900">나의 투자 성향</p>
+          <p class="text-[18px] font-bold text-gray-900">나의 금융 스타일</p>
 
-          <p class="mt-0.5 text-[13px] text-gray-500">개인 투자 성향 결과 확인</p>
+          <p class="mt-0.5 text-[13px] text-gray-500">나의 금융 스타일 결과 확인</p>
         </div>
 
         <!-- 오른쪽 화살표 -->
