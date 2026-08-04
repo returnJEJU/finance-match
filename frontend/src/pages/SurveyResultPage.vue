@@ -64,7 +64,7 @@ async function handleNext() {
 
     <section v-else-if="result && resultMeta" class="flex flex-1 flex-col">
       <!-- 결과 문구 -->
-      <div class="mt-10 text-center">
+      <div class="mt-5 text-center">
         <p class="text-[18px] font-medium tracking-[-0.2px]">{{ result.name }}님의 금융 스타일은</p>
 
         <p class="mt-2 flex items-baseline justify-center gap-2 tracking-[-1px]">
@@ -86,13 +86,13 @@ async function handleNext() {
         <img
           :src="resultMeta.character"
           :alt="`${result.investmentType} 캐릭터`"
-          class="relative h-[210px] w-[210px] object-contain"
+          class="relative h-[230px] w-[230px] object-contain"
         />
       </div>
 
       <!-- 설명 카드 -->
       <article
-        class="border-line-card rounded-card mt-auto flex h-[230px] flex-none flex-col overflow-hidden border bg-white px-6 py-6"
+        class="border-line-card rounded-card mt-auto flex h-[260px] flex-none flex-col overflow-hidden border bg-white px-6 py-5"
       >
         <div class="flex flex-none items-start gap-2">
           <component
@@ -108,7 +108,7 @@ async function handleNext() {
         </div>
 
         <div
-          class="text-ink-sub mt-4 min-h-0 flex-1 overflow-y-auto pr-2 text-[18px] leading-[1.7]"
+          class="text-ink-sub mt-2 min-h-0 flex-1 overflow-y-auto pr-2 text-[18px] leading-[1.7]"
         >
           <p>{{ result.description }}</p>
         </div>
