@@ -79,16 +79,18 @@ const goToCreatedInviteCode = () => {
 </script>
 
 <template>
-  <section class="flex min-h-screen flex-col px-6 pt-5 pb-8">
-    <header class="text-center text-[18px]">커플 연동</header>
+  <section class="flex min-h-screen flex-col px-5 pt-3 pb-8">
+    <header class="flex h-8 flex-none items-center justify-center">
+      <h1 class="text-center text-[20px] font-semibold text-ink">커플 연동</h1>
+    </header>
 
     <main class="mt-16 flex flex-1 flex-col">
       <div class="text-center">
         <PageTitle align="center" class="!text-[32px]">초대 코드 입력</PageTitle>
 
         <p class="text-muted mt-4 text-[16px] leading-[1.55]">
-          연인으로부터 받은 8자리 초대 코드를 입력하여<br />
-          두 분의 소중한 인연을 연결해 보세요!
+          파트너로부터 받은 8자리 초대 코드를 입력하고<br />
+          두 분의 금융 궁합을 확인해 보세요!
         </p>
       </div>
 
@@ -96,7 +98,7 @@ const goToCreatedInviteCode = () => {
 
       <div>
         <div
-          class="rounded-card relative flex h-[54px] items-center border bg-white px-3 shadow-sm transition"
+          class="rounded-card relative flex h-[81px] items-center border bg-white px-3 shadow-sm transition"
           :class="
             inviteCodeError ? 'border-red-300' : 'border-line-field focus-within:border-brand-deep'
           "
@@ -119,7 +121,7 @@ const goToCreatedInviteCode = () => {
             <span
               v-for="(character, index) in codeCharacters"
               :key="index"
-              class="flex h-9 items-center justify-center rounded-[7px] border border-line-soft bg-surface-muted text-center font-mono text-[20px] font-extrabold text-ink-sub"
+              class="flex h-[54px] items-center justify-center rounded-[7px] border border-line-soft bg-surface-muted text-center font-mono text-[20px] font-extrabold text-ink-sub"
               :class="character !== '-' ? 'border-brand-deep bg-white text-ink' : ''"
             >
               {{ character }}
@@ -127,7 +129,7 @@ const goToCreatedInviteCode = () => {
           </div>
         </div>
 
-        <p v-if="inviteCodeError" class="mt-3 text-center text-[16px] font-medium text-red-500">
+        <p v-if="inviteCodeError" class="mt-3 text-center text-[16px] font-medium text-warn">
           {{ inviteCodeError }}
         </p>
       </div>
@@ -162,7 +164,7 @@ const goToCreatedInviteCode = () => {
           </span>
 
           <span class="ml-3 min-w-0 flex-1">
-            <span class="block text-[16px] font-extrabold text-gray-900">
+            <span class="block text-[18px] font-extrabold text-gray-900">
               공동 목표 설정하고 초대 코드 만들기
             </span>
             <span class="mt-0.5 block text-[16px] font-medium text-gray-500">

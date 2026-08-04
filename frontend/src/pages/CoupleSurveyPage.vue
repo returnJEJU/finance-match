@@ -394,7 +394,7 @@ function submitSurvey() {
 
           <div class="w-full">
             <BaseButton
-              class="w-full rounded-full text-[20px] shadow-lg"
+              class="w-full text-[20px] shadow-lg"
               :class="isFormValid && !isSubmitting ? 'shadow-brand-deep/30' : 'shadow-gray-300/60'"
               :variant="isFormValid && !isSubmitting ? 'primary' : 'disabled'"
               @click="submitSurvey"
