@@ -18,7 +18,7 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue'
  *   - title    : 상단바 제목 (없으면 로고 표시) — DefaultLayout 에서 사용
  *   - showBack : 상단바 뒤로가기 버튼 표시 — DefaultLayout 에서 사용
  *
- * 모든 화면은 iPhone 16(393 x 852) 기준 프레임(max-w-[393px]) 위에 렌더된다.
+ * 모든 화면은 iPhone 12 Pro Max(428 x 926) 기준 프레임(max-w-[428px]) 위에 렌더된다.
  */
 const routes = [
   // ── 퍼널 (BlankLayout · 네비바 없음) ──

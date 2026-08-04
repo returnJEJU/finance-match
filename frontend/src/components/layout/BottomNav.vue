@@ -29,7 +29,7 @@ const isActive = (name) => {
 
 <template>
   <nav
-    class="fixed inset-x-0 bottom-0 z-40 mx-auto flex h-[58px] max-w-[393px] items-center justify-around border-t border-gray-100 bg-white"
+    class="fixed inset-x-0 bottom-0 z-40 mx-auto flex h-[58px] max-w-[428px] items-center justify-around border-t border-gray-100 bg-white"
   >
     <RouterLink
       v-for="tab in tabs"
