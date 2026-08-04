@@ -2,31 +2,17 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import { ArrowRight, Check, ClipboardList, Copy, KeyRound, LoaderCircle } from 'lucide-vue-next'
+import { ArrowRight, Check, Copy, KeyRound, LoaderCircle } from 'lucide-vue-next'
 import { getCommonSurvey, getInvitation } from '@/api/invitation'
 import { getOnboardingStatus } from '@/api/onboarding'
+import CommonGoalSummaryCard from '@/components/couple/CommonGoalSummaryCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import characterExcited from '@/assets/images/characters/character-excited.png'
+import logoWordmark from '@/assets/images/logo/logo-wordmark.png'
 
 const route = useRoute()
 const router = useRouter()
 const copied = ref(false)
-
-const goalTypeLabels = {
-  INVESTMENT: '여유 자금 투자',
-  RETIREMENT: '노후 자금 마련',
-  MARRIAGE: '결혼 자금 마련',
-  HOUSING: '부동산 자금 마련',
-  SHORT_TERM: '단기 자금 운용',
-}
-
-const loanPurposeLabels = {
-  NONE: '계획 없음',
-  JEONSE: '전세 자금',
-  HOUSING: '주택 구입',
-  CAR: '자동차 구입',
-  BUSINESS: '사업/창업',
-}
 
 const routeInviteCode = computed(() => {
   const inviteCode = route.query.inviteCode
@@ -69,45 +55,11 @@ const isLoading = computed(
 )
 const hasLoadError = computed(() => isInvitationError.value || isCommonSurveyError.value)
 
-const summaryItems = computed(() => [
-  {
-    label: '목표',
-    value: goalTypeLabels[commonSurvey.value?.goalType1] || '-',
-  },
-  {
-    label: '목표 금액',
-    value: formatWon(commonSurvey.value?.targetAmount),
-  },
-  {
-    label: '기간',
-    value: commonSurvey.value?.targetPeriodMonths
-      ? `${commonSurvey.value.targetPeriodMonths}개월`
-      : '-',
-  },
-  {
-    label: '대출 계획',
-    value: loanPurposeLabels[commonSurvey.value?.loanPurpose] || '-',
-  },
-])
-
 const progressSteps = computed(() => [
   { label: '공동 설문 완료', done: true },
   { label: '내 개인 설문', done: personalSurveyCompleted.value },
   { label: '파트너 연결', done: coupleConnected.value },
 ])
-
-function formatWon(amount) {
-  if (!amount) return '-'
-
-  const won = Number(amount)
-  const eok = Math.floor(won / 100000000)
-  const man = Math.floor((won % 100000000) / 10000)
-
-  if (eok && man) return `${eok}억 ${man.toLocaleString('ko-KR')}만 원`
-  if (eok) return `${eok}억 원`
-  if (man) return `${man.toLocaleString('ko-KR')}만 원`
-  return `${won.toLocaleString('ko-KR')}원`
-}
 
 async function copyInviteCode() {
   if (!inviteCode.value) return
@@ -140,7 +92,7 @@ function goToInviteCodeInput() {
 <template>
   <section class="flex min-h-screen flex-col bg-canvas px-4 pt-4 pb-7">
     <header class="flex justify-center">
-      <span class="text-[18px] font-extrabold text-good">찰떡궁합</span>
+      <img :src="logoWordmark" alt="찰떡귱합" class="h-6 w-auto" />
     </header>
 
     <main class="mt-5 flex flex-1 flex-col">
@@ -164,25 +116,7 @@ function goToInviteCodeInput() {
           공동 목표 정보를 불러오지 못했어요.
         </p>
 
-        <section class="rounded-card border-line-card mt-7 border bg-white px-5 py-5 shadow-sm">
-          <h2 class="flex items-center gap-2 text-[20px] font-extrabold text-ink">
-            <ClipboardList :size="18" class="text-brand-ink" />
-            우리의 공동 목표 요약
-          </h2>
-
-          <dl class="mt-4 grid grid-cols-2 gap-3">
-            <div
-              v-for="item in summaryItems"
-              :key="item.label"
-              class="rounded-field bg-surface-muted px-4 py-4"
-            >
-              <dt class="text-[16px] font-bold text-muted">{{ item.label }}</dt>
-              <dd class="mt-2 break-keep text-[18px] leading-[1.35] font-extrabold text-brand-ink">
-                {{ item.value }}
-              </dd>
-            </div>
-          </dl>
-        </section>
+        <CommonGoalSummaryCard :survey="commonSurvey" />
 
         <section class="rounded-card mt-5 bg-brand px-5 py-5">
           <p class="text-center text-[18px] font-extrabold text-ink">
