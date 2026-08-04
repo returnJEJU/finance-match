@@ -4,14 +4,14 @@ import { useQuery } from '@tanstack/vue-query'
 import {
   ChevronDown,
   ChevronUp,
-  Wallet,
-  BarChart3,
-  Heart,
-  Search,
-  Building2,
+  BadgeDollarSign,
+  Landmark,
+  HeartHandshake,
+  Target,
 } from 'lucide-vue-next'
 
 import { getReport } from '@/api/report'
+import AnimatedCharacter from '@/components/ui/AnimatedCharacter.vue'
 
 import typeStable from '@/assets/images/characters/types/type-stable.png'
 import typeStabilitySeeking from '@/assets/images/characters/types/type-stability-seeking.png'
@@ -76,12 +76,13 @@ const coupleInvestmentTypeMeta = {
 }
 
 // 점수 축(key)별 아이콘 — report API 의 scoreAxes[].key 와 매핑한다.
-const scoreIcons = {
-  ASSET_STABILITY: Wallet,
-  DEBT_REPAYMENT: BarChart3,
-  FINANCIAL_VALUE: Heart,
-  GOAL_FEASIBILITY: Search,
-  TAX_STRATEGY: Building2,
+// DashboardPage.vue 의 scoreCards 아이콘·색상과 동일하게 맞춘다(같은 축은 페이지가 달라도 같은 아이콘).
+const scoreIconMeta = {
+  ASSET_STABILITY: { icon: BadgeDollarSign, iconClass: 'bg-brand-soft text-brand-ink' },
+  DEBT_REPAYMENT: { icon: Landmark, iconClass: 'bg-[#fff3e9] text-[#a94700]' },
+  FINANCIAL_VALUE: { icon: HeartHandshake, iconClass: 'bg-[#f5f5dc] text-[#777000]' },
+  GOAL_FEASIBILITY: { icon: Target, iconClass: 'bg-[#eef7e9] text-[#46763b]' },
+  TAX_STRATEGY: { icon: BadgeDollarSign, iconClass: 'bg-[#f5f0ff] text-[#66528c]' },
 }
 
 const {
@@ -220,10 +221,10 @@ const toggleCard = (key) => {
     <template v-else>
       <!-- 커플 성향 히어로 -->
       <div ref="coupleDescriptionRef" class="relative text-center">
-        <p class="text-[13px] font-medium text-ink-sub">우리 커플의 금융 스타일은</p>
+        <p class="text-[14px] font-medium text-ink-sub">우리 커플의 금융 스타일은</p>
         <button
           type="button"
-          class="mt-1 cursor-pointer text-[26px] font-extrabold"
+          class="mt-1 cursor-pointer text-[30px] font-extrabold"
           :aria-expanded="openDescription === 'couple'"
           @click="toggleDescription('couple')"
         >
@@ -233,7 +234,7 @@ const toggleCard = (key) => {
         <div
           v-if="openDescription === 'couple'"
           role="tooltip"
-          class="absolute top-full left-1/2 z-10 mt-2 w-[220px] -translate-x-1/2 rounded-[12px] bg-[#d5fae7] px-3 py-3 text-center text-[11px] leading-[1.5] font-medium tracking-[-0.3px] text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
+          class="absolute top-full left-1/2 z-10 mt-2 w-[220px] -translate-x-1/2 rounded-[12px] bg-[#d5fae7] px-3 py-3 text-center text-[14px] leading-[1.5] font-medium tracking-[-0.3px] text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
         >
           <span
             class="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-[#d5fae7]"
@@ -244,10 +245,10 @@ const toggleCard = (key) => {
       </div>
 
       <div class="mt-6 flex items-center justify-between px-2">
-        <p class="text-[12px] text-ink-sub">
+        <p class="text-[16px] text-ink-sub">
           {{ me.name }}님은 <span class="font-semibold text-ink">{{ me.label }}</span>
         </p>
-        <p class="text-[12px] text-ink-sub">
+        <p class="text-[16px] text-ink-sub">
           {{ partner.name }}님은 <span class="font-semibold text-ink">{{ partner.label }}</span>
         </p>
       </div>
@@ -260,12 +261,16 @@ const toggleCard = (key) => {
             :aria-expanded="openDescription === 'me'"
             @click="toggleDescription('me')"
           >
-            <img :src="me.character" :alt="me.label" class="h-24 w-24 object-contain" />
+            <AnimatedCharacter
+              :src="me.character"
+              :alt="me.label"
+              img-class="h-32 w-32 object-contain"
+            />
           </button>
           <div
             v-if="openDescription === 'me'"
             role="tooltip"
-            class="absolute top-full left-1/2 z-10 mt-2 w-[180px] -translate-x-1/2 rounded-[12px] bg-[#d5fae7] px-3 py-3 text-center text-[11px] leading-[1.5] font-medium tracking-[-0.3px] text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
+            class="absolute top-full left-1/2 z-10 mt-2 w-[180px] -translate-x-1/2 rounded-[12px] bg-[#d5fae7] px-3 py-3 text-center text-[14px] leading-[1.5] font-medium tracking-[-0.3px] text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
           >
             <span
               class="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-[#d5fae7]"
@@ -366,12 +371,16 @@ const toggleCard = (key) => {
             :aria-expanded="openDescription === 'partner'"
             @click="toggleDescription('partner')"
           >
-            <img :src="partner.character" :alt="partner.label" class="h-24 w-24 object-contain" />
+            <AnimatedCharacter
+              :src="partner.character"
+              :alt="partner.label"
+              img-class="h-32 w-32 object-contain"
+            />
           </button>
           <div
             v-if="openDescription === 'partner'"
             role="tooltip"
-            class="absolute top-full left-1/2 z-10 mt-2 w-[180px] -translate-x-1/2 rounded-[12px] bg-[#d5fae7] px-3 py-3 text-center text-[11px] leading-[1.5] font-medium tracking-[-0.3px] text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
+            class="absolute top-full left-1/2 z-10 mt-2 w-[180px] -translate-x-1/2 rounded-[12px] bg-[#d5fae7] px-3 py-3 text-center text-[14px] leading-[1.5] font-medium tracking-[-0.3px] text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
           >
             <span
               class="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-[#d5fae7]"
@@ -384,7 +393,7 @@ const toggleCard = (key) => {
 
       <!-- 안정 ~ 도전 슬라이더: 안정 쪽=민트, 도전 쪽=노랑 그라데이션. 낮은 위치·높은 위치에
            각각 점을 찍고, 호버하면 이름·성향이 뜬다 -->
-      <div class="mt-7">
+      <div class="mt-7 mx-auto w-64">
         <div class="flex items-center justify-between">
           <span class="text-[14px] font-bold text-ink">안정</span>
           <span class="text-[14px] font-bold text-ink">도전</span>
@@ -399,8 +408,8 @@ const toggleCard = (key) => {
             }"
           />
           <span
-            class="group absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full bg-[#78f2dc]"
-            style="box-shadow: 0 0 0 6px rgba(120, 242, 220, 0.3)"
+            class="group absolute top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full border-[3px] border-[#3fc9ae] bg-[#bff5ea]"
+            style="box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18)"
             :style="{ left: `${lowerPosition}%` }"
           >
             <span
@@ -410,8 +419,8 @@ const toggleCard = (key) => {
             </span>
           </span>
           <span
-            class="group absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full bg-[#fff44f]"
-            style="box-shadow: 0 0 0 6px rgba(255, 244, 79, 0.35)"
+            class="group absolute top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full border-[3px] border-[#e0c400] bg-[#fff9b3]"
+            style="box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18)"
             :style="{ left: `${higherPosition}%` }"
           >
             <span
@@ -425,7 +434,7 @@ const toggleCard = (key) => {
 
       <!-- 점수 상세 분석 -->
       <div class="mt-8">
-        <h2 class="text-[15px] font-bold text-ink">점수 상세 분석</h2>
+        <h2 class="text-[16px] font-bold text-ink">점수 상세 분석</h2>
         <p class="mt-1 text-[12px] text-muted">항목을 눌러 각 점수의 근거를 확인하세요.</p>
 
         <div class="mt-4 space-y-3">
@@ -441,11 +450,12 @@ const toggleCard = (key) => {
             >
               <span class="flex items-center gap-2.5">
                 <span
-                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand"
+                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px]"
+                  :class="scoreIconMeta[axis.key]?.iconClass"
                 >
-                  <component :is="scoreIcons[axis.key]" :size="16" class="text-ink" />
+                  <component :is="scoreIconMeta[axis.key]?.icon" :size="19" :stroke-width="2" />
                 </span>
-                <span class="text-[14px] font-bold text-ink">{{ axis.name }}</span>
+                <span class="text-[16px] font-bold text-ink">{{ axis.name }}</span>
               </span>
               <span class="flex items-center gap-1.5">
                 <span class="text-[15px] font-bold text-good"
@@ -457,7 +467,7 @@ const toggleCard = (key) => {
             </button>
 
             <div v-if="isOpen(axis.key)" class="mt-3">
-              <p class="text-[12px] leading-[1.6] text-ink-sub">{{ axis.reason }}</p>
+              <p class="text-[14px] leading-[1.6] text-ink-sub">{{ axis.reason }}</p>
 
               <!-- 목표 달성 가능성 카드 전용: 초과/부족 진행 현황 -->
               <div v-if="axis.key === 'GOAL_FEASIBILITY' && goalProgress" class="mt-3">
