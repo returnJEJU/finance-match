@@ -2,7 +2,7 @@
 // 회원가입 - 정보 입력 (1/4) · 레이아웃: BlankLayout
 //
 // 입력값은 signupStore 에 담아 다음 단계로 넘긴다. 실제 가입 요청은 3단계(인증서)에서
-// 1·2단계를 합쳐 한 번에 보낸다. 첫 단계라 상단에 뒤로가기를 두지 않는다.
+// 1·2단계를 합쳐 한 번에 보낸다.
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Eye, EyeOff } from 'lucide-vue-next'
@@ -75,16 +75,24 @@ function goNext() {
 </script>
 
 <template>
+  <!--
+    <b>[다음] 버튼을 화면에 고정하지 않는다.</b> 고정하면 키보드가 올라올 때 버튼이 키보드 위로
+    따라 올라와 입력칸을 가린다(높이를 화면에 묶으면 dvh·svh 어느 쪽으로도 막을 수 없었다).
+    그래서 내용만큼 늘어나게 두고, 버튼은 폼 끝에 두어 <b>스크롤해 내려야 보이게</b> 한다.
+  -->
   <div class="flex min-h-dvh flex-col">
-    <FunnelHeader :step="1" :show-back="false" />
+    <!-- 앱 안에 뒤로 갈 기록이 없으면(주소 직접 입력·새로고침) 온보딩으로 보낸다. -->
+    <FunnelHeader :step="1" :fallback-to="{ name: 'onboarding' }" />
 
-    <div class="flex flex-1 flex-col px-7">
+    <!-- pb-8 은 마지막 입력칸과 [다음] 버튼 사이 여백이다. 이걸 안쪽 빈 div 로 두면 내용이
+         길어질 때 flex 가 찌그러뜨려 0 이 된다 — 패딩은 그런 일이 없다. -->
+    <div class="flex flex-1 flex-col px-7 pb-8">
       <PageTitle class="mt-3.5">금융 궁합을 보기 위한<br />첫 단계예요</PageTitle>
       <p class="text-muted mt-2 text-[13px] leading-[1.5]">
         두 사람에게 맞는 금융상품까지 찾아드려요
       </p>
 
-      <label class="text-ink-sub mt-4 mb-1.5 text-[12px] font-semibold">이름</label>
+      <label class="text-ink-sub mt-6 mb-1.5 text-[14px] font-semibold">이름</label>
       <input
         v-model="form.name"
         type="text"
@@ -92,7 +100,7 @@ function goNext() {
         class="border-line-field rounded-field placeholder:text-muted-soft h-12 border bg-white px-3.5 text-[14px] outline-none"
       />
 
-      <span class="text-ink-sub mt-4 mb-1.5 text-[12px] font-semibold">성별</span>
+      <span class="text-ink-sub mt-6 mb-1.5 text-[14px] font-semibold">성별</span>
       <div class="flex gap-2">
         <button
           v-for="option in [
@@ -109,7 +117,7 @@ function goNext() {
         </button>
       </div>
 
-      <label class="text-ink-sub mt-4 mb-1.5 text-[12px] font-semibold">생년월일</label>
+      <label class="text-ink-sub mt-6 mb-1.5 text-[14px] font-semibold">생년월일</label>
       <input
         :value="form.birthDate"
         type="text"
@@ -120,7 +128,7 @@ function goNext() {
         @input="formatBirth"
       />
 
-      <label class="text-ink-sub mt-4 mb-1.5 text-[12px] font-semibold">이메일(아이디)</label>
+      <label class="text-ink-sub mt-6 mb-1.5 text-[14px] font-semibold">이메일(아이디)</label>
       <input
         v-model="form.email"
         type="email"
@@ -130,7 +138,7 @@ function goNext() {
         class="border-line-field rounded-field placeholder:text-muted-soft h-12 border bg-white px-3.5 text-[14px] outline-none"
       />
 
-      <label class="text-ink-sub mt-4 mb-1.5 text-[12px] font-semibold">비밀번호</label>
+      <label class="text-ink-sub mt-6 mb-1.5 text-[14px] font-semibold">비밀번호</label>
       <div
         class="border-line-field rounded-field flex h-12 items-center gap-2 border bg-white px-3.5"
       >
@@ -150,7 +158,7 @@ function goNext() {
         </button>
       </div>
 
-      <label class="text-ink-sub mt-4 mb-1.5 text-[12px] font-semibold">비밀번호 확인</label>
+      <label class="text-ink-sub mt-6 mb-1.5 text-[14px] font-semibold">비밀번호 확인</label>
       <div
         class="border-line-field rounded-field flex h-12 items-center gap-2 border bg-white px-3.5"
       >
@@ -173,8 +181,6 @@ function goNext() {
       <p v-if="passwordMismatch" class="mt-2 text-[12px] font-medium text-red-500">
         비밀번호가 일치하지 않습니다.
       </p>
-
-      <div class="h-6 flex-1"></div>
     </div>
 
     <div class="flex flex-none flex-col px-7 pb-14">
