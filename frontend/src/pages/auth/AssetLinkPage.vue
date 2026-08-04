@@ -111,7 +111,7 @@ const authStore = useAuthStore()
     </div>
 
     <!-- 두 버튼을 한 줄에 둔다. 위아래로 쌓으면 버튼 영역만 130px 을 넘겨 본문이 눌린다. -->
-    <div class="flex flex-none gap-2.5 px-7 pb-14">
+    <div class="flex flex-none gap-2.5 px-7 pb-7">
       <BaseButton class="flex-1" :to="{ name: 'signup-asset-linking' }">자산 불러오기</BaseButton>
 
       <BaseButton class="flex-1" :to="{ name: 'signup-asset-institutions' }" variant="ghost">

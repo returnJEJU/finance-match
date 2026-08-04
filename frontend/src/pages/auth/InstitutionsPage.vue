@@ -157,7 +157,7 @@ function goBack() {
       <div class="h-6 flex-1"></div>
     </div>
 
-    <div class="flex flex-none flex-col gap-2.5 px-7 pb-14">
+    <div class="flex flex-none flex-col gap-2.5 px-7 pb-7">
       <p class="text-muted text-center text-[12.5px]">
         <b class="text-ink font-bold">{{ selectedCount }}개 기관</b> 선택됨
       </p>

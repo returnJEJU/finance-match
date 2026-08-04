@@ -184,7 +184,7 @@ function goNext() {
       <div class="h-6 flex-1"></div>
     </div>
 
-    <div class="flex flex-none flex-col px-7 pb-14">
+    <div class="flex flex-none flex-col px-7 pb-7">
       <BaseButton :variant="requiredAgreed ? 'primary' : 'disabled'" @click="goNext">
         동의하고 계속하기
       </BaseButton>

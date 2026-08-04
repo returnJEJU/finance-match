@@ -219,7 +219,7 @@ function goNext() {
       </p>
     </div>
 
-    <div class="flex flex-none flex-col gap-3 px-7 pb-14">
+    <div class="flex flex-none flex-col gap-3 px-7 pb-7">
       <p v-if="linkError" class="text-center text-[12px] font-medium text-red-500">
         {{ linkError }}
       </p>

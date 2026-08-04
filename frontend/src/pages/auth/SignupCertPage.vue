@@ -104,7 +104,7 @@ const selected = ref('kakao')
       <div class="flex-1"></div>
     </div>
 
-    <div class="flex flex-none flex-col gap-4.5 px-7 pb-14">
+    <div class="flex flex-none flex-col gap-4.5 px-7 pb-7">
       <button
         type="button"
         class="text-muted flex cursor-pointer items-center px-0.5 text-[12.5px]"
