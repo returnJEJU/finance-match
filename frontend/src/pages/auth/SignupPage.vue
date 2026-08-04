@@ -183,7 +183,7 @@ function goNext() {
       </p>
     </div>
 
-    <div class="flex flex-none flex-col px-7 pb-14">
+    <div class="flex flex-none flex-col px-7 pb-7">
       <BaseButton :variant="canSubmit ? 'primary' : 'disabled'" @click="goNext"> 다음 </BaseButton>
     </div>
   </div>
