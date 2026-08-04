@@ -3,9 +3,10 @@
 // 화면: 마이페이지 · 레이아웃: DefaultLayout
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useMutation, useQuery } from '@tanstack/vue-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import stableImage from '@/assets/images/characters/types/type-stable.png'
 import { disconnectCouple, getCoupleProfileMessage, updateCoupleProfileMessage } from '@/api/couple'
+import { useAuthStore } from '@/stores/auth'
 
 import {
   UserRound,
@@ -32,6 +33,8 @@ import {
 } from 'lucide-vue-next'
 
 const router = useRouter()
+const queryClient = useQueryClient()
+const authStore = useAuthStore()
 
 // 실제 화면에 표시되는 소개 문구
 const profileMessage = ref('우리의 금융 여정')
@@ -42,9 +45,10 @@ const editMessage = ref('')
 // 모달 열림 여부
 const isEditModalOpen = ref(false)
 const profileMessageError = ref('')
+const coupleProfileQueryKey = computed(() => ['coupleProfileMessage', authStore.member?.id ?? 'me'])
 
 const { data: coupleProfileMessage, isError: isProfileMessageLoadError } = useQuery({
-  queryKey: ['coupleProfileMessage'],
+  queryKey: coupleProfileQueryKey,
   queryFn: getCoupleProfileMessage,
 })
 
@@ -70,6 +74,7 @@ watch(
 const updateProfileMessageMutation = useMutation({
   mutationFn: updateCoupleProfileMessage,
   onSuccess: (response) => {
+    queryClient.setQueryData(coupleProfileQueryKey.value, response)
     profileMessage.value = response.profileMessage
     isEditModalOpen.value = false
     profileMessageError.value = ''
@@ -275,6 +280,7 @@ const disconnectError = ref('')
 const disconnectCoupleMutation = useMutation({
   mutationFn: disconnectCouple,
   onSuccess: () => {
+    queryClient.removeQueries({ queryKey: ['coupleProfileMessage'] })
     disconnectStep.value = 0
     disconnectError.value = ''
     router.push({ name: 'couple-start' })
@@ -322,10 +328,11 @@ const closeLogoutModal = () => {
   isLogoutModalOpen.value = false
 }
 
-// 지금은 백엔드 연결 전이라 실제 로그아웃 처리 X
 const confirmLogout = () => {
-  console.log('로그아웃 - 추후 API 연결')
+  authStore.logout()
+  queryClient.clear()
   isLogoutModalOpen.value = false
+  router.replace({ name: 'login' })
 }
 
 // ========================================
@@ -370,9 +377,9 @@ const confirmWithdraw = () => {
 
       <!-- 사용자 정보 -->
       <div class="ml-3 flex-1">
-        <div class="text-sm font-bold text-gray-900">{{ coupleDisplayName }}</div>
+        <div class="text-[20px] leading-tight font-bold text-gray-900">{{ coupleDisplayName }}</div>
 
-        <div class="mt-1 flex items-center text-[11px] text-gray-500">
+        <div class="mt-1 flex items-center text-[13px] text-gray-500">
           <span>{{ profileMessage }}</span>
           <span v-if="isProfileMessageLoadError" class="ml-1 text-red-400">
             저장된 소개를 불러오지 못했어요
@@ -391,7 +398,7 @@ const confirmWithdraw = () => {
 
     <!-- 내 정보 관리 -->
     <section class="mt-3">
-      <h2 class="mb-2 text-[11px] font-medium text-gray-500">내 정보 관리</h2>
+      <h2 class="mb-2 text-[13px] font-medium text-gray-500">내 정보 관리</h2>
 
       <div
         class="flex cursor-pointer items-center rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm"
@@ -404,9 +411,9 @@ const confirmWithdraw = () => {
 
         <!-- 텍스트 -->
         <div class="ml-3 flex-1">
-          <p class="text-[13px] font-bold text-gray-900">나의 투자 성향</p>
+          <p class="text-[18px] font-bold text-gray-900">나의 투자 성향</p>
 
-          <p class="mt-0.5 text-[10px] text-gray-500">개인 투자 성향 결과 확인</p>
+          <p class="mt-0.5 text-[13px] text-gray-500">개인 투자 성향 결과 확인</p>
         </div>
 
         <!-- 오른쪽 화살표 -->
@@ -416,7 +423,7 @@ const confirmWithdraw = () => {
 
     <!-- 데이터 관리 -->
     <section class="mt-3">
-      <h2 class="mb-2 text-[11px] font-medium text-gray-500">데이터 관리</h2>
+      <h2 class="mb-2 text-[13px] font-medium text-gray-500">데이터 관리</h2>
 
       <div
         class="flex cursor-pointer items-center rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm"
@@ -427,9 +434,9 @@ const confirmWithdraw = () => {
         </div>
 
         <div class="ml-3 flex-1">
-          <p class="text-[13px] font-bold text-gray-900">금융자산 갱신하기</p>
+          <p class="text-[18px] font-bold text-gray-900">금융자산 갱신하기</p>
 
-          <p class="mt-0.5 text-[10px] text-gray-500">연결된 금융자산 정보를 최신으로 업데이트</p>
+          <p class="mt-0.5 text-[13px] text-gray-500">연결된 금융자산 정보를 최신으로 업데이트</p>
         </div>
 
         <ChevronRight :size="18" :stroke-width="1.8" class="text-[#b8b18a]" />
@@ -438,7 +445,7 @@ const confirmWithdraw = () => {
 
     <!-- 상품 추천 -->
     <section class="mt-3">
-      <h2 class="mb-2 text-[11px] font-medium text-gray-500">상품 추천</h2>
+      <h2 class="mb-2 text-[13px] font-medium text-gray-500">상품 추천</h2>
 
       <div
         class="flex cursor-pointer items-center rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm transition hover:bg-gray-50"
@@ -449,9 +456,9 @@ const confirmWithdraw = () => {
         </div>
 
         <div class="ml-3 flex-1">
-          <p class="text-[13px] font-bold text-gray-900">찜한 상품</p>
+          <p class="text-[18px] font-bold text-gray-900">찜한 상품</p>
 
-          <p class="mt-0.5 text-[10px] text-gray-500">찜한 목록으로 이동합니다</p>
+          <p class="mt-0.5 text-[13px] text-gray-500">찜한 목록으로 이동합니다</p>
         </div>
 
         <ChevronRight :size="18" :stroke-width="1.8" class="text-[#b8b18a]" />
@@ -460,7 +467,7 @@ const confirmWithdraw = () => {
 
     <!-- 커플 관리 -->
     <section class="mt-3">
-      <h2 class="mb-2 text-[11px] font-medium text-gray-500">커플 관리</h2>
+      <h2 class="mb-2 text-[13px] font-medium text-gray-500">커플 관리</h2>
 
       <div
         class="flex cursor-pointer items-center rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm transition hover:bg-gray-50"
@@ -471,9 +478,9 @@ const confirmWithdraw = () => {
         </div>
 
         <div class="ml-3 flex-1">
-          <p class="text-[13px] font-bold text-gray-900">커플 연결 끊기</p>
+          <p class="text-[18px] font-bold text-gray-900">커플 연결 끊기</p>
 
-          <p class="mt-0.5 text-[10px] text-gray-500">현재 커플 관계를 해제합니다</p>
+          <p class="mt-0.5 text-[13px] text-gray-500">현재 커플 관계를 해제합니다</p>
         </div>
 
         <ChevronRight :size="18" :stroke-width="1.8" class="text-[#b8b18a]" />
@@ -482,7 +489,7 @@ const confirmWithdraw = () => {
 
     <!-- 기타 -->
     <section class="mt-3">
-      <h2 class="mb-2 text-[11px] font-medium text-gray-500">기타</h2>
+      <h2 class="mb-2 text-[13px] font-medium text-gray-500">기타</h2>
 
       <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <!-- 로그아웃 -->
@@ -494,7 +501,7 @@ const confirmWithdraw = () => {
             <LogOut :size="20" :stroke-width="1.8" class="text-[#7c7500]" />
           </div>
 
-          <p class="ml-3 flex-1 text-[13px] font-bold text-gray-800">로그아웃</p>
+          <p class="ml-3 flex-1 text-[18px] font-bold text-gray-800">로그아웃</p>
 
           <ChevronRight :size="18" :stroke-width="1.8" class="text-[#b8b18a]" />
         </div>
@@ -511,7 +518,7 @@ const confirmWithdraw = () => {
             <UserRoundX :size="20" :stroke-width="1.8" class="text-red-500" />
           </div>
 
-          <p class="ml-3 flex-1 text-[13px] font-bold text-red-500">탈퇴하기</p>
+          <p class="ml-3 flex-1 text-[18px] font-bold text-red-500">탈퇴하기</p>
 
           <ChevronRight :size="18" :stroke-width="1.8" class="text-[#b8b18a]" />
         </div>
@@ -538,7 +545,7 @@ const confirmWithdraw = () => {
       </div>
 
       <!-- 안내 문구 -->
-      <p class="mt-4 text-center text-[11px] text-gray-500">나를 소개하는 한 줄을 입력해주세요.</p>
+      <p class="mt-4 text-center text-[13px] text-gray-500">나를 소개하는 한 줄을 입력해주세요.</p>
 
       <!-- 입력 영역 -->
       <div class="relative mt-4 rounded-xl border border-gray-200 bg-white">
@@ -548,7 +555,7 @@ const confirmWithdraw = () => {
           rows="3"
           placeholder="한 줄 소개를 입력해주세요."
           :disabled="isProfileMessageSaving"
-          class="h-[86px] w-full resize-none rounded-xl bg-transparent px-3 py-3 text-[13px] font-medium text-gray-800 outline-none placeholder:text-gray-300"
+          class="h-[86px] w-full resize-none rounded-xl bg-transparent px-3 py-3 text-[18px] font-medium text-gray-800 outline-none placeholder:text-gray-300"
         ></textarea>
 
         <!-- 글자수 -->
@@ -557,7 +564,7 @@ const confirmWithdraw = () => {
         </span>
       </div>
 
-      <p v-if="profileMessageError" class="mt-2 text-center text-[11px] text-red-500">
+      <p v-if="profileMessageError" class="mt-2 text-center text-[13px] text-red-500">
         {{ profileMessageError }}
       </p>
 
@@ -566,7 +573,7 @@ const confirmWithdraw = () => {
         <!-- 취소 -->
         <button
           type="button"
-          class="h-11 flex-1 rounded-xl bg-gray-100 text-[13px] font-semibold text-gray-600"
+          class="h-11 flex-1 rounded-xl bg-gray-100 text-[18px] font-semibold text-gray-600"
           :disabled="isProfileMessageSaving"
           @click="closeEditModal"
         >
@@ -576,7 +583,7 @@ const confirmWithdraw = () => {
         <!-- 저장 -->
         <button
           type="button"
-          class="h-11 flex-1 rounded-xl bg-yellow-300 text-[13px] font-bold text-gray-900 disabled:opacity-60"
+          class="h-11 flex-1 rounded-xl bg-yellow-300 text-[18px] font-bold text-gray-900 disabled:opacity-60"
           :disabled="isProfileMessageSaving"
           @click="saveProfileMessage"
         >
@@ -608,7 +615,7 @@ const confirmWithdraw = () => {
 
       <!-- 투자 성향 -->
       <div class="mt-7 text-center">
-        <p class="text-[10px] font-medium text-gray-500">민수님의 투자 성향은</p>
+        <p class="text-[13px] font-medium text-gray-500">민수님의 투자 성향은</p>
 
         <p class="mt-1 text-[22px] font-bold text-gray-900">
           <span class="text-emerald-400">
@@ -643,13 +650,13 @@ const confirmWithdraw = () => {
         <div class="flex items-center justify-center gap-2">
           <ShieldCheck :size="19" :stroke-width="1.8" class="text-gray-700" />
 
-          <h3 class="text-[13px] font-bold text-gray-800">
+          <h3 class="text-[18px] font-bold text-gray-800">
             {{ investmentProfile.description }}
           </h3>
         </div>
 
         <!-- 상세 내용 -->
-        <p class="mt-4 whitespace-pre-line text-[10px] leading-[1.9] text-gray-600">
+        <p class="mt-4 whitespace-pre-line text-[13px] leading-[1.9] text-gray-600">
           {{ investmentProfile.content }}
         </p>
       </div>
@@ -695,7 +702,7 @@ const confirmWithdraw = () => {
       <div class="mt-7 flex gap-3">
         <button
           type="button"
-          class="h-12 flex-1 rounded-xl bg-gray-100 text-[13px] font-bold text-gray-600"
+          class="h-12 flex-1 rounded-xl bg-gray-100 text-[18px] font-bold text-gray-600"
           @click="closeAssetRefreshModal"
         >
           취소
@@ -703,7 +710,7 @@ const confirmWithdraw = () => {
 
         <button
           type="button"
-          class="h-12 flex-1 rounded-xl bg-yellow-300 text-[13px] font-bold text-gray-900"
+          class="h-12 flex-1 rounded-xl bg-yellow-300 text-[18px] font-bold text-gray-900"
           @click="startAssetRefresh"
         >
           갱신하기
@@ -750,7 +757,7 @@ const confirmWithdraw = () => {
           ></div>
         </div>
 
-        <span class="w-8 text-right text-[10px] font-medium text-gray-500">
+        <span class="w-8 text-right text-[13px] font-medium text-gray-500">
           {{ refreshProgress }}%
         </span>
       </div>
@@ -789,7 +796,7 @@ const confirmWithdraw = () => {
       <div class="mt-5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <!-- 라벨 -->
         <div class="flex items-center justify-between">
-          <span class="rounded-full bg-gray-100 px-3 py-1 text-[10px] text-gray-600">
+          <span class="rounded-full bg-gray-100 px-3 py-1 text-[13px] text-gray-600">
             총 자산
           </span>
 
@@ -809,7 +816,7 @@ const confirmWithdraw = () => {
         </div>
 
         <!-- 비율 -->
-        <div class="mt-3 grid grid-cols-3 text-[10px]">
+        <div class="mt-3 grid grid-cols-3 text-[13px]">
           <div>
             <div class="flex items-center gap-1 text-gray-500">
               <span class="h-2 w-2 rounded-full bg-cyan-300"></span>
@@ -909,14 +916,14 @@ const confirmWithdraw = () => {
 
             <!-- 위험 등급 -->
             <span
-              class="mt-1.5 inline-block rounded px-2 py-0.5 text-[10px] font-medium"
+              class="mt-1.5 inline-block rounded px-2 py-0.5 text-[13px] font-medium"
               :class="product.riskClass"
             >
               {{ product.risk }}
             </span>
 
             <!-- 설명 -->
-            <p class="mt-1.5 text-[11px] leading-[1.5] text-gray-500">
+            <p class="mt-1.5 text-[13px] leading-[1.5] text-gray-500">
               {{ product.description }}
             </p>
 
@@ -925,7 +932,7 @@ const confirmWithdraw = () => {
               <span
                 v-for="tag in product.tags"
                 :key="tag"
-                class="rounded bg-gray-100 px-2 py-1 text-[10px] text-gray-500"
+                class="rounded bg-gray-100 px-2 py-1 text-[13px] text-gray-500"
               >
                 {{ tag }}
               </span>
@@ -980,7 +987,7 @@ const confirmWithdraw = () => {
         <div class="mt-8 flex gap-3">
           <button
             type="button"
-            class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[13px] font-bold text-gray-600 disabled:cursor-not-allowed disabled:opacity-60"
+            class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[18px] font-bold text-gray-600 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="isDisconnectingCouple"
             @click="closeDisconnectSheet"
           >
@@ -989,7 +996,7 @@ const confirmWithdraw = () => {
 
           <button
             type="button"
-            class="h-12 flex-1 cursor-pointer rounded-xl bg-yellow-300 text-[13px] font-bold text-gray-900 disabled:cursor-not-allowed disabled:opacity-60"
+            class="h-12 flex-1 cursor-pointer rounded-xl bg-yellow-300 text-[18px] font-bold text-gray-900 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="isDisconnectingCouple"
             @click="nextDisconnectStep"
           >
@@ -998,7 +1005,7 @@ const confirmWithdraw = () => {
         </div>
 
         <!-- 단계 -->
-        <div class="mt-3 text-center text-[11px]">
+        <div class="mt-3 text-center text-[13px]">
           <span class="font-bold text-red-400">1</span>
           <span class="text-gray-300"> / 3</span>
         </div>
@@ -1024,7 +1031,7 @@ const confirmWithdraw = () => {
         <div class="mt-8 flex gap-3">
           <button
             type="button"
-            class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[13px] font-bold text-gray-600 disabled:cursor-not-allowed disabled:opacity-60"
+            class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[18px] font-bold text-gray-600 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="isDisconnectingCouple"
             @click="closeDisconnectSheet"
           >
@@ -1033,7 +1040,7 @@ const confirmWithdraw = () => {
 
           <button
             type="button"
-            class="h-12 flex-1 cursor-pointer rounded-xl bg-yellow-300 text-[13px] font-bold text-gray-900 disabled:cursor-not-allowed disabled:opacity-60"
+            class="h-12 flex-1 cursor-pointer rounded-xl bg-yellow-300 text-[18px] font-bold text-gray-900 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="isDisconnectingCouple"
             @click="nextDisconnectStep"
           >
@@ -1041,7 +1048,7 @@ const confirmWithdraw = () => {
           </button>
         </div>
 
-        <div class="mt-3 text-center text-[11px]">
+        <div class="mt-3 text-center text-[13px]">
           <span class="font-bold text-red-400">2</span>
           <span class="text-gray-300"> / 3</span>
         </div>
@@ -1064,14 +1071,14 @@ const confirmWithdraw = () => {
           연결 정보와 리포트/추천 결과가 삭제돼요.
         </p>
 
-        <p v-if="disconnectError" class="mt-3 text-center text-[11px] text-red-500">
+        <p v-if="disconnectError" class="mt-3 text-center text-[13px] text-red-500">
           {{ disconnectError }}
         </p>
 
         <div class="mt-8 flex gap-3">
           <button
             type="button"
-            class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[13px] font-bold text-gray-600 disabled:cursor-not-allowed disabled:opacity-60"
+            class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[18px] font-bold text-gray-600 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="isDisconnectingCouple"
             @click="closeDisconnectSheet"
           >
@@ -1080,7 +1087,7 @@ const confirmWithdraw = () => {
 
           <button
             type="button"
-            class="h-12 flex-1 cursor-pointer rounded-xl bg-red-500 text-[13px] font-bold text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+            class="h-12 flex-1 cursor-pointer rounded-xl bg-red-500 text-[18px] font-bold text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="isDisconnectingCouple"
             @click="finishDisconnect"
           >
@@ -1088,7 +1095,7 @@ const confirmWithdraw = () => {
           </button>
         </div>
 
-        <div class="mt-3 text-center text-[11px]">
+        <div class="mt-3 text-center text-[13px]">
           <span class="font-bold text-red-500">3</span>
           <span class="text-gray-300"> / 3</span>
         </div>
@@ -1124,7 +1131,7 @@ const confirmWithdraw = () => {
         <!-- 취소 -->
         <button
           type="button"
-          class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[13px] font-bold text-gray-600 transition hover:bg-gray-200"
+          class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[18px] font-bold text-gray-600 transition hover:bg-gray-200"
           @click="closeLogoutModal"
         >
           취소
@@ -1133,7 +1140,7 @@ const confirmWithdraw = () => {
         <!-- 로그아웃 -->
         <button
           type="button"
-          class="h-12 flex-1 cursor-pointer rounded-xl bg-yellow-300 text-[13px] font-bold text-gray-900 transition hover:bg-yellow-400"
+          class="h-12 flex-1 cursor-pointer rounded-xl bg-yellow-300 text-[18px] font-bold text-gray-900 transition hover:bg-yellow-400"
           @click="confirmLogout"
         >
           로그아웃
@@ -1175,7 +1182,7 @@ const confirmWithdraw = () => {
         <!-- 취소 -->
         <button
           type="button"
-          class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[13px] font-bold text-gray-600 transition hover:bg-gray-200"
+          class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[18px] font-bold text-gray-600 transition hover:bg-gray-200"
           @click="closeWithdrawSheet"
         >
           취소
@@ -1184,7 +1191,7 @@ const confirmWithdraw = () => {
         <!-- 탈퇴 -->
         <button
           type="button"
-          class="h-12 flex-1 cursor-pointer rounded-xl bg-red-500 text-[13px] font-bold text-white transition hover:bg-red-600"
+          class="h-12 flex-1 cursor-pointer rounded-xl bg-red-500 text-[18px] font-bold text-white transition hover:bg-red-600"
           @click="confirmWithdraw"
         >
           탈퇴하기
