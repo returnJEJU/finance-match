@@ -13,8 +13,10 @@ import { useAuthStore } from '@/stores/auth'
 import {
   UserRound,
   ClipboardList,
+  ClipboardPenLine,
   RefreshCw,
   HeartCrack,
+  HeartHandshake,
   Heart,
   LogOut,
   UserRoundX,
@@ -200,6 +202,308 @@ const startAssetRefresh = () => {
       assetRefreshStep.value = 'done'
     }, 400)
   }, 1200)
+}
+
+// ========================================
+// 설문 갱신 바텀시트
+// ========================================
+
+const isSurveyRefreshSheetOpen = ref(false)
+const surveyRefreshTarget = ref(null)
+
+const surveyRefreshOptions = {
+  personal: {
+    title: '개인 설문 갱신하기',
+    description: '나의 금융 스타일을 다시 확인해요',
+    confirmTitle: '개인 설문을 갱신하시겠어요?',
+    confirmDescription: '기존 개인 설문 결과를 새 응답 기준으로 업데이트합니다.',
+  },
+  couple: {
+    title: '공동 설문 갱신하기',
+    description: '우리의 목표와 금융 기준을 다시 맞춰요',
+    confirmTitle: '공동 설문을 갱신하시겠어요?',
+    confirmDescription: '기존 공동 설문 결과를 새 응답 기준으로 업데이트합니다.',
+  },
+}
+
+const personalSurveyRefreshQuestions = [
+  {
+    key: 'annualIncome',
+    type: 'money',
+    title: '최근 1년간 세전 총소득은 얼마인가요?',
+  },
+  {
+    key: 'monthlyAvailableAmount',
+    type: 'money',
+    title: '매달 무리 없이 저축하거나 투자할 수 있는 금액은 얼마인가요?',
+  },
+  {
+    key: 'financialAssetRatio',
+    type: 'single',
+    title: '총 자산 중 금융자산이 차지하는 비중은 어느 정도인가요?',
+    options: [
+      { value: 'UNDER_10', label: '10% 이내' },
+      { value: 'UNDER_30', label: '30% 이내' },
+      { value: 'UNDER_50', label: '50% 이내' },
+      { value: 'UNDER_80', label: '80% 이내' },
+      { value: 'OVER_80', label: '80% 초과' },
+    ],
+  },
+  {
+    key: 'investmentExperiences',
+    type: 'multi',
+    title: '지금까지 거래하거나 가입해 본 금융상품을 모두 선택해 주세요.',
+    options: [
+      { value: 'LOW_RISK', label: '은행 예적금, 국채, 지방채, MMF, CMA 등' },
+      { value: 'MODERATE_LOW_RISK', label: '채권형 펀드, 금융채, 원금보장형 ELS/ELF 등' },
+      { value: 'MODERATE_RISK', label: '혼합형 펀드, 중간 등급 회사채, 일부 보장 ELS/ELF 등' },
+      {
+        value: 'MODERATE_HIGH_RISK',
+        label: '인덱스 주식형 펀드, 저신용 회사채, 비보장 ELS/ELF 등',
+      },
+      { value: 'HIGH_RISK', label: '주식형 펀드, 파생상품 펀드, 주식, 선물·옵션 등' },
+    ],
+  },
+  {
+    key: 'financialKnowledge',
+    type: 'single',
+    title: '금융투자상품에 대한 이해도는 어느 정도인가요?',
+    options: [
+      { value: 'VERY_LOW', label: '매우 낮음 - 금융상품 중 예·적금에 대해서만 알고 있음' },
+      { value: 'LOW', label: '낮음 - 주식, 채권, 펀드의 차이를 구별할 수 있음' },
+      {
+        value: 'MEDIUM',
+        label: '보통 - 주식, 채권, 펀드의 기본적인 특징과 손실 가능성을 대략 이해하고 있음',
+      },
+      {
+        value: 'HIGH',
+        label: '높음 - 주식, 채권, 펀드 등의 구조 및 위험을 깊이 있게 이해하고 있음',
+      },
+      {
+        value: 'VERY_HIGH',
+        label: '매우 높음 - 파생상품을 포함한 대부분의 금융투자상품의 구조 및 위험을 이해하고 있음',
+      },
+    ],
+  },
+  {
+    key: 'capitalPreservationAttitude',
+    type: 'single',
+    title: '투자한다고 가정했을 때 원금 보존 태도는 무엇인가요?',
+    options: [
+      { value: 'ZERO', label: '원금 보존 추구' },
+      { value: 'UNDER_10', label: '10% 이내 손실 감내 가능' },
+      { value: 'UNDER_20', label: '20% 이내 손실 감내 가능' },
+      { value: 'UNDER_50', label: '50% 이내 손실 감내 가능' },
+      { value: 'UNDER_70', label: '70% 이내 손실 감내 가능' },
+      { value: 'FULL', label: '전액손실 감내 가능' },
+    ],
+  },
+]
+
+const coupleSurveyRefreshQuestions = [
+  {
+    key: 'goals',
+    type: 'rank-two',
+    title: '두 분이 우선으로 생각하는 금융 목표 2개를 골라 주세요.',
+    options: [
+      { value: 'INVESTMENT', label: '여유 자금 투자' },
+      { value: 'RETIREMENT', label: '노후 자금 마련' },
+      { value: 'MARRIAGE', label: '결혼 자금 마련' },
+      { value: 'HOUSING', label: '부동산 자금 마련' },
+      { value: 'SHORT_TERM', label: '사용예정자금 단기운용' },
+    ],
+  },
+  {
+    key: 'targetAmount',
+    type: 'money',
+    title: '1순위 공동 목표를 위해 필요한 금액은 얼마인가요?',
+  },
+  {
+    key: 'targetPeriodMonths',
+    type: 'number',
+    title: '1순위 공동 목표를 몇 개월 안에 이루고 싶으신가요?',
+    unit: '개월',
+  },
+  {
+    key: 'loanPurpose',
+    type: 'single',
+    title: '앞으로 대출을 받는다면 주된 목적은 무엇인가요?',
+    options: [
+      { value: 'NONE', label: '현재 대출 계획 없음' },
+      { value: 'JEONSE', label: '전세 자금 마련' },
+      { value: 'HOUSING', label: '주택 구입 자금 마련' },
+      { value: 'CAR', label: '자동차 구입 자금 마련' },
+      { value: 'BUSINESS', label: '사업 또는 창업 자금 마련' },
+    ],
+  },
+  {
+    key: 'hasLoanWithinOneMonth',
+    type: 'boolean',
+    title: '최근 1개월 이내 대출을 받았거나, 앞으로 1개월 이내 받을 예정인가요?',
+    options: [
+      { value: true, label: '예' },
+      { value: false, label: '아니요' },
+    ],
+  },
+]
+
+const selectedSurveyRefreshOption = computed(() =>
+  surveyRefreshTarget.value ? surveyRefreshOptions[surveyRefreshTarget.value] : null,
+)
+
+const activeSurveyRefreshTarget = ref(null)
+const surveyRefreshAnswers = ref({})
+const surveyRefreshFormError = ref('')
+
+const activeSurveyRefreshOption = computed(() =>
+  activeSurveyRefreshTarget.value ? surveyRefreshOptions[activeSurveyRefreshTarget.value] : null,
+)
+
+const activeSurveyRefreshQuestions = computed(() =>
+  activeSurveyRefreshTarget.value === 'couple'
+    ? coupleSurveyRefreshQuestions
+    : personalSurveyRefreshQuestions,
+)
+
+const openSurveyRefreshSheet = () => {
+  isSurveyRefreshSheetOpen.value = true
+}
+
+const closeSurveyRefreshSheet = () => {
+  isSurveyRefreshSheetOpen.value = false
+}
+
+const openSurveyRefreshConfirm = (target) => {
+  isSurveyRefreshSheetOpen.value = false
+  surveyRefreshTarget.value = target
+}
+
+const closeSurveyRefreshConfirm = () => {
+  surveyRefreshTarget.value = null
+}
+
+const confirmSurveyRefresh = () => {
+  if (!selectedSurveyRefreshOption.value) return
+  activeSurveyRefreshTarget.value = surveyRefreshTarget.value
+  surveyRefreshAnswers.value = {}
+  surveyRefreshFormError.value = ''
+  surveyRefreshTarget.value = null
+}
+
+const closeSurveyRefreshForm = () => {
+  activeSurveyRefreshTarget.value = null
+  surveyRefreshAnswers.value = {}
+  surveyRefreshFormError.value = ''
+}
+
+const updateSurveyRefreshAnswer = (key, value) => {
+  surveyRefreshAnswers.value = {
+    ...surveyRefreshAnswers.value,
+    [key]: value,
+  }
+  surveyRefreshFormError.value = ''
+}
+
+const formatSurveyRefreshNumber = (value) => {
+  if (!value) return ''
+  return Number(value).toLocaleString('ko-KR')
+}
+
+const formatKoreanUnitNumber = (value) => {
+  if (value < 1000) return Number(value).toLocaleString('ko-KR')
+
+  const thousand = Math.floor(value / 1000)
+  const hundred = Math.floor((value % 1000) / 100)
+  const ten = Math.floor((value % 100) / 10)
+  const one = value % 10
+  const parts = []
+
+  if (thousand > 0) parts.push(`${thousand}천`)
+  if (hundred > 0) parts.push(`${hundred}백`)
+  if (ten > 0) parts.push(`${ten}십`)
+  if (one > 0) parts.push(`${one}`)
+
+  return parts.join('')
+}
+
+const formatSurveyRefreshKoreanAmount = (value) => {
+  if (!value) return '금액 입력'
+
+  const amount = Number(value)
+  if (!Number.isFinite(amount) || amount < 0) return '금액 입력'
+  if (amount === 0) return '0원'
+
+  const jo = Math.floor(amount / 1_000_000_000_000)
+  const eok = Math.floor((amount % 1_000_000_000_000) / 100_000_000)
+  const man = Math.floor((amount % 100_000_000) / 10_000)
+  const won = amount % 10_000
+  const parts = []
+
+  if (jo > 0) parts.push(`${formatKoreanUnitNumber(jo)}조`)
+  if (eok > 0) parts.push(`${formatKoreanUnitNumber(eok)}억`)
+  if (man > 0) parts.push(`${formatKoreanUnitNumber(man)}만`)
+  if (won > 0) parts.push(parts.length > 0 ? `${formatSurveyRefreshNumber(won)}원` : `${won}`)
+
+  return parts.length > 1 && won > 0 ? parts.join(' ') : `${parts.join('')}원`
+}
+
+const getSurveyRefreshInputValue = (question) => {
+  const value = surveyRefreshAnswers.value[question.key] ?? ''
+  return formatSurveyRefreshNumber(value)
+}
+
+const updateSurveyRefreshMoney = (key, event) => {
+  updateSurveyRefreshAnswer(key, event.target.value.replace(/\D/g, '').slice(0, 15))
+}
+
+const toggleSurveyRefreshAnswer = (key, value) => {
+  const currentValue = surveyRefreshAnswers.value[key] ?? []
+  updateSurveyRefreshAnswer(
+    key,
+    currentValue.includes(value)
+      ? currentValue.filter((selectedValue) => selectedValue !== value)
+      : [...currentValue, value],
+  )
+}
+
+const toggleSurveyRefreshGoal = (value) => {
+  const currentValue = surveyRefreshAnswers.value.goals ?? []
+
+  if (currentValue.includes(value)) {
+    updateSurveyRefreshAnswer(
+      'goals',
+      currentValue.filter((selectedValue) => selectedValue !== value),
+    )
+    return
+  }
+
+  updateSurveyRefreshAnswer('goals', [...currentValue.slice(-1), value])
+}
+
+const getSurveyRefreshGoalRank = (value) => {
+  const selectedGoals = surveyRefreshAnswers.value.goals ?? []
+  const index = selectedGoals.indexOf(value)
+  return index >= 0 ? `${index + 1}순위` : ''
+}
+
+const isSurveyRefreshQuestionAnswered = (question) => {
+  const value = surveyRefreshAnswers.value[question.key]
+
+  if (question.type === 'multi') return Array.isArray(value) && value.length > 0
+  if (question.type === 'rank-two') return Array.isArray(value) && value.length === 2
+  if (question.type === 'boolean') return value !== undefined
+  return Boolean(value)
+}
+
+const submitSurveyRefreshForm = () => {
+  const isComplete = activeSurveyRefreshQuestions.value.every(isSurveyRefreshQuestionAnswered)
+  if (!isComplete) {
+    surveyRefreshFormError.value = '설문 문항에 모두 답변해 주세요.'
+    return
+  }
+
+  window.alert('설문 갱신이 완료되었습니다.')
+  closeSurveyRefreshForm()
 }
 
 // ========================================
@@ -554,6 +858,23 @@ const confirmWithdraw = async () => {
 
         <ChevronRight :size="18" :stroke-width="1.8" class="text-[#b8b18a]" />
       </div>
+
+      <div
+        class="mt-2 flex cursor-pointer items-center rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm transition hover:bg-gray-50"
+        @click="openSurveyRefreshSheet"
+      >
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+          <ClipboardPenLine :size="20" :stroke-width="1.8" class="text-[#7c7500]" />
+        </div>
+
+        <div class="ml-3 flex-1">
+          <p class="text-[18px] font-bold text-gray-900">설문 갱신하기</p>
+
+          <p class="mt-0.5 text-[13px] text-gray-500">설문 정보를 최신으로 업데이트</p>
+        </div>
+
+        <ChevronRight :size="18" :stroke-width="1.8" class="text-[#b8b18a]" />
+      </div>
     </section>
 
     <!-- 상품 추천 -->
@@ -806,6 +1127,284 @@ const confirmWithdraw = async () => {
           </div>
         </article>
       </section>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
+  <!-- 설문 갱신 바텀시트 -->
+  <!-- ======================================== -->
+  <div
+    v-if="isSurveyRefreshSheetOpen"
+    class="fixed inset-0 z-[100] bg-black/40"
+    @click.self="closeSurveyRefreshSheet"
+  >
+    <div
+      class="absolute bottom-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 rounded-t-[28px] bg-white px-5 pb-7 pt-3 shadow-2xl"
+    >
+      <div class="mx-auto h-1.5 w-12 rounded-full bg-gray-200"></div>
+
+      <div class="mt-5 flex items-start justify-between">
+        <div>
+          <h2 class="text-[22px] font-bold text-gray-900">설문 갱신하기</h2>
+
+          <p class="mt-2 text-[12px] text-gray-500">갱신할 설문을 선택해 주세요.</p>
+        </div>
+
+        <button
+          type="button"
+          class="flex h-8 w-8 cursor-pointer items-center justify-center text-gray-600"
+          @click="closeSurveyRefreshSheet"
+        >
+          <X :size="24" :stroke-width="2" />
+        </button>
+      </div>
+
+      <div class="mt-6 space-y-3">
+        <button
+          type="button"
+          class="flex w-full cursor-pointer items-center rounded-xl border border-gray-200 bg-white px-4 py-4 text-left transition hover:bg-gray-50"
+          @click="openSurveyRefreshConfirm('personal')"
+        >
+          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-yellow-50">
+            <ClipboardList :size="22" :stroke-width="1.9" class="text-[#7c7500]" />
+          </div>
+
+          <div class="ml-3 min-w-0 flex-1">
+            <p class="text-[17px] font-bold text-gray-900">개인 설문 갱신하기</p>
+
+            <p class="mt-1 text-[13px] leading-[1.5] text-gray-500">
+              나의 금융 스타일을 다시 확인해요
+            </p>
+          </div>
+
+          <ChevronRight :size="18" :stroke-width="1.8" class="shrink-0 text-[#b8b18a]" />
+        </button>
+
+        <button
+          type="button"
+          class="flex w-full cursor-pointer items-center rounded-xl border border-gray-200 bg-white px-4 py-4 text-left transition hover:bg-gray-50"
+          @click="openSurveyRefreshConfirm('couple')"
+        >
+          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-pink-50">
+            <HeartHandshake :size="22" :stroke-width="1.9" class="text-pink-500" />
+          </div>
+
+          <div class="ml-3 min-w-0 flex-1">
+            <p class="text-[17px] font-bold text-gray-900">공동 설문 갱신하기</p>
+
+            <p class="mt-1 text-[13px] leading-[1.5] text-gray-500">
+              우리의 목표와 금융 기준을 다시 맞춰요
+            </p>
+          </div>
+
+          <ChevronRight :size="18" :stroke-width="1.8" class="shrink-0 text-[#b8b18a]" />
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="mt-4 h-12 w-full cursor-pointer rounded-xl bg-gray-100 text-[18px] font-bold text-gray-600 transition hover:bg-gray-200"
+        @click="closeSurveyRefreshSheet"
+      >
+        취소
+      </button>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
+  <!-- 설문 갱신 확인 -->
+  <!-- ======================================== -->
+  <div
+    v-if="selectedSurveyRefreshOption"
+    class="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 px-5"
+    @click.self="closeSurveyRefreshConfirm"
+  >
+    <div class="w-full max-w-[350px] rounded-[24px] bg-white px-6 pb-6 pt-8 shadow-xl">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yellow-50">
+        <ClipboardPenLine :size="28" :stroke-width="2.1" class="text-[#7c7500]" />
+      </div>
+
+      <h2 class="mt-6 text-center text-[17px] font-bold text-gray-900">
+        {{ selectedSurveyRefreshOption.confirmTitle }}
+      </h2>
+
+      <p class="mt-3 text-center text-[12px] leading-[1.7] text-gray-400">
+        {{ selectedSurveyRefreshOption.confirmDescription }}<br />
+        설문 입력창을 엽니다.
+      </p>
+
+      <div class="mt-7 flex gap-3">
+        <button
+          type="button"
+          class="h-12 flex-1 cursor-pointer rounded-xl bg-gray-100 text-[18px] font-bold text-gray-600 transition hover:bg-gray-200"
+          @click="closeSurveyRefreshConfirm"
+        >
+          취소
+        </button>
+
+        <button
+          type="button"
+          class="h-12 flex-1 cursor-pointer rounded-xl bg-yellow-300 text-[18px] font-bold text-gray-900 transition hover:bg-yellow-400"
+          @click="confirmSurveyRefresh"
+        >
+          갱신하기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
+  <!-- 설문 갱신 입력 모달 -->
+  <!-- ======================================== -->
+  <div
+    v-if="activeSurveyRefreshOption"
+    class="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 px-4"
+    @click.self="closeSurveyRefreshForm"
+  >
+    <div
+      class="relative flex max-h-[88vh] w-full max-w-[400px] flex-col rounded-[24px] bg-white shadow-xl"
+    >
+      <div class="shrink-0 border-b border-gray-100 px-5 pb-4 pt-5">
+        <button
+          type="button"
+          class="absolute right-4 top-4 flex h-8 w-8 cursor-pointer items-center justify-center text-gray-500"
+          @click="closeSurveyRefreshForm"
+        >
+          <X :size="23" :stroke-width="2" />
+        </button>
+
+        <h2 class="pr-10 text-[20px] font-bold text-gray-900">
+          {{ activeSurveyRefreshOption.title }}
+        </h2>
+
+        <p class="mt-2 text-[13px] leading-[1.5] text-gray-500">
+          {{ activeSurveyRefreshOption.description }}
+        </p>
+      </div>
+
+      <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+        <div
+          v-for="(question, index) in activeSurveyRefreshQuestions"
+          :key="question.key"
+          class="mb-7 last:mb-0"
+        >
+          <h3 class="text-[17px] leading-[1.5] font-bold text-gray-900">
+            <span class="text-[#7c7500]">Q{{ index + 1 }}.</span>
+            {{ question.title }}
+          </h3>
+
+          <div v-if="question.type === 'money' || question.type === 'number'" class="mt-3">
+            <div
+              class="flex h-12 items-center rounded-xl border border-gray-200 bg-white px-3 focus-within:border-[#7c7500]"
+            >
+              <input
+                :value="getSurveyRefreshInputValue(question)"
+                type="text"
+                inputmode="numeric"
+                class="min-w-0 flex-1 bg-transparent text-right text-[18px] font-semibold text-gray-900 outline-none"
+                @input="updateSurveyRefreshMoney(question.key, $event)"
+              />
+              <span class="ml-3 text-[14px] font-medium text-gray-600">
+                {{ question.unit ?? '원' }}
+              </span>
+            </div>
+            <p v-if="question.type === 'money'" class="mt-1.5 text-right text-[13px] text-gray-500">
+              {{ formatSurveyRefreshKoreanAmount(surveyRefreshAnswers[question.key] ?? '') }}
+            </p>
+          </div>
+
+          <div v-else-if="question.type === 'single'" class="mt-3 space-y-2">
+            <button
+              v-for="option in question.options"
+              :key="option.value"
+              type="button"
+              class="flex min-h-11 w-full cursor-pointer items-center justify-center rounded-xl border px-3 py-2 text-center text-[15px] leading-[1.4] font-semibold transition"
+              :class="
+                surveyRefreshAnswers[question.key] === option.value
+                  ? 'border-[#7c7500] bg-yellow-50 text-gray-900'
+                  : 'border-gray-200 bg-white text-gray-700'
+              "
+              @click="updateSurveyRefreshAnswer(question.key, option.value)"
+            >
+              {{ option.label }}
+            </button>
+          </div>
+
+          <div v-else-if="question.type === 'multi'" class="mt-3 space-y-2">
+            <button
+              v-for="option in question.options"
+              :key="option.value"
+              type="button"
+              class="flex min-h-11 w-full cursor-pointer items-center justify-center rounded-xl border px-3 py-2 text-center text-[15px] leading-[1.4] font-semibold transition"
+              :class="
+                (surveyRefreshAnswers[question.key] ?? []).includes(option.value)
+                  ? 'border-[#7c7500] bg-yellow-50 text-gray-900'
+                  : 'border-gray-200 bg-white text-gray-700'
+              "
+              @click="toggleSurveyRefreshAnswer(question.key, option.value)"
+            >
+              {{ option.label }}
+            </button>
+          </div>
+
+          <div v-else-if="question.type === 'rank-two'" class="mt-3 space-y-2">
+            <button
+              v-for="option in question.options"
+              :key="option.value"
+              type="button"
+              class="flex min-h-11 w-full cursor-pointer items-center justify-between rounded-xl border px-3 py-2 text-left text-[15px] leading-[1.4] font-semibold transition"
+              :class="
+                getSurveyRefreshGoalRank(option.value)
+                  ? 'border-[#7c7500] bg-yellow-50 text-gray-900'
+                  : 'border-gray-200 bg-white text-gray-700'
+              "
+              @click="toggleSurveyRefreshGoal(option.value)"
+            >
+              <span>{{ option.label }}</span>
+              <span
+                v-if="getSurveyRefreshGoalRank(option.value)"
+                class="ml-3 shrink-0 rounded bg-white px-1.5 py-0.5 text-[12px] font-bold text-[#7c7500]"
+              >
+                {{ getSurveyRefreshGoalRank(option.value) }}
+              </span>
+            </button>
+          </div>
+
+          <div v-else-if="question.type === 'boolean'" class="mt-3 grid grid-cols-2 gap-2">
+            <button
+              v-for="option in question.options"
+              :key="String(option.value)"
+              type="button"
+              class="h-11 cursor-pointer rounded-xl border text-[16px] font-bold transition"
+              :class="
+                surveyRefreshAnswers[question.key] === option.value
+                  ? 'border-[#7c7500] bg-yellow-50 text-gray-900'
+                  : 'border-gray-200 bg-white text-gray-700'
+              "
+              @click="updateSurveyRefreshAnswer(question.key, option.value)"
+            >
+              {{ option.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="shrink-0 border-t border-gray-100 px-5 pb-5 pt-4">
+        <p
+          v-if="surveyRefreshFormError"
+          class="mb-3 text-center text-[13px] font-semibold text-red-500"
+        >
+          {{ surveyRefreshFormError }}
+        </p>
+
+        <button
+          type="button"
+          class="h-12 w-full cursor-pointer rounded-xl bg-yellow-300 text-[18px] font-bold text-gray-900 transition hover:bg-yellow-400"
+          @click="submitSurveyRefreshForm"
+        >
+          갱신하기
+        </button>
+      </div>
     </div>
   </div>
 
