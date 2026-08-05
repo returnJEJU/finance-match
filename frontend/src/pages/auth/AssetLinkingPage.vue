@@ -113,10 +113,10 @@ onMounted(async () => {
     await advanceTo(100, REVEAL_STEP_MS)
     finished.value = true
   } catch (error) {
-    // 이미 연동한 회원이 뒤로 가기·새로고침으로 다시 들어온 경우. 연동 자체는 끝나 있으므로
-    // 막지 않고 다음 단계로 보낸다. 완료 화면은 응답이 있어야 그릴 수 있어 건너뛴다.
+    // 이미 연동한 회원이 뒤로 가기·새로고침으로 다시 들어온 경우. 완료 화면에서 조회 API 로
+    // 저장된 연동 결과를 다시 채운다.
     if (error.code === 'ASSET_ALREADY_LINKED') {
-      router.replace({ name: 'couple-start' })
+      router.replace({ name: 'signup-asset-done' })
       return
     }
     linkError.value = error.message || '자산을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'

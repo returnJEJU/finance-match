@@ -28,8 +28,8 @@ const assetLinkResponseSchema = z.object({
   /**
    * 카테고리별 금액.
    *
-   * 응답을 만들 때만 쪼개 주는 값이고 DB 에는 합계만 저장된다 — 즉 <b>재조회로는 이 구성을 다시
-   * 얻을 수 없다.</b> 그래서 연동 직후 화면에 보여주려면 이 응답을 들고 있어야 한다.
+   * 현재 목 마이데이터 구현에서는 조회 시 provider 를 다시 호출해 같은 구성을 복원한다.
+   * 실제 마이데이터 연동으로 바뀌면 DB 저장 구조를 별도로 검토해야 한다.
    */
   summary: z.array(
     z.object({
@@ -55,5 +55,16 @@ const assetLinkResponseSchema = z.object({
  */
 export async function linkAssets() {
   const data = await api.post('/v1/members/me/assets')
+  return assetLinkResponseSchema.parse(data)
+}
+
+/**
+ * 저장된 자산 연동 결과 조회.
+ *
+ * @throws {ApiError} ASSET_NOT_LINKED(404) — 아직 자산을 연동하지 않은 회원.
+ * @throws {ApiError} MYDATA_LINK_FAILED(502) — 마이데이터 조회 실패
+ */
+export async function getLinkedAssets() {
+  const data = await api.get('/v1/members/me/assets')
   return assetLinkResponseSchema.parse(data)
 }

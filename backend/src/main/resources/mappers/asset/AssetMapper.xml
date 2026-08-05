@@ -12,6 +12,16 @@
         )
     </select>
 
+    <select id="findLinkByMemberId"
+            resultType="com.financematch.asset.mapper.AssetLinkRow">
+        SELECT
+            financial_asset,
+            total_debt,
+            created_at AS linked_at
+        FROM financial_summary
+        WHERE member_id = #{memberId}
+    </select>
+
     <insert id="insertFinancialSummary"
             parameterType="com.financematch.asset.domain.FinancialSummary">
         INSERT INTO financial_summary (

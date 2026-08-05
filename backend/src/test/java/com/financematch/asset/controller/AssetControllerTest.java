@@ -46,6 +46,19 @@ class AssetControllerTest {
     }
 
     @Test
+    void getAssetsReturnsLinkedAssetData() {
+        AssetLinkResponse linked = response();
+        when(assetService.getAssets(1L)).thenReturn(linked);
+
+        ApiResponse<AssetLinkResponse> response =
+                assetController.getAssets(1L);
+
+        verify(assetService).getAssets(1L);
+        assertTrue(response.isSuccess());
+        assertSame(linked, response.getData());
+    }
+
+    @Test
     void refreshReturnsUpdatedAssetData() {
         AssetLinkResponse refreshed = response();
         when(assetService.refresh(1L)).thenReturn(refreshed);
