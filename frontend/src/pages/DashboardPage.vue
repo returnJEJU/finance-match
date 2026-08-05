@@ -1,5 +1,5 @@
 <script setup>
-import { computed, markRaw, onMounted, ref } from 'vue'
+import { computed, markRaw, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   ArrowRight,
@@ -159,6 +159,22 @@ const toggleHelp = (key) => {
   openedHelpKey.value = openedHelpKey.value === key ? null : key
 }
 
+// 말풍선이 열려있을 때 화면의 다른 곳을 탭하면 닫는다. 카드 전체가 아니라 "?" 버튼 자신이나
+// 말풍선 내용 위를 클릭한 경우만 안 닫는다 — 같은 카드 안이라도 진행바·점수 같은 다른 부분을
+// 누르면 바깥 클릭으로 보고 닫아야 한다.
+const handleOutsideHelpClick = (event) => {
+  if (!openedHelpKey.value) {
+    return
+  }
+  const onTrigger = event.target.closest('[data-help-card]')
+  const onTooltip = event.target.closest('[role="tooltip"]')
+  if (!onTrigger && !onTooltip) {
+    openedHelpKey.value = null
+  }
+}
+onMounted(() => document.addEventListener('click', handleOutsideHelpClick))
+onUnmounted(() => document.removeEventListener('click', handleOutsideHelpClick))
+
 // 상세 리포트로 이동
 const moveToReport = () => {
   router.push('/report')
@@ -250,7 +266,7 @@ onMounted(() => {
       </div>
 
       <!-- 항목별 점수 -->
-      <div class="mx-auto mt-4 flex w-[92%] shrink-0 flex-col gap-[14px]">
+      <div class="mx-auto mt-4 flex w-[92%] shrink-0 flex-col gap-5">
         <article v-for="card in scoreCards" :key="card.key" class="relative">
           <!-- 항목 이름과 점수 -->
           <div class="flex items-center justify-between">
@@ -260,11 +276,11 @@ onMounted(() => {
                 class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[7px]"
                 :class="card.iconClass"
               >
-                <component :is="card.icon" :size="14" :stroke-width="2" />
+                <component :is="card.icon" :size="16" :stroke-width="2" />
               </div>
 
               <!-- 항목 이름 -->
-              <span class="text-[13px] font-semibold text-ink">
+              <span class="text-[15px] font-semibold text-ink">
                 {{ card.title }}
               </span>
 
@@ -274,6 +290,7 @@ onMounted(() => {
                 class="shrink-0 text-[#c8c3ad]"
                 :aria-label="`${card.title} 도움말`"
                 :aria-expanded="openedHelpKey === card.key"
+                :data-help-card="card.key"
                 @click="toggleHelp(card.key)"
               >
                 <CircleHelp :size="14" :stroke-width="2" />
@@ -283,7 +300,7 @@ onMounted(() => {
             <!-- 점수 -->
             <p
               v-if="card.key !== 'tax' || card.calculated"
-              class="shrink-0 text-[12px] font-bold text-ink"
+              class="shrink-0 text-[14px] font-bold text-ink"
             >
               <span class="text-[#777000]">{{ card.score }}점</span>
               / {{ card.maxScore }}점
