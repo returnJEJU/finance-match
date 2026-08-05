@@ -51,17 +51,27 @@ public class RecommendationService {
     public void createRecommendation(Long memberId) {
         try {
             Long coupleId =
-                    recommendationMapper.lockCoupleIdByMemberIdNowait(memberId);
+                    recommendationMapper.findCoupleIdByMemberId(memberId);
+
             if (coupleId == null) {
+                throw new ApiException(ErrorCode.COUPLE_NOT_CONNECTED);
+            }
+
+            Long lockedCoupleId =
+                    recommendationMapper.lockCoupleIdByIdNowait(coupleId);
+
+            if (lockedCoupleId == null) {
                 throw new ApiException(ErrorCode.COUPLE_NOT_CONNECTED);
             }
 
             LocalDateTime inputVersionBefore =
                     recommendationMapper.findLatestInputUpdatedAtByMemberId(memberId);
+
             recommend(memberId);
 
             LocalDateTime inputVersionAfter =
                     recommendationMapper.findLatestInputUpdatedAtByMemberId(memberId);
+
             if (!Objects.equals(inputVersionBefore, inputVersionAfter)) {
                 throw new RecommendationInputChangedException(
                         inputVersionBefore,
@@ -91,6 +101,7 @@ public class RecommendationService {
                 if (!coupleMapper.existsCoupleByMemberId(memberId)) {
                     throw new ApiException(ErrorCode.COUPLE_NOT_CONNECTED);
                 }
+
                 throw new ApiException(ErrorCode.RECOMMENDATION_NOT_FOUND);
             }
 
@@ -114,7 +125,6 @@ public class RecommendationService {
     }
 
     RecommendationPlan recommend(Long memberId) {
-
         if (memberId == null) {
             throw new IllegalArgumentException("회원 ID는 필수입니다.");
         }
@@ -126,36 +136,29 @@ public class RecommendationService {
             if (!coupleMapper.existsCoupleByMemberId(memberId)) {
                 throw new ApiException(ErrorCode.COUPLE_NOT_CONNECTED);
             }
+
             throw new ApiException(ErrorCode.RECOMMENDATION_NOT_READY);
         }
 
-        RecommendationPlan plan = recommendationPlanner.create(context);
+        RecommendationPlan plan =
+                recommendationPlanner.create(context);
+
         saveRecommendationResult(context, plan);
 
         return plan;
-    }
-
-    private static class RecommendationInputChangedException extends RuntimeException {
-
-        private RecommendationInputChangedException(
-                LocalDateTime before,
-                LocalDateTime after) {
-            super("추천 생성 중 입력정보가 변경되었습니다. before=" + before + ", after=" + after);
-        }
     }
 
     private void saveRecommendationResult(
             RecommendationContext context,
             RecommendationPlan plan) {
 
-        Long recommendationId = getOrCreateRecommendationId(context.getCoupleId());
+        Long recommendationId =
+                getOrCreateRecommendationId(context.getCoupleId());
 
-        // 공동 추천은 recommendation 하위 슬롯과 후보 상품을 통째로 최신 결과로 교체한다.
         replaceJointRecommendations(
                 recommendationId,
                 plan.joint());
 
-        // 개인 추천은 회원별 최신 절세·투자 결과만 남도록 기존 row를 지우고 다시 넣는다.
         replacePersonalRecommendations(
                 context.memberIds(),
                 plan.personal());
@@ -163,14 +166,18 @@ public class RecommendationService {
 
     private Long getOrCreateRecommendationId(Long coupleId) {
         if (coupleId == null) {
-            throw new IllegalStateException("추천 결과를 저장할 커플 ID가 필요합니다.");
+            throw new IllegalStateException(
+                    "추천 결과를 저장할 커플 ID가 필요합니다.");
         }
 
-        Recommendation recommendation = new Recommendation(coupleId);
+        Recommendation recommendation =
+                new Recommendation(coupleId);
+
         recommendationMapper.upsertRecommendation(recommendation);
 
         if (recommendation.getId() == null) {
-            throw new IllegalStateException("추천 결과 부모 row 저장에 실패했습니다.");
+            throw new IllegalStateException(
+                    "추천 결과 부모 row 저장에 실패했습니다.");
         }
 
         return recommendation.getId();
@@ -178,9 +185,11 @@ public class RecommendationService {
 
     private void replaceJointRecommendations(
             Long recommendationId,
-            Map<RecommendationSlotType, List<RecommendedProduct>> jointRecommendations) {
+            Map<RecommendationSlotType, List<RecommendedProduct>>
+                    jointRecommendations) {
 
-        recommendationMapper.deleteSlotsByRecommendationId(recommendationId);
+        recommendationMapper.deleteSlotsByRecommendationId(
+                recommendationId);
 
         jointRecommendations.forEach(
                 (slotType, products) -> {
@@ -192,35 +201,46 @@ public class RecommendationService {
                             new RecommendationSlot(
                                     recommendationId,
                                     slotType);
+
                     recommendationMapper.insertRecommendationSlot(slot);
 
                     if (slot.getId() == null) {
-                        throw new IllegalStateException("추천 슬롯 저장에 실패했습니다: " + slotType);
+                        throw new IllegalStateException(
+                                "추천 슬롯 저장에 실패했습니다: " + slotType);
                     }
 
                     products.forEach(
                             product ->
-                                    recommendationMapper.insertRecommendationProduct(
-                                            slot.getId(),
-                                            product));
+                                    recommendationMapper
+                                            .insertRecommendationProduct(
+                                                    slot.getId(),
+                                                    product));
                 });
     }
 
     private void replacePersonalRecommendations(
             List<Long> memberIds,
-            Map<PersonalRecommendationType, Map<Long, List<RecommendedProduct>>> personalRecommendations) {
+            Map<
+                    PersonalRecommendationType,
+                    Map<Long, List<RecommendedProduct>>>
+                    personalRecommendations) {
 
         memberIds.forEach(
                 memberId -> {
-                    recommendationMapper.deletePersonalTaxSavingByMemberId(memberId);
-                    recommendationMapper.deletePersonalInvestmentByMemberId(memberId);
+                    recommendationMapper
+                            .deletePersonalTaxSavingByMemberId(memberId);
+
+                    recommendationMapper
+                            .deletePersonalInvestmentByMemberId(memberId);
                 });
 
         savePersonalTaxSavingRecommendations(
-                personalRecommendations.get(PersonalRecommendationType.TAX_SAVING));
+                personalRecommendations.get(
+                        PersonalRecommendationType.TAX_SAVING));
 
         savePersonalInvestmentRecommendations(
-                personalRecommendations.get(PersonalRecommendationType.INVESTMENT));
+                personalRecommendations.get(
+                        PersonalRecommendationType.INVESTMENT));
     }
 
     private void savePersonalTaxSavingRecommendations(
@@ -234,9 +254,10 @@ public class RecommendationService {
                 (memberId, products) ->
                         products.forEach(
                                 product ->
-                                        recommendationMapper.insertPersonalTaxSaving(
-                                                memberId,
-                                                product)));
+                                        recommendationMapper
+                                                .insertPersonalTaxSaving(
+                                                        memberId,
+                                                        product)));
     }
 
     private void savePersonalInvestmentRecommendations(
@@ -250,8 +271,24 @@ public class RecommendationService {
                 (memberId, products) ->
                         products.forEach(
                                 product ->
-                                        recommendationMapper.insertPersonalInvestment(
-                                                memberId,
-                                                product)));
+                                        recommendationMapper
+                                                .insertPersonalInvestment(
+                                                        memberId,
+                                                        product)));
+    }
+
+    private static class RecommendationInputChangedException
+            extends RuntimeException {
+
+        private RecommendationInputChangedException(
+                LocalDateTime before,
+                LocalDateTime after) {
+
+            super(
+                    "추천 생성 중 입력정보가 변경되었습니다. before="
+                            + before
+                            + ", after="
+                            + after);
+        }
     }
 }

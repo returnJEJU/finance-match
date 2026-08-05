@@ -38,20 +38,33 @@ class RecommendationConcurrencyTest {
     private PlatformTransactionManager transactionManager;
 
     @Test
-    void rejectsSecondGenerationRequestWhenCoupleRowIsLocked() throws Exception {
+    void rejectsSecondGenerationRequestWhenCoupleRowIsLocked()
+            throws Exception {
+
         CountDownLatch locked = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        ExecutorService executor =
+                Executors.newSingleThreadExecutor();
 
         Future<?> lockHolder =
                 executor.submit(
                         () -> {
                             TransactionTemplate transaction =
-                                    new TransactionTemplate(transactionManager);
+                                    new TransactionTemplate(
+                                            transactionManager);
+
                             transaction.executeWithoutResult(
                                     status -> {
+                                        Long coupleId =
+                                                recommendationMapper
+                                                        .findCoupleIdByMemberId(
+                                                                MEMBER_ID);
+
                                         recommendationMapper
-                                                .lockCoupleIdByMemberIdNowait(MEMBER_ID);
+                                                .lockCoupleIdByIdNowait(
+                                                        coupleId);
+
                                         locked.countDown();
                                         awaitRelease(release);
                                     });
@@ -59,13 +72,17 @@ class RecommendationConcurrencyTest {
 
         try {
             if (!locked.await(5, TimeUnit.SECONDS)) {
-                throw new IllegalStateException("커플 행 잠금을 제한 시간 안에 획득하지 못했습니다.");
+                throw new IllegalStateException(
+                        "커플 행 잠금을 제한 시간 안에 획득하지 못했습니다.");
             }
 
             ApiException exception =
                     assertThrows(
                             ApiException.class,
-                            () -> recommendationService.createRecommendation(MEMBER_ID));
+                            () ->
+                                    recommendationService
+                                            .createRecommendation(
+                                                    MEMBER_ID));
 
             assertEquals(
                     ErrorCode.RECOMMENDATION_IN_PROGRESS,
@@ -79,12 +96,16 @@ class RecommendationConcurrencyTest {
 
     private void awaitRelease(CountDownLatch release) {
         try {
-            if (!release.await(5, TimeUnit.SECONDS)) {
-                throw new IllegalStateException("커플 행 잠금 해제 신호를 받지 못했습니다.");
+            if (!release.await(15, TimeUnit.SECONDS)) {
+                throw new IllegalStateException(
+                        "커플 행 잠금 해제 신호를 받지 못했습니다.");
             }
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("커플 행 잠금 테스트가 중단되었습니다.", exception);
+
+            throw new IllegalStateException(
+                    "커플 행 잠금 테스트가 중단되었습니다.",
+                    exception);
         }
     }
 }
