@@ -55,7 +55,6 @@ public enum ErrorCode {
     INVITATION_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 초대 코드입니다."),
     SELF_INVITATION_NOT_ALLOWED(HttpStatus.CONFLICT, "본인이 생성한 초대코드는 사용할 수 없습니다."),
     INVITATION_NOT_AVAILABLE(HttpStatus.CONFLICT, "이미 사용되었거나 사용할 수 없는 초대 코드입니다."),
-    PERSONAL_SURVEY_ALREADY_EXISTS(HttpStatus.CONFLICT, "개인 설문이 이미 저장되어 있습니다."),
     INVESTMENT_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "산출된 투자성향 결과가 존재하지 않습니다."),
 
     // ===== 자산 연동 =====

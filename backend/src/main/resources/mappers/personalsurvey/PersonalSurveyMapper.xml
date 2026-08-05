@@ -13,12 +13,10 @@
         FOR UPDATE
     </select>
 
-    <select id="existsPersonalSurveyByMemberId" resultType="boolean">
-        SELECT EXISTS (
-            SELECT 1
-            FROM personal_survey
-            WHERE member_id = #{memberId}
-        )
+    <select id="findPersonalSurveyIdByMemberId" resultType="long">
+        SELECT id
+        FROM personal_survey
+        WHERE member_id = #{memberId}
     </select>
 
     <select id="findCalculationContext"
@@ -70,6 +68,24 @@
             #{capitalPreservationAttitude}
         )
     </insert>
+
+    <update id="updatePersonalSurvey"
+            parameterType="com.financematch.personalsurvey.domain.PersonalSurvey">
+        UPDATE personal_survey
+        SET annual_income = #{annualIncome},
+            monthly_available_amount = #{monthlyAvailableAmount},
+            financial_asset_ratio = #{financialAssetRatio},
+            financial_knowledge = #{financialKnowledge},
+            capital_preservation_attitude = #{capitalPreservationAttitude},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+            AND member_id = #{memberId}
+    </update>
+
+    <delete id="deleteInvestmentExperiences">
+        DELETE FROM personal_survey_investment_experience
+        WHERE personal_survey_id = #{personalSurveyId}
+    </delete>
 
     <insert id="insertInvestmentExperiences">
         INSERT INTO personal_survey_investment_experience (
