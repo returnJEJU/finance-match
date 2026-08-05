@@ -2,10 +2,11 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
-import { ChevronLeft, LoaderCircle } from 'lucide-vue-next'
+import { LoaderCircle } from 'lucide-vue-next'
 
 import { savePersonalSurvey } from '@/api/personalSurvey'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import FunnelHeader from '@/components/layout/FunnelHeader.vue'
 import characterExcited from '@/assets/images/characters/character-excited.png'
 
 const router = useRouter()
@@ -151,10 +152,6 @@ const completedQuestionCount = computed(
   () => questionCompletion.value.filter((isCompleted) => isCompleted).length,
 )
 
-const progressLabel = computed(
-  () => `${String(completedQuestionCount.value).padStart(2, '0')} / 06`,
-)
-
 const isFormValid = computed(() => completedQuestionCount.value === questionCompletion.value.length)
 
 const saveSurveyMutation = useMutation({
@@ -225,10 +222,6 @@ function toggleInvestmentExperience(value) {
   investmentExperiences.value = [...investmentExperiences.value, value]
 }
 
-function goBack() {
-  router.back()
-}
-
 function submitSurvey() {
   if (isSubmitting.value) return
 
@@ -250,35 +243,13 @@ function submitSurvey() {
 
 <template>
   <section class="mx-auto flex min-h-screen flex-col bg-canvas px-5 pb-7">
-    <div class="sticky top-0 z-30 -mx-5 bg-canvas px-5 pt-3 pb-4">
-      <header class="flex flex-none items-center">
-        <button
-          type="button"
-          class="relative z-10 flex h-8 w-8 cursor-pointer items-center justify-start"
-          aria-label="뒤로 가기"
-          @click="goBack"
-        >
-          <ChevronLeft :size="20" :stroke-width="2" />
-        </button>
-
-        <h1 class="-ml-8 flex-1 text-center text-[20px] font-semibold text-ink">개인 설문</h1>
-      </header>
-
-      <div class="mt-8">
-        <span class="text-brand-ink text-[16px] font-extrabold">
-          {{ progressLabel }}
-        </span>
-
-        <div class="mt-2 grid h-1.5 grid-cols-6 gap-1">
-          <div
-            v-for="(_, index) in questionCompletion"
-            :key="index"
-            class="h-full rounded-full transition-colors"
-            :class="index < completedQuestionCount ? 'bg-brand-deep' : 'bg-line-card'"
-          ></div>
-        </div>
-      </div>
-    </div>
+    <FunnelHeader
+      :step="completedQuestionCount"
+      :total="questionCompletion.length"
+      title="개인 설문"
+      padding-class="px-5"
+      class="-mx-5"
+    />
 
     <main class="mt-1 flex-1">
       <div class="rounded-field flex items-center gap-4 bg-brand px-4 py-4">
