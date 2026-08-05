@@ -172,7 +172,7 @@ const toggleFavorite = () => {
       </div>
 
       <div class="min-w-0 flex-1">
-        <div class="flex items-center gap-2">
+        <div class="flex items-start gap-2">
           <h3 class="min-w-0 flex-1 text-[18px] leading-6 font-bold text-ink">
             {{ product.productName }}
           </h3>
@@ -195,10 +195,10 @@ const toggleFavorite = () => {
 
           <div
             v-else-if="slotType === 'INVESTMENT' && product.riskLabel"
-            class="flex w-16 shrink-0 justify-center"
+            class="flex w-[72px] translate-x-2 shrink-0 justify-center pt-0.5"
           >
             <span
-              class="rounded-md border px-2 py-0.5 text-center text-[12px] font-semibold"
+              class="whitespace-nowrap rounded-md border px-2 py-0.5 text-center text-[12px] font-semibold"
               :class="riskBadgeClass"
             >
               {{ product.riskLabel }}
@@ -207,14 +207,17 @@ const toggleFavorite = () => {
 
           <span
             v-else-if="product.comparisonValue"
-            class="min-w-16 shrink-0 text-center text-[15px] leading-5 font-bold text-ink"
+            class="w-[72px] translate-x-2 shrink-0 pt-0.5 text-center text-[15px] leading-5 font-bold text-ink"
           >
             {{ product.comparisonValue }}
           </span>
 
-          <div v-else-if="product.riskLabel" class="flex w-16 shrink-0 justify-center">
+          <div
+            v-else-if="product.riskLabel"
+            class="flex w-[72px] translate-x-2 shrink-0 justify-center pt-0.5"
+          >
             <span
-              class="rounded-md border px-2 py-0.5 text-center text-[12px] font-semibold"
+              class="whitespace-nowrap rounded-md border px-2 py-0.5 text-center text-[12px] font-semibold"
               :class="riskBadgeClass"
             >
               {{ product.riskLabel }}
