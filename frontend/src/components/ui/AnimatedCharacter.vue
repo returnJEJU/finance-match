@@ -7,11 +7,14 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import gsap from 'gsap'
 
-defineProps({
+const props = defineProps({
   src: { type: String, required: true },
   alt: { type: String, default: '' },
   // 이미지 자체 크기·object-fit 등. 컨테이너(위치·배경 원 등)는 호출부에서 감싸 쓴다.
   imgClass: { type: String, default: '' },
+  // idle 루프 시작을 이만큼(초) 늦춘다. 캐릭터 두 개를 나란히 쓸 때 서로 다른 값을 주면 똑같은
+  // 박자로 동시에 떠다니지 않고 살짝 엇갈려 움직인다.
+  delay: { type: Number, default: 0 },
 })
 
 const el = ref(null)
@@ -24,7 +27,7 @@ onMounted(() => {
   if (prefersReducedMotion) return
 
   ctx = gsap.context(() => {
-    const timeline = gsap.timeline()
+    const timeline = gsap.timeline({ delay: props.delay })
 
     // 등장: 아래서 위로 올라오며 튕김
     timeline.from(el.value, {
