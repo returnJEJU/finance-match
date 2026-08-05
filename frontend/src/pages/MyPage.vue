@@ -1047,7 +1047,7 @@ const confirmWithdraw = async () => {
         <X :size="21" :stroke-width="1.8" />
       </button>
 
-      <h2 class="text-center text-[15px] font-bold text-gray-900">개인 투자 성향 결과</h2>
+      <h2 class="text-center text-[15px] font-bold text-gray-900">나의 금융 스타일 결과</h2>
 
       <div
         v-if="isPersonalSurveyResultLoading"
@@ -1080,15 +1080,13 @@ const confirmWithdraw = async () => {
             {{ personalSurveyResult.name }}님의 금융 스타일은
           </p>
 
-          <p class="mt-2 flex flex-wrap items-baseline justify-center gap-2 tracking-[-1px]">
+          <p class="mt-2 flex flex-wrap items-baseline justify-center tracking-[-1px]">
             <strong
               class="text-[38px] leading-[1.2] font-extrabold"
               :class="personalSurveyResultMeta.accentClass"
             >
               {{ personalSurveyResult.investmentType }}
             </strong>
-
-            <span class="text-[22px] font-medium">입니다.</span>
           </p>
         </div>
 
@@ -1122,7 +1120,7 @@ const confirmWithdraw = async () => {
           </div>
 
           <div
-            class="mt-4 min-h-0 flex-1 overflow-y-auto pr-2 text-[13px] leading-[1.9] text-gray-600"
+            class="mt-4 min-h-0 flex-1 overflow-y-auto pr-2 text-[16px] leading-[1.8] text-gray-600"
           >
             <p>{{ personalSurveyResult.description }}</p>
           </div>
