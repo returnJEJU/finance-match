@@ -10,6 +10,7 @@ import com.financematch.asset.domain.PensionIsaAccount;
 import com.financematch.asset.dto.AssetAccountResponse;
 import com.financematch.asset.dto.AssetLinkResponse;
 import com.financematch.asset.dto.AssetSummaryResponse;
+import com.financematch.asset.mapper.AssetLinkRow;
 import com.financematch.asset.mapper.AssetMapper;
 import com.financematch.common.ErrorCode;
 import com.financematch.exception.ApiException;
@@ -30,6 +31,28 @@ public class AssetService {
 
     private final AssetMapper assetMapper;
     private final MyDataProvider myDataProvider;
+
+    @Transactional(readOnly = true)
+    public AssetLinkResponse getAssets(Long memberId) {
+        validateMemberId(memberId);
+
+        AssetLinkRow linkedAsset = assetMapper.findLinkByMemberId(memberId);
+        if (linkedAsset == null) {
+            throw new ApiException(ErrorCode.ASSET_NOT_LINKED);
+        }
+
+        MyDataSnapshot snapshot = fetch(memberId);
+        EnumMap<AssetCategory, BigDecimal> amountByCategory = amountByCategory(snapshot);
+        MyDataPensionIsa source = snapshot.pensionIsa();
+
+        return new AssetLinkResponse(
+                linkedAsset.getFinancialAsset(),
+                linkedAsset.getTotalDebt(),
+                assetCount(snapshot),
+                summaryList(amountByCategory),
+                accountResponse(source),
+                linkedAsset.getLinkedAt());
+    }
 
     @Transactional
     public AssetLinkResponse link(Long memberId) {
@@ -87,14 +110,7 @@ public class AssetService {
     }
 
     private AggregatedMyData aggregate(Long memberId, MyDataSnapshot snapshot) {
-        EnumMap<AssetCategory, BigDecimal> amountByCategory =
-                new EnumMap<>(AssetCategory.class);
-        for (AssetCategory category : AssetCategory.values()) {
-            amountByCategory.put(category, BigDecimal.ZERO);
-        }
-        for (MyDataAsset asset : snapshot.assets()) {
-            amountByCategory.merge(asset.category(), asset.balance(), BigDecimal::add);
-        }
+        EnumMap<AssetCategory, BigDecimal> amountByCategory = amountByCategory(snapshot);
 
         BigDecimal totalAsset =
                 amountByCategory.values().stream()
@@ -140,26 +156,29 @@ public class AssetService {
                         .linkedAt(snapshot.fetchedAt())
                         .build();
 
-        List<AssetSummaryResponse> summary =
-                List.of(
-                        summary(AssetCategory.BANK_CHECKING, amountByCategory),
-                        summary(AssetCategory.BANK_SAVINGS, amountByCategory),
-                        summary(AssetCategory.SECURITIES, amountByCategory),
-                        summary(AssetCategory.INSURANCE, amountByCategory));
-
         AssetLinkResponse response =
                 new AssetLinkResponse(
                         totalAsset,
                         totalDebt,
-                        snapshot.assets().size() + snapshot.loans().size(),
-                        summary,
-                        new AssetAccountResponse(
-                                source.hasPensionSaving(),
-                                source.hasIrp(),
-                                source.hasIsa()),
+                        assetCount(snapshot),
+                        summaryList(amountByCategory),
+                        accountResponse(source),
                         snapshot.fetchedAt());
 
         return new AggregatedMyData(financialSummary, pensionIsaAccount, response);
+    }
+
+    private EnumMap<AssetCategory, BigDecimal> amountByCategory(MyDataSnapshot snapshot) {
+        EnumMap<AssetCategory, BigDecimal> amountByCategory =
+                new EnumMap<>(AssetCategory.class);
+        for (AssetCategory category : AssetCategory.values()) {
+            amountByCategory.put(category, BigDecimal.ZERO);
+        }
+        for (MyDataAsset asset : snapshot.assets()) {
+            amountByCategory.merge(asset.category(), asset.balance(), BigDecimal::add);
+        }
+
+        return amountByCategory;
     }
 
     private BigDecimal weightedAverageInterestRate(
@@ -181,6 +200,26 @@ public class AssetService {
             AssetCategory category,
             EnumMap<AssetCategory, BigDecimal> amountByCategory) {
         return new AssetSummaryResponse(category, amountByCategory.get(category));
+    }
+
+    private List<AssetSummaryResponse> summaryList(
+            EnumMap<AssetCategory, BigDecimal> amountByCategory) {
+        return List.of(
+                summary(AssetCategory.BANK_CHECKING, amountByCategory),
+                summary(AssetCategory.BANK_SAVINGS, amountByCategory),
+                summary(AssetCategory.SECURITIES, amountByCategory),
+                summary(AssetCategory.INSURANCE, amountByCategory));
+    }
+
+    private AssetAccountResponse accountResponse(MyDataPensionIsa source) {
+        return new AssetAccountResponse(
+                source.hasPensionSaving(),
+                source.hasIrp(),
+                source.hasIsa());
+    }
+
+    private int assetCount(MyDataSnapshot snapshot) {
+        return snapshot.assets().size() + snapshot.loans().size();
     }
 
     private void validateMemberId(Long memberId) {

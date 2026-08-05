@@ -11,10 +11,12 @@ import static org.mockito.Mockito.when;
 import com.financematch.asset.domain.FinancialSummary;
 import com.financematch.asset.domain.PensionIsaAccount;
 import com.financematch.asset.dto.AssetLinkResponse;
+import com.financematch.asset.mapper.AssetLinkRow;
 import com.financematch.asset.mapper.AssetMapper;
 import com.financematch.common.ErrorCode;
 import com.financematch.exception.ApiException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -109,6 +111,35 @@ class AssetServiceTest {
         verify(assetMapper).upsertFinancialSummary(any());
         verify(assetMapper).upsertPensionIsaAccount(any());
         assertEquals(new BigDecimal("84200000"), response.totalAsset());
+    }
+
+    @Test
+    void getsLinkedAssetsWithStoredTotalsAndLinkedAt() {
+        LocalDateTime linkedAt = LocalDateTime.of(2026, 8, 5, 10, 30);
+        AssetLinkRow stored =
+                new AssetLinkRow(
+                        new BigDecimal("84000000"),
+                        new BigDecimal("1000000"),
+                        linkedAt);
+        when(assetMapper.findLinkByMemberId(7L)).thenReturn(stored);
+
+        AssetLinkResponse response = assetService.getAssets(7L);
+
+        assertEquals(new BigDecimal("84000000"), response.totalAsset());
+        assertEquals(new BigDecimal("1000000"), response.totalDebt());
+        assertEquals(5, response.assetCount());
+        assertEquals(4, response.summary().size());
+        assertEquals(linkedAt, response.linkedAt());
+    }
+
+    @Test
+    void rejectsAssetLookupWhenMemberHasNotLinkedAssets() {
+        when(assetMapper.findLinkByMemberId(7L)).thenReturn(null);
+
+        ApiException exception =
+                assertThrows(ApiException.class, () -> assetService.getAssets(7L));
+
+        assertEquals(ErrorCode.ASSET_NOT_LINKED, exception.getErrorCode());
     }
 
     @Test

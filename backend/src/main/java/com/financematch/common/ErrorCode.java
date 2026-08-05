@@ -60,6 +60,7 @@ public enum ErrorCode {
 
     // ===== 자산 연동 =====
     ASSET_ALREADY_LINKED(HttpStatus.CONFLICT, "이미 자산 연동이 완료되었습니다."),
+    ASSET_NOT_LINKED(HttpStatus.NOT_FOUND, "자산 연동 정보가 없습니다."),
     MYDATA_LINK_FAILED(HttpStatus.BAD_GATEWAY, "마이데이터를 불러오지 못했습니다."),
 
     // ===== 추천 =====

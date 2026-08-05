@@ -1,11 +1,19 @@
 <script setup>
 // 자산 연동 완료 · 레이아웃: BlankLayout
 //
-// 금액·구성비는 연동 응답에서 그린다. 응답은 assetLinkStore 가 앞 화면에서 넘겨준다 —
-// 자산 조회 API 가 없고(연동·갱신뿐), 카테고리별 금액은 응답을 만들 때만 쪼개 주는 값이라
-// DB 에도 남지 않아서 이 화면이 스스로 다시 불러올 수 없다.
-import { computed } from 'vue'
-import { ChevronRight, CreditCard, Landmark, TrendingUp, Wallet } from 'lucide-vue-next'
+// 금액·구성비는 연동 응답에서 그린다. 같은 세션에서는 assetLinkStore 가 앞 화면에서 넘겨준
+// 응답을 쓰고, 새로고침·재진입처럼 스토어가 비어 있으면 조회 API 로 다시 채운다.
+import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import {
+  ChevronRight,
+  CreditCard,
+  Landmark,
+  LoaderCircle,
+  TrendingUp,
+  Wallet,
+} from 'lucide-vue-next'
+import { getLinkedAssets } from '@/api/asset'
 import { useAssetLinkStore } from '@/stores/assetLink'
 import logoWordmark from '@/assets/images/logo/logo-wordmark.png'
 import characterExcited from '@/assets/images/characters/character-excited.png'
@@ -47,12 +55,34 @@ const ASSET_ROWS = [
   },
 ]
 
+const router = useRouter()
 const assetLinkStore = useAssetLinkStore()
-
-// 스토어가 빈 채로 들어오는 경우는 라우터의 beforeEnter 가 막는다.
-// 화면이 뜬 뒤(onMounted)에 이동을 걸면 진행 중인 내비게이션과 충돌해 주소만 바뀐다.
+const isLoading = ref(!assetLinkStore.hasResult)
+const loadError = ref('')
 
 const result = computed(() => assetLinkStore.result)
+
+async function loadLinkedAssets() {
+  if (assetLinkStore.hasResult) return
+
+  isLoading.value = true
+  loadError.value = ''
+
+  try {
+    const linkedAssets = await getLinkedAssets()
+    assetLinkStore.setResult(linkedAssets)
+  } catch (error) {
+    if (error?.code === 'ASSET_NOT_LINKED') {
+      router.replace({ name: 'signup-asset' })
+      return
+    }
+    loadError.value = error?.message || '자산 연동 결과를 불러오지 못했어요.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(loadLinkedAssets)
 
 const won = (amount) => `${Number(amount).toLocaleString('ko-KR')}원`
 
@@ -105,7 +135,21 @@ const items = computed(() => [
       <img :src="logoWordmark" alt="찰떡귱합" class="w-24" />
     </div>
 
-    <div class="flex flex-1 flex-col px-7">
+    <div v-if="isLoading" class="flex flex-1 flex-col items-center justify-center px-7 text-center">
+      <LoaderCircle class="text-brand-deep h-8 w-8 animate-spin" />
+      <p class="text-muted mt-4 text-[14px] leading-[1.6]">자산 연동 결과를 불러오고 있어요</p>
+    </div>
+
+    <div
+      v-else-if="loadError"
+      class="flex flex-1 flex-col items-center justify-center px-7 text-center"
+    >
+      <p class="text-[16px] leading-[1.6] font-bold text-ink">자산 연동 결과를 불러오지 못했어요</p>
+      <p class="text-muted mt-2 text-[13px] leading-[1.6]">{{ loadError }}</p>
+      <BaseButton class="mt-6 w-full" @click="loadLinkedAssets">다시 시도하기</BaseButton>
+    </div>
+
+    <div v-else class="flex flex-1 flex-col px-7">
       <!-- 이미지가 정사각형인데 그림은 그 안을 다 채우지 않는다(위 약 8%·아래 약 14%가 투명).
            mt 를 줄이는 것만으로는 안 좁혀져서, 그 빈 자리만큼 음수 마진으로 당긴다. -->
       <img :src="characterExcited" alt="" class="mt-1 -mb-2 w-[136px] self-center" />
@@ -182,7 +226,7 @@ const items = computed(() => [
       <div class="flex-1"></div>
     </div>
 
-    <div class="flex flex-none flex-col px-7 pb-7">
+    <div v-if="!isLoading && !loadError" class="flex flex-none flex-col px-7 pb-7">
       <!--
         여기가 회원가입 퍼널의 끝이다. 다음은 로그인으로 보낸다 — 어느 화면으로 갈지 정하는 재료
         (isFirstLogin·progress)가 로그인 응답에만 있어서, 로그인을 거쳐야 첫 로그인으로 인식되어

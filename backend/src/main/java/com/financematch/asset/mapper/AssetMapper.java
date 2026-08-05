@@ -9,6 +9,8 @@ public interface AssetMapper {
 
     boolean existsByMemberId(Long memberId);
 
+    AssetLinkRow findLinkByMemberId(Long memberId);
+
     int insertFinancialSummary(FinancialSummary financialSummary);
 
     int insertPensionIsaAccount(PensionIsaAccount pensionIsaAccount);
