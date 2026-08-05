@@ -492,7 +492,7 @@ const toggleCard = (key) => {
               <p class="text-[16px] leading-[1.6] text-ink-sub">{{ axis.reason }}</p>
 
               <!-- 목표 달성 가능성 카드 전용: 초과/부족 진행 현황 -->
-              <div v-if="axis.key === 'GOAL_FEASIBILITY' && goalProgress" class="mt-3">
+              <div v-if="axis.key === 'GOAL_FEASIBILITY' && goalProgress" class="mt-5">
                 <p
                   class="text-[12px] font-medium"
                   :class="goalProgress.achieved ? 'text-good' : 'text-warn'"
