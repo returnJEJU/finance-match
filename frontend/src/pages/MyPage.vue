@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { getCurrentMember } from '@/api/auth'
 import { disconnectCouple, getCoupleProfileMessage, updateCoupleProfileMessage } from '@/api/couple'
 import { getPersonalSurveyResult } from '@/api/personalSurvey'
+import RecommendationProductCard from '@/components/recommendation/RecommendationProductCard.vue'
 import { investmentTypeMeta } from '@/constants/investmentTypeMeta'
 import { useAuthStore } from '@/stores/auth'
 
@@ -507,45 +508,45 @@ const submitSurveyRefreshForm = () => {
 }
 
 // ========================================
-// 찜한 상품 바텀시트
+// 관심 상품 바텀시트
 // ========================================
 
-const isFavoriteSheetOpen = ref(false)
+const isInterestProductSheetOpen = ref(false)
 
-const favoriteProducts = ref([
+const interestProducts = ref([
   {
-    id: 1,
-    name: '글로벌 테크 TOP10 ETF',
-    risk: '초고위험',
-    riskClass: 'bg-red-100 text-red-500',
-    description: '우상향하는 미국 빅테크 기업 집중 투자',
-    tags: ['ETF', '해외주식'],
+    productId: 1,
+    productName: 'KB국민은행 일임형 ISA',
+    description: '일임형 ISA',
+    productUrl: 'https://www.kbstar.com/',
+    slotType: 'TAX_SAVING',
+    accountType: 'ISA',
   },
   {
-    id: 2,
-    name: '미국 배당 귀족주 포트폴리오',
-    risk: '위험중립형',
-    riskClass: 'bg-sky-100 text-sky-500',
-    description: '분기별 안정적인 배당 수익 확보',
-    tags: ['펀드', '해외주식'],
+    productId: 2,
+    productName: 'KB증권 중개형 ISA',
+    description: '직접운용 ISA',
+    productUrl: 'https://www.kbsec.com/',
+    slotType: 'TAX_SAVING',
+    accountType: 'ISA',
   },
   {
-    id: 3,
-    name: '친환경 신재생 에너지 펀드',
-    risk: '적극투자형',
-    riskClass: 'bg-orange-100 text-orange-500',
-    description: '미래 성장을 주도할 그린 에너지 투자',
-    tags: ['펀드', '테마주식'],
+    productId: 3,
+    productName: 'KB증권 개인연금저축',
+    description: '연금저축계좌',
+    productUrl: 'https://www.kbsec.com/',
+    slotType: 'TAX_SAVING',
+    accountType: 'PENSION_SAVINGS',
   },
 ])
 
-const openFavoriteSheet = () => {
+const openInterestProductSheet = () => {
   sheetDragY.value = 0
-  isFavoriteSheetOpen.value = true
+  isInterestProductSheetOpen.value = true
 }
 
-const closeFavoriteSheet = () => {
-  isFavoriteSheetOpen.value = false
+const closeInterestProductSheet = () => {
+  isInterestProductSheetOpen.value = false
   sheetDragY.value = 0
 }
 
@@ -584,7 +585,7 @@ const endSheetDrag = () => {
     sheetDragY.value = window.innerHeight
 
     setTimeout(() => {
-      isFavoriteSheetOpen.value = false
+      isInterestProductSheetOpen.value = false
       sheetDragY.value = 0
     }, 250)
 
@@ -883,16 +884,16 @@ const confirmWithdraw = async () => {
 
       <div
         class="flex cursor-pointer items-center rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm transition hover:bg-gray-50"
-        @click="openFavoriteSheet"
+        @click="openInterestProductSheet"
       >
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
           <Heart :size="20" :stroke-width="1.8" class="text-pink-400" />
         </div>
 
         <div class="ml-3 flex-1">
-          <p class="text-[18px] font-bold text-gray-900">찜한 상품</p>
+          <p class="text-[18px] font-bold text-gray-900">관심 상품</p>
 
-          <p class="mt-0.5 text-[13px] text-gray-500">찜한 목록으로 이동합니다</p>
+          <p class="mt-0.5 text-[13px] text-gray-500">관심 상품 목록으로 이동합니다</p>
         </div>
 
         <ChevronRight :size="18" :stroke-width="1.8" class="text-[#b8b18a]" />
@@ -1604,12 +1605,12 @@ const confirmWithdraw = async () => {
   </div>
 
   <!-- ======================================== -->
-  <!-- 찜한 상품 바텀시트 -->
+  <!-- 관심 상품 바텀시트 -->
   <!-- ======================================== -->
   <div
-    v-if="isFavoriteSheetOpen"
+    v-if="isInterestProductSheetOpen"
     class="fixed inset-0 z-[100] bg-black/40"
-    @click.self="closeFavoriteSheet"
+    @click.self="closeInterestProductSheet"
   >
     <div
       class="absolute bottom-0 left-1/2 max-h-[82vh] w-full max-w-[430px] overflow-y-auto rounded-t-[28px] bg-white px-5 pb-8 pt-3 shadow-2xl"
@@ -1631,15 +1632,15 @@ const confirmWithdraw = async () => {
       <!-- 헤더 -->
       <div class="mt-5 flex items-start justify-between">
         <div>
-          <h2 class="text-[22px] font-bold text-gray-900">찜한 상품</h2>
+          <h2 class="text-[22px] font-bold text-gray-900">관심 상품</h2>
 
-          <p class="mt-2 text-[12px] text-gray-500">찜한 상품을 확인하고 비교해 보세요.</p>
+          <p class="mt-2 text-[12px] text-gray-500">관심 상품을 확인하고 비교해 보세요.</p>
         </div>
 
         <button
           type="button"
           class="flex h-8 w-8 cursor-pointer items-center justify-center text-gray-600"
-          @click="closeFavoriteSheet"
+          @click="closeInterestProductSheet"
         >
           <X :size="24" :stroke-width="2" />
         </button>
@@ -1647,51 +1648,14 @@ const confirmWithdraw = async () => {
 
       <!-- 상품 목록 -->
       <div class="mt-6 space-y-4">
-        <div
-          v-for="product in favoriteProducts"
-          :key="product.id"
-          class="flex items-center rounded-2xl border border-gray-200 bg-white px-5 py-5 shadow-sm"
-        >
-          <!-- 상품 정보 -->
-          <div class="min-w-0 flex-1">
-            <!-- 상품명 -->
-            <h3 class="text-[14px] font-bold leading-[1.4] text-gray-900">
-              {{ product.name }}
-            </h3>
-
-            <!-- 위험 등급 -->
-            <span
-              class="mt-1.5 inline-block rounded px-2 py-0.5 text-[13px] font-medium"
-              :class="product.riskClass"
-            >
-              {{ product.risk }}
-            </span>
-
-            <!-- 설명 -->
-            <p class="mt-1.5 text-[13px] leading-[1.5] text-gray-500">
-              {{ product.description }}
-            </p>
-
-            <!-- 태그 -->
-            <div class="mt-2 flex gap-2">
-              <span
-                v-for="tag in product.tags"
-                :key="tag"
-                class="rounded bg-gray-100 px-2 py-1 text-[13px] text-gray-500"
-              >
-                {{ tag }}
-              </span>
-            </div>
-          </div>
-
-          <!-- 찜 하트 -->
-          <button
-            type="button"
-            class="ml-4 flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center"
-          >
-            <Heart :size="23" :stroke-width="1.8" fill="currentColor" class="text-pink-400" />
-          </button>
-        </div>
+        <RecommendationProductCard
+          v-for="product in interestProducts"
+          :key="product.productId"
+          :product="product"
+          :slot-type="product.slotType"
+          :favorite-state="true"
+          compact
+        />
       </div>
     </div>
   </div>
