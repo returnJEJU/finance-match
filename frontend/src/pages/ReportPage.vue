@@ -12,41 +12,38 @@ import {
 
 import { getReport } from '@/api/report'
 import AnimatedCharacter from '@/components/ui/AnimatedCharacter.vue'
+import { investmentTypeMeta as investmentTypeMetaByLabel } from '@/constants/investmentTypeMeta'
+import { abbreviateKoreanName } from '@/utils/koreanName'
 
-import typeStable from '@/assets/images/characters/types/type-stable.png'
-import typeStabilitySeeking from '@/assets/images/characters/types/type-stability-seeking.png'
-import typeRiskNeutral from '@/assets/images/characters/types/type-risk-neutral.png'
-import typeActive from '@/assets/images/characters/types/type-active.png'
-import typeAggressive from '@/assets/images/characters/types/type-aggressive.png'
+// 백엔드(PersonalInvestmentType) enum 코드 → 한글 라벨. investmentTypeMetaByLabel(공용 상수)이
+// 한글 라벨을 키로 쓰기 때문에 다리 역할이 필요하다. 캐릭터 이미지·accentClass는 이제 그 공용
+// 상수 하나로만 관리되어, 색이 바뀌어도 SurveyResultPage.vue와 여기 둘 다 자동으로 맞는다.
+//
+// TEMP: description 은 백엔드에 아직 "확정 후 수정" 임시 문구뿐이고, 이 리포트 API는 애초에
+// 본인 것만 조회 가능해 파트너 설명을 못 받아온다 — 실제 문구 나오면 교체.
+const INVESTMENT_TYPE_DESCRIPTIONS = {
+  STABLE: '안정성과 예측 가능한 관리를 가장 중요하게 생각해요.',
+  STABLE_SEEKING: '안정성을 우선하면서도 약간의 위험은 감수해 꾸준히 자산을 불려가요.',
+  NEUTRAL: '안정과 수익 사이에서 균형을 유연하게 고려해요.',
+  AGGRESSIVE: '높은 수익을 위해 어느 정도의 위험은 감수하고 적극적으로 기회를 활용해요.',
+  VERY_AGGRESSIVE: '높은 위험을 감수하더라도 최대한의 수익을 추구하는 걸 선호해요.',
+}
 
-// TEMP: description 은 백엔드(PersonalInvestmentType)에 아직 "확정 후 수정" 임시 문구뿐이고,
-// 이 리포트 API는 애초에 본인 것만 조회 가능해 파트너 설명을 못 받아온다 — 실제 문구 나오면 교체.
-const investmentTypeMeta = {
-  STABLE: {
-    label: '든든지킴형',
-    character: typeStable,
-    description: '안정성과 예측 가능한 관리를 가장 중요하게 생각해요.',
-  },
-  STABLE_SEEKING: {
-    label: '차곡성장형',
-    character: typeStabilitySeeking,
-    description: '안정성을 우선하면서도 약간의 위험은 감수해 꾸준히 자산을 불려가요.',
-  },
-  NEUTRAL: {
-    label: '균형설계형',
-    character: typeRiskNeutral,
-    description: '안정과 수익 사이에서 균형을 유연하게 고려해요.',
-  },
-  AGGRESSIVE: {
-    label: '적극성장형',
-    character: typeActive,
-    description: '높은 수익을 위해 어느 정도의 위험은 감수하고 적극적으로 기회를 활용해요.',
-  },
-  VERY_AGGRESSIVE: {
-    label: '과감도전형',
-    character: typeAggressive,
-    description: '높은 위험을 감수하더라도 최대한의 수익을 추구하는 걸 선호해요.',
-  },
+const INVESTMENT_TYPE_LABELS = {
+  STABLE: '든든지킴형',
+  STABLE_SEEKING: '차곡성장형',
+  NEUTRAL: '균형설계형',
+  AGGRESSIVE: '적극성장형',
+  VERY_AGGRESSIVE: '과감도전형',
+}
+
+function investmentTypeMetaFor(code) {
+  const label = INVESTMENT_TYPE_LABELS[code]
+  return {
+    label,
+    description: INVESTMENT_TYPE_DESCRIPTIONS[code],
+    ...investmentTypeMetaByLabel[label],
+  }
 }
 
 // 커플 공통 성향(investmentProfile.we)은 개인 성향과 다른 값이다 — 두 사람의 개인 성향 단계
@@ -116,11 +113,21 @@ const coupleTypeDescription = computed(
 
 const me = computed(() => ({
   name: report.value.name,
-  ...investmentTypeMeta[report.value.investmentProfile.me],
+  ...investmentTypeMetaFor(report.value.investmentProfile.me),
 }))
 const partner = computed(() => ({
   name: report.value.partnerName,
-  ...investmentTypeMeta[report.value.investmentProfile.you],
+  ...investmentTypeMetaFor(report.value.investmentProfile.you),
+}))
+
+// "OOOO형" 글자색 — 반으로 딱 잘리지 않고 나(왼쪽 위) 색에서 파트너(오른쪽 아래) 색으로 자연스럽게
+// 이어지는 대각선 그라데이션. accentClass는 'text-[#RRGGBB]' 형태라 그 안의 hex만 뽑아 쓴다.
+const accentColorOf = (person) => person?.accentClass?.match(/#[0-9a-fA-F]{3,6}/)?.[0] ?? '#333333'
+const coupleTypeGradientStyle = computed(() => ({
+  backgroundImage: `linear-gradient(135deg, ${accentColorOf(me.value)}, ${accentColorOf(partner.value)})`,
+  WebkitBackgroundClip: 'text',
+  backgroundClip: 'text',
+  color: 'transparent',
 }))
 
 // 슬라이더 위치(%) — 안정형(0%) ~ 공격투자형(100%) 5단계 중 개인 성향의 인덱스로 계산.
@@ -141,6 +148,16 @@ const lowerPerson = computed(() => (isMeLower.value ? me.value : partner.value))
 const higherPerson = computed(() => (isMeLower.value ? partner.value : me.value))
 const lowerPosition = computed(() => Math.min(mePosition.value, partnerPosition.value))
 const higherPosition = computed(() => Math.max(mePosition.value, partnerPosition.value))
+
+// 두 사람 성향이 같으면 노브 위치도 같아져, 나중에 그려지는(도전 쪽) 노브가 다른 노브를 완전히
+// 가려버려서 안쪽 노브는 호버가 아예 안 먹힌다. 겹칠 때만 양옆으로 살짝 벌려 둘 다 호버 가능하게 한다.
+const isOverlapping = computed(() => lowerPosition.value === higherPosition.value)
+const lowerKnobLeft = computed(() =>
+  isOverlapping.value ? `calc(${lowerPosition.value}% - 6px)` : `${lowerPosition.value}%`,
+)
+const higherKnobLeft = computed(() =>
+  isOverlapping.value ? `calc(${higherPosition.value}% + 6px)` : `${higherPosition.value}%`,
+)
 
 // 캐릭터·커플 성향 라벨을 클릭하면 그 설명을 보여준다. 'me' | 'partner' | 'couple' | null —
 // 하나만 열려있다. 모바일에선 hover 가 안 먹히니 클릭으로 여닫는다. 같은 걸 다시 누르면 닫힌다.
@@ -223,15 +240,15 @@ const toggleCard = (key) => {
     <template v-else>
       <!-- 커플 성향 히어로 -->
       <div ref="coupleDescriptionRef" class="relative text-center">
-        <p class="text-[14px] font-medium text-ink-sub">우리 커플의 금융 스타일은</p>
+        <p class="text-[16px] font-medium text-ink-sub">우리 커플의 금융 스타일은</p>
         <button
           type="button"
-          class="mt-1 cursor-pointer text-[30px] font-extrabold"
+          class="mt-1 cursor-pointer text-[40px] font-extrabold"
           :aria-expanded="openDescription === 'couple'"
           @click="toggleDescription('couple')"
         >
-          <span class="text-good">{{ coupleTypeLabel }}</span>
-          <span class="text-ink">입니다.</span>
+          <span :style="coupleTypeGradientStyle">{{ coupleTypeLabel }}</span>
+          <span class="text-ink"></span>
         </button>
         <div
           v-if="openDescription === 'couple'"
@@ -248,14 +265,16 @@ const toggleCard = (key) => {
 
       <div class="mt-6 flex items-center justify-between px-2">
         <p class="text-[16px] text-ink-sub">
-          {{ me.name }}님은 <span class="font-semibold text-ink">{{ me.label }}</span>
+          {{ abbreviateKoreanName(me.name) }}님은
+          <span class="font-semibold" :class="me.accentClass">{{ me.label }}</span>
         </p>
         <p class="text-[16px] text-ink-sub">
-          {{ partner.name }}님은 <span class="font-semibold text-ink">{{ partner.label }}</span>
+          {{ abbreviateKoreanName(partner.name) }}님은
+          <span class="font-semibold" :class="partner.accentClass">{{ partner.label }}</span>
         </p>
       </div>
 
-      <div class="mt-2 flex items-center justify-center gap-4">
+      <div class="mt-2 flex items-center justify-center gap-2">
         <div ref="meDescriptionRef" class="relative">
           <button
             type="button"
@@ -266,7 +285,7 @@ const toggleCard = (key) => {
             <AnimatedCharacter
               :src="me.character"
               :alt="me.label"
-              img-class="h-32 w-32 object-contain"
+              img-class="h-36 w-36 object-contain"
             />
           </button>
           <div
@@ -376,7 +395,8 @@ const toggleCard = (key) => {
             <AnimatedCharacter
               :src="partner.character"
               :alt="partner.label"
-              img-class="h-32 w-32 object-contain"
+              :delay="1"
+              img-class="h-36 w-36 object-contain"
             />
           </button>
           <div
@@ -397,8 +417,8 @@ const toggleCard = (key) => {
            각각 점을 찍고, 호버하면 이름·성향이 뜬다 -->
       <div class="mt-7 mx-auto w-64">
         <div class="flex items-center justify-between">
-          <span class="text-[14px] font-bold text-ink">안정</span>
-          <span class="text-[14px] font-bold text-ink">도전</span>
+          <span class="text-[16px] font-bold text-ink">안정</span>
+          <span class="text-[16px] font-bold text-ink">도전</span>
         </div>
         <div class="relative mt-3 h-1.5 rounded-full bg-line-card">
           <div
@@ -412,7 +432,7 @@ const toggleCard = (key) => {
           <span
             class="group absolute top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full border-[3px] border-[#3fc9ae] bg-[#bff5ea]"
             style="box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18)"
-            :style="{ left: `${lowerPosition}%` }"
+            :style="{ left: lowerKnobLeft }"
           >
             <span
               class="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100"
@@ -423,7 +443,7 @@ const toggleCard = (key) => {
           <span
             class="group absolute top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full border-[3px] border-[#e0c400] bg-[#fff9b3]"
             style="box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18)"
-            :style="{ left: `${higherPosition}%` }"
+            :style="{ left: higherKnobLeft }"
           >
             <span
               class="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100"
@@ -436,8 +456,8 @@ const toggleCard = (key) => {
 
       <!-- 점수 상세 분석 -->
       <div class="mt-8">
-        <h2 class="text-[16px] font-bold text-ink">점수 상세 분석</h2>
-        <p class="mt-1 text-[12px] text-muted">항목을 눌러 각 점수의 근거를 확인하세요.</p>
+        <h2 class="text-[18px] font-bold text-ink">점수 상세 분석</h2>
+        <p class="mt-1 text-[12px] text-muted">각 점수의 근거를 확인하세요.</p>
 
         <div class="mt-4 space-y-3">
           <div
@@ -457,7 +477,7 @@ const toggleCard = (key) => {
                 >
                   <component :is="scoreIconMeta[axis.key]?.icon" :size="19" :stroke-width="2" />
                 </span>
-                <span class="text-[16px] font-bold text-ink">{{ axis.name }}</span>
+                <span class="text-[18px] font-bold text-ink">{{ axis.name }}</span>
               </span>
               <span class="flex items-center gap-1.5">
                 <span class="text-[15px] font-bold text-good"
@@ -469,10 +489,10 @@ const toggleCard = (key) => {
             </button>
 
             <div v-if="isOpen(axis.key)" class="mt-3">
-              <p class="text-[14px] leading-[1.6] text-ink-sub">{{ axis.reason }}</p>
+              <p class="text-[16px] leading-[1.6] text-ink-sub">{{ axis.reason }}</p>
 
               <!-- 목표 달성 가능성 카드 전용: 초과/부족 진행 현황 -->
-              <div v-if="axis.key === 'GOAL_FEASIBILITY' && goalProgress" class="mt-3">
+              <div v-if="axis.key === 'GOAL_FEASIBILITY' && goalProgress" class="mt-5">
                 <p
                   class="text-[12px] font-medium"
                   :class="goalProgress.achieved ? 'text-good' : 'text-warn'"
@@ -486,7 +506,9 @@ const toggleCard = (key) => {
                   {{ goalProgress.amountLabel }}
                 </p>
 
-                <div class="relative mt-3 h-10 overflow-hidden rounded-full bg-line-card">
+                <div
+                  class="relative mt-3 h-10 w-4/5 mx-auto overflow-hidden rounded-full bg-line-card"
+                >
                   <div
                     class="absolute inset-y-0 left-0 rounded-full"
                     :class="goalProgress.achieved ? 'bg-good' : 'bg-warn'"
@@ -516,7 +538,7 @@ const toggleCard = (key) => {
                       class="mt-1 text-[16px] font-bold"
                       :class="goalProgress.achieved ? 'text-good' : 'text-warn'"
                     >
-                      {{ goalProgress.achievementRate }}
+                      {{ goalProgress.achieved ? '100%' : goalProgress.achievementRate }}
                     </p>
                   </div>
                 </div>
