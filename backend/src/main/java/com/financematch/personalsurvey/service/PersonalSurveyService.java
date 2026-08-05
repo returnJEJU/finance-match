@@ -36,11 +36,6 @@ public class PersonalSurveyService {
             throw new ApiException(ErrorCode.NOT_FOUND);
         }
 
-        if (personalSurveyMapper.existsPersonalSurveyByMemberId(memberId)) {
-            // TODO: 개인 설문 수정 기능 추가한다면 예외 대신 기존 설문 및 투자성향을 갱신
-            throw new ApiException(ErrorCode.PERSONAL_SURVEY_ALREADY_EXISTS);
-        }
-
         PersonalSurveyCalculationContext context = personalSurveyMapper.findCalculationContext(memberId);
         if (context == null) {
             throw new ApiException(ErrorCode.COMMON_SURVEY_NOT_FOUND);
@@ -62,9 +57,19 @@ public class PersonalSurveyService {
 
         PersonalSurvey personalSurvey = PersonalSurvey.of(memberId, request);
 
-        int surveyInserted = personalSurveyMapper.insertPersonalSurvey(personalSurvey);
-        if (surveyInserted != 1 || personalSurvey.getId() == null) {
-            throw new ApiException(ErrorCode.INTERNAL_ERROR);
+        Long personalSurveyId = personalSurveyMapper.findPersonalSurveyIdByMemberId(memberId);
+        if (personalSurveyId == null) {
+            int surveyInserted = personalSurveyMapper.insertPersonalSurvey(personalSurvey);
+            if (surveyInserted != 1 || personalSurvey.getId() == null) {
+                throw new ApiException(ErrorCode.INTERNAL_ERROR);
+            }
+        } else {
+            personalSurvey.setId(personalSurveyId);
+            int surveyUpdated = personalSurveyMapper.updatePersonalSurvey(personalSurvey);
+            if (surveyUpdated != 1) {
+                throw new ApiException(ErrorCode.INTERNAL_ERROR);
+            }
+            personalSurveyMapper.deleteInvestmentExperiences(personalSurveyId);
         }
 
         int experiencesInserted = personalSurveyMapper.insertInvestmentExperiences(

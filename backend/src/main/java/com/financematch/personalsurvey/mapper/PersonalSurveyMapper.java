@@ -11,11 +11,15 @@ public interface PersonalSurveyMapper {
 
     Long lockActiveMemberById(@Param("memberId") Long memberId);
 
-    boolean existsPersonalSurveyByMemberId(@Param("memberId") Long memberId);
+    Long findPersonalSurveyIdByMemberId(@Param("memberId") Long memberId);
 
     PersonalSurveyCalculationContext findCalculationContext(@Param("memberId") Long memberId);
 
     int insertPersonalSurvey(PersonalSurvey personalSurvey);
+
+    int updatePersonalSurvey(PersonalSurvey personalSurvey);
+
+    int deleteInvestmentExperiences(@Param("personalSurveyId") Long personalSurveyId);
 
     int insertInvestmentExperiences(
             @Param("personalSurveyId") Long personalSurveyId,
