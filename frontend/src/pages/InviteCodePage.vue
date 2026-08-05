@@ -281,7 +281,7 @@ const goToCreatedInviteCode = () => {
               class="mt-2 flex h-10 w-full items-center justify-center text-[14px] font-bold text-gray-500"
               @click="closeSurveyNotice"
             >
-              다음에 할게요
+              뒤로 가기
             </button>
           </section>
         </div>
