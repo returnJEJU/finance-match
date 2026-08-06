@@ -707,10 +707,10 @@ const closeWithdrawSheet = () => {
   isWithdrawSheetOpen.value = false
 }
 
-const moveToLoginAfterWithdraw = (query) => {
+const moveToOnboardingAfterWithdraw = (query = {}) => {
   queryClient.clear()
   isWithdrawSheetOpen.value = false
-  router.replace({ name: 'login', query })
+  router.replace({ name: 'onboarding', query })
 }
 
 const confirmWithdraw = async () => {
@@ -741,7 +741,7 @@ const confirmWithdraw = async () => {
   try {
     await authStore.withdrawAccount({ password, confirmationText })
     resetWithdrawState()
-    moveToLoginAfterWithdraw({ withdraw: 'success' })
+    moveToOnboardingAfterWithdraw({ withdraw: 'success' })
   } catch (error) {
     if (error?.code === 'INVALID_PASSWORD') {
       withdrawPasswordError.value = error.message || '비밀번호가 일치하지 않습니다.'
@@ -759,7 +759,7 @@ const confirmWithdraw = async () => {
       error?.code === 'MEMBER_ALREADY_WITHDRAWN' ||
       error?.code === 'MEMBER_NOT_FOUND'
     ) {
-      moveToLoginAfterWithdraw()
+      moveToOnboardingAfterWithdraw()
       return
     }
 

@@ -1,14 +1,51 @@
 <script setup>
 // 온보딩 화면 (앱 진입) · 레이아웃: BlankLayout
 // 카카오 로그인은 아직 붙이지 않는다. 버튼만 두고 인증 도메인이 준비되면 클릭 핸들러를 채운다.
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import logoWordmark from '@/assets/images/logo/logo-wordmark.png'
 import characterMarried from '@/assets/images/characters/character-married.png'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import PageTitle from '@/components/ui/PageTitle.vue'
+
+const route = useRoute()
+const router = useRouter()
+const toastMessage = ref('')
+let toastTimer = null
+
+onMounted(() => {
+  const query = { ...route.query }
+
+  if (route.query.withdraw === 'success') {
+    toastMessage.value = '탈퇴가 완료되었습니다.'
+    delete query.withdraw
+  }
+
+  if (!toastMessage.value) return
+
+  router.replace({ name: 'onboarding', query })
+
+  toastTimer = window.setTimeout(() => {
+    toastMessage.value = ''
+  }, 2400)
+})
+
+onBeforeUnmount(() => {
+  if (toastTimer) {
+    window.clearTimeout(toastTimer)
+  }
+})
 </script>
 
 <template>
   <div class="flex min-h-dvh flex-col">
+    <div
+      v-if="toastMessage"
+      class="fixed left-1/2 top-5 z-[120] w-[calc(100%-40px)] max-w-[360px] -translate-x-1/2 rounded-xl bg-gray-900 px-4 py-3 text-center text-[13px] font-semibold text-white shadow-lg"
+    >
+      {{ toastMessage }}
+    </div>
+
     <!-- pt-* 는 가운데 정렬을 유지한 채 덩어리를 내리는 손잡이다. 위쪽에만 여백이 생기므로
          남는 공간이 위아래로 나뉘는 지점이 내려가고, 실제로는 <b>준 값의 절반</b>만큼 내려온다.
          (pt-16 = 64px → 약 32px 아래로) -->
