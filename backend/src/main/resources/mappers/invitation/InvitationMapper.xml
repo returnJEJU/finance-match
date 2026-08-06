@@ -63,6 +63,22 @@
             )
     </select>
 
+    <select id="findCommonSurveyUpdateTargetForUpdate"
+            resultType="com.financematch.invitation.domain.CommonSurveyUpdateTarget">
+        SELECT
+            cs.id AS common_survey_id,
+            c.id AS couple_id
+        FROM common_survey cs
+            LEFT JOIN invitation_code ic
+            ON ic.common_survey_id = cs.id
+            LEFT JOIN couple c
+            ON c.invitation_code_id = ic.id
+        WHERE cs.member_id = #{memberId}
+           OR c.inviter_id = #{memberId}
+           OR c.invitee_id = #{memberId}
+        FOR UPDATE
+    </select>
+
     <insert id="insertCommonSurvey"
             parameterType="com.financematch.invitation.domain.CommonSurvey"
             useGeneratedKeys="true"
@@ -98,5 +114,27 @@
             'ACTIVE'
         )
     </insert>
+
+    <update id="updateCommonSurvey">
+        UPDATE common_survey
+        SET first_goal_type = #{request.goalType1},
+            second_goal_type = #{request.goalType2},
+            target_amount = #{request.targetAmount},
+            target_period_months = #{request.targetPeriodMonths},
+            loan_purpose = #{request.loanPurpose},
+            has_loan_within_one_month = #{request.hasLoanWithinOneMonth},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{commonSurveyId}
+    </update>
+
+    <delete id="deleteCompatibilityResultByCoupleId">
+        DELETE FROM compatibility_result
+        WHERE couple_id = #{coupleId}
+    </delete>
+
+    <delete id="deleteRecommendationByCoupleId">
+        DELETE FROM recommendation
+        WHERE couple_id = #{coupleId}
+    </delete>
 
 </mapper>
