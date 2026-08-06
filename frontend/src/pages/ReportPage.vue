@@ -153,6 +153,19 @@ const coupleTypeGradientStyle = computed(() => ({
   color: 'transparent',
 }))
 
+// 슬라이더 노브 채움색 — 각자 accentColorOf 그대로 쓰면 트랙(회색) 위에서 진하게 붕 떠 보여서,
+// 흰색 쪽으로 섞어(lighten) 옅은 파스텔로 만든다. 테두리는 원래 색 그대로 둬서 "옅은 채움 +
+// 진한 테두리 링" 패턴을 유지한다(민트/노랑 고정색이었을 때와 같은 스타일).
+const lightenHex = (hex, amount) => {
+  const num = parseInt(hex.slice(1), 16)
+  const mix = (channel) => Math.round(channel + (255 - channel) * amount)
+  const r = mix((num >> 16) & 0xff)
+  const g = mix((num >> 8) & 0xff)
+  const b = mix(num & 0xff)
+  return `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`
+}
+const knobFillOf = (person) => lightenHex(accentColorOf(person), 0.7)
+
 // 슬라이더 위치(%) — 안정형(0%) ~ 공격투자형(100%) 5단계 중 개인 성향의 인덱스로 계산.
 // 커플 공통 노브 1개 대신, 두 사람 각자의 위치를 따로 찍는다 — 이 축(안정형~공격형) 자체가
 // 원래 개인 성향 스펙트럼이라 "각자 어디에 있는지"가 "커플이 얼마나 다른지(DIFF)"보다 더 잘 맞는다.
@@ -460,16 +473,20 @@ const toggleCard = (key) => {
         <div class="relative mt-3 h-1.5 rounded-full bg-line-card">
           <div
             class="absolute top-0 h-full rounded-full"
-            style="background: linear-gradient(to right, #78f2dc, #c3f29c, #fff44f)"
             :style="{
+              backgroundImage: `linear-gradient(to right, ${accentColorOf(lowerPerson)}, ${accentColorOf(higherPerson)})`,
               left: `${lowerPosition}%`,
               width: `${higherPosition - lowerPosition}%`,
             }"
           />
           <span
-            class="group absolute top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full border-[3px] border-[#3fc9ae] bg-[#bff5ea]"
-            style="box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18)"
-            :style="{ left: lowerKnobLeft }"
+            class="group absolute top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full border-[3px]"
+            :style="{
+              left: lowerKnobLeft,
+              borderColor: accentColorOf(lowerPerson),
+              backgroundColor: knobFillOf(lowerPerson),
+              boxShadow: '0 2px 5px rgba(0, 0, 0, 0.18)',
+            }"
           >
             <span
               class="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100"
@@ -478,9 +495,13 @@ const toggleCard = (key) => {
             </span>
           </span>
           <span
-            class="group absolute top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full border-[3px] border-[#e0c400] bg-[#fff9b3]"
-            style="box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18)"
-            :style="{ left: higherKnobLeft }"
+            class="group absolute top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-default rounded-full border-[3px]"
+            :style="{
+              left: higherKnobLeft,
+              borderColor: accentColorOf(higherPerson),
+              backgroundColor: knobFillOf(higherPerson),
+              boxShadow: '0 2px 5px rgba(0, 0, 0, 0.18)',
+            }"
           >
             <span
               class="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100"
