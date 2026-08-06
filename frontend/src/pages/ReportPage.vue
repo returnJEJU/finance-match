@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import {
   ChevronDown,
   ChevronUp,
@@ -10,7 +10,7 @@ import {
   Target,
 } from 'lucide-vue-next'
 
-import { getReport } from '@/api/report'
+import { getReport, getReportStatus } from '@/api/report'
 import AnimatedCharacter from '@/components/ui/AnimatedCharacter.vue'
 import { investmentTypeMeta as investmentTypeMetaByLabel } from '@/constants/investmentTypeMeta'
 import { abbreviateKoreanName } from '@/utils/koreanName'
@@ -82,6 +82,8 @@ const scoreIconMeta = {
   TAX_STRATEGY: { icon: BadgeDollarSign, iconClass: 'bg-[#f5f0ff] text-[#66528c]' },
 }
 
+const queryClient = useQueryClient()
+
 const {
   data: report,
   isLoading,
@@ -90,11 +92,32 @@ const {
 } = useQuery({
   queryKey: ['report'],
   queryFn: getReport,
+  // NOT_FOUND(준비 중)는 기본 재시도로 몇 번 더 불러봐야 소용없다 — 아래 reportStatus 폴링이
+  // 다 끝났을 때만 다시 부르도록 직접 트리거한다.
+  retry: false,
 })
 
 // 리포트가 아직 없는 건(파트너 설문 미완료·계산 전) 진짜 오류가 아니라 "준비 중" 상태다.
 // ReportService 가 이때 NOT_FOUND 로 응답한다(GET /v1/members/me/report).
 const isNotReady = computed(() => error.value?.code === 'NOT_FOUND')
+
+// 준비 중일 때만 진행 상황을 가볍게 폴링한다 — 5축 중 몇 축이 끝났는지(ReportService.getReportStatus).
+// ready 가 되는 순간 report 쿼리를 다시 불러 완성된 리포트로 자연스럽게 넘어간다.
+const { data: reportStatus } = useQuery({
+  queryKey: ['reportStatus'],
+  queryFn: getReportStatus,
+  enabled: isNotReady,
+  refetchInterval: (query) => (query.state.data?.ready ? false : 4000),
+})
+
+watch(
+  () => reportStatus.value?.ready,
+  (ready) => {
+    if (ready) {
+      queryClient.invalidateQueries({ queryKey: ['report'] })
+    }
+  },
+)
 
 // 목표 달성 가능성 카드의 진행 현황 — report API 의 goalProgress 를 그대로 쓴다.
 // achieved=false(부족)면 마젠타(warn 토큰), true(초과)면 초록(good 토큰)으로 갈린다.
@@ -230,9 +253,23 @@ const toggleCard = (key) => {
     <p v-if="isLoading" class="py-10 text-center text-[13px] text-muted">
       불러오는 중...(약 1분 소요)
     </p>
-    <p v-else-if="isNotReady" class="py-10 text-center text-[13px] text-muted">
-      리포트를 준비하고 있어요. 두 분의 설문이 모두 끝나면 확인할 수 있어요.
-    </p>
+    <div v-else-if="isNotReady" class="px-4 py-16 text-center">
+      <p class="text-[13px] text-muted">리포트를 준비하고 있어요. (약 2분 소요)</p>
+
+      <div v-if="reportStatus" class="mx-auto mt-6 w-4/5">
+        <div class="flex items-center justify-end text-[12px] font-semibold text-brand-ink">
+          <span
+            >{{ Math.round((reportStatus.completedAxes / reportStatus.totalAxes) * 100) }}%</span
+          >
+        </div>
+        <div class="mt-2 h-2 overflow-hidden rounded-full bg-line-card">
+          <div
+            class="bg-brand-deep h-full rounded-full transition-all duration-500"
+            :style="{ width: `${(reportStatus.completedAxes / reportStatus.totalAxes) * 100}%` }"
+          />
+        </div>
+      </div>
+    </div>
     <p v-else-if="isError" class="py-10 text-center text-[13px] text-warn">
       리포트를 불러오지 못했어요.
     </p>
