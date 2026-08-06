@@ -4,12 +4,16 @@ package com.financematch.invitation.service;
 import com.financematch.common.ErrorCode;
 import com.financematch.exception.ApiException;
 import com.financematch.invitation.domain.CommonSurvey;
+import com.financematch.invitation.domain.CommonSurveyUpdateTarget;
 import com.financematch.invitation.dto.CommonSurveyResponse;
 import com.financematch.invitation.dto.CreateInvitationRequest;
 import com.financematch.invitation.dto.CreateInvitationResponse;
 import com.financematch.invitation.dto.GetInvitationResponse;
+import com.financematch.invitation.dto.UpdateCommonSurveyRequest;
 import com.financematch.invitation.mapper.InvitationMapper;
+import com.financematch.personalsurvey.event.PersonalSurveyCompletedEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +28,7 @@ public class InvitationService {
     private static final int MAX_CODE_GENERATION_ATTEMPTS = 10;
 
     private final InvitationMapper invitationMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -109,5 +114,36 @@ public class InvitationService {
         }
 
         return response;
+    }
+
+    @Transactional
+    public void updateCommonSurvey(Long memberId, UpdateCommonSurveyRequest request) {
+
+        Long lockedMemberId = invitationMapper.lockMemberById(memberId);
+        if (lockedMemberId == null) {
+            throw new ApiException(ErrorCode.UNAUTHORIZED);
+        }
+
+        CommonSurveyUpdateTarget target =
+                invitationMapper.findCommonSurveyUpdateTargetForUpdate(memberId);
+        if (target == null) {
+            throw new ApiException(ErrorCode.COMMON_SURVEY_NOT_FOUND);
+        }
+
+        int updatedRows = invitationMapper.updateCommonSurvey(
+                target.getCommonSurveyId(),
+                request);
+        if (updatedRows != 1) {
+            throw new ApiException(ErrorCode.INTERNAL_ERROR);
+        }
+
+        if (target.getCoupleId() == null) {
+            return;
+        }
+
+        invitationMapper.deleteRecommendationByCoupleId(target.getCoupleId());
+        invitationMapper.deleteCompatibilityResultByCoupleId(target.getCoupleId());
+
+        eventPublisher.publishEvent(new PersonalSurveyCompletedEvent(memberId));
     }
 }

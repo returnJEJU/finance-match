@@ -6,6 +6,7 @@ import com.financematch.invitation.dto.CommonSurveyResponse;
 import com.financematch.invitation.dto.CreateInvitationRequest;
 import com.financematch.invitation.dto.CreateInvitationResponse;
 import com.financematch.invitation.dto.GetInvitationResponse;
+import com.financematch.invitation.dto.UpdateCommonSurveyRequest;
 import com.financematch.invitation.service.InvitationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -53,6 +54,16 @@ public class InvitationController {
         CommonSurveyResponse response = invitationService.getCommonSurvey(memberId);
 
         return ApiResponse.ok(response);
+    }
+
+    @PutMapping("/common-survey")
+    public ApiResponse<Void> updateCommonSurvey(
+            @LoginMember Long memberId,
+            @Valid @RequestBody UpdateCommonSurveyRequest request) {
+
+        invitationService.updateCommonSurvey(memberId, request);
+
+        return ApiResponse.ok(null);
     }
 
 }
