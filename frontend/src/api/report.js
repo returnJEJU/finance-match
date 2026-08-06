@@ -41,3 +41,15 @@ export async function getReport() {
   const data = await api.get('/v1/members/me/report')
   return reportResponseSchema.parse(data)
 }
+
+const reportStatusSchema = z.object({
+  ready: z.boolean(),
+  completedAxes: z.number(),
+  totalAxes: z.number(),
+})
+
+// 리포트가 아직 준비 중일 때(NOT_FOUND) 진행 바를 그리기 위해 폴링하는 가벼운 조회.
+export async function getReportStatus() {
+  const data = await api.get('/v1/members/me/report/status')
+  return reportStatusSchema.parse(data)
+}

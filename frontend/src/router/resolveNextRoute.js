@@ -70,10 +70,10 @@ export function resolveNextRoute({ isFirstLogin, progress }, redirect = null) {
     return hasInvitation ? { name: 'survey-personal' } : { name: 'couple-connected' }
   }
 
-  // 둘 다 끝났으면 계산 화면을 거쳐 대시보드로 간다(계산 화면이 대시보드로 넘긴다).
-  return partnerPersonalSurveyCompleted
-    ? { name: 'match-calculating' }
-    : { name: 'dashboard-waiting' }
+  // 둘 다 끝났으면 대시보드로 바로 간다. match-calculating 은 "방금 막 둘 다 끝난" 최초 1회에만
+  // 필요한 화면이라(SurveyResultPage.vue 가 그 케이스를 담당), 이미 계산이 끝나 있을 로그인
+  // 시점엔 계산 중 애니메이션을 다시 보여줄 이유가 없다.
+  return partnerPersonalSurveyCompleted ? { name: 'dashboard' } : { name: 'dashboard-waiting' }
 }
 
 /**
