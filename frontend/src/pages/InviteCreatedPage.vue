@@ -57,8 +57,8 @@ const hasLoadError = computed(() => isInvitationError.value || isCommonSurveyErr
 
 const progressSteps = computed(() => [
   { label: '공동 설문 완료', done: true },
-  { label: '내 개인 설문', done: personalSurveyCompleted.value },
   { label: '파트너 연결', done: coupleConnected.value },
+  { label: '내 개인 설문', done: personalSurveyCompleted.value },
 ])
 
 async function copyInviteCode() {
