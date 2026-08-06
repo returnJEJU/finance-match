@@ -819,7 +819,7 @@ const confirmWithdraw = async () => {
       <h2 class="mb-2 text-[13px] font-medium text-gray-500">내 정보 관리</h2>
 
       <div
-        class="flex cursor-pointer items-center rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm"
+        class="flex cursor-pointer items-center rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm transition hover:bg-gray-50"
         @click="openInvestmentModal"
       >
         <!-- 아이콘 -->
@@ -844,7 +844,7 @@ const confirmWithdraw = async () => {
       <h2 class="mb-2 text-[13px] font-medium text-gray-500">데이터 관리</h2>
 
       <div
-        class="flex cursor-pointer items-center rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm"
+        class="flex cursor-pointer items-center rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm transition hover:bg-gray-50"
         @click="openAssetRefreshModal"
       >
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
