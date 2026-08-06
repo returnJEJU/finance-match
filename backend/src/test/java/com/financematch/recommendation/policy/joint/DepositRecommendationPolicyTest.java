@@ -32,7 +32,7 @@ class DepositRecommendationPolicyTest {
         RecommendationContext context = new RecommendationContext();
         context.setTargetPeriodMonths(12);
         context.setAvailableBalance(
-                BigDecimal.valueOf(6_000_000L));
+                BigDecimal.valueOf(9_100_000L));
 
         // when
         List<RecommendedProduct> result =
@@ -59,7 +59,7 @@ class DepositRecommendationPolicyTest {
         RecommendationContext context = new RecommendationContext();
         context.setTargetPeriodMonths(2);
         context.setAvailableBalance(
-                BigDecimal.valueOf(6_000_000L));
+                BigDecimal.valueOf(9_100_000L));
 
         // when
         List<RecommendedProduct> result =
@@ -76,13 +76,13 @@ class DepositRecommendationPolicyTest {
     }
 
     @Test
-    void 입출금잔액합계가_600만원_미만이면_예금을_추천하지_않는다() {
+    void 입출금잔액합계가_910만원_미만이면_예금을_추천하지_않는다() {
 
         // given
         RecommendationContext context = new RecommendationContext();
         context.setTargetPeriodMonths(12);
         context.setAvailableBalance(
-                BigDecimal.valueOf(5_999_999L));
+                BigDecimal.valueOf(9_099_999L));
 
         // when
         List<RecommendedProduct> result =
@@ -93,13 +93,13 @@ class DepositRecommendationPolicyTest {
     }
 
     @Test
-    void 입출금잔액합계가_정확히_600만원이면_예금을_추천한다() {
+    void 입출금잔액합계가_정확히_910만원이면_예금을_추천한다() {
 
         // given
         RecommendationContext context = new RecommendationContext();
         context.setTargetPeriodMonths(12);
         context.setAvailableBalance(
-                BigDecimal.valueOf(6_000_000L));
+                BigDecimal.valueOf(9_100_000L));
 
         // when
         List<RecommendedProduct> result =

@@ -44,7 +44,7 @@ class RecommendationPlannerTest {
 
         context.setTargetPeriodMonths(12);
         context.setAvailableBalance(
-                java.math.BigDecimal.valueOf(6_000_000L));
+                java.math.BigDecimal.valueOf(9_100_000L));
 
         // when
         RecommendationPlan plan =
