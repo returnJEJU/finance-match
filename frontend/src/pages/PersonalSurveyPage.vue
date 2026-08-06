@@ -23,46 +23,46 @@ const financialAssetRatioOptions = [
 const investmentExperienceOptions = [
   {
     value: 'LOW_RISK',
-    label: '은행 예적금, 국채, 지방채, 보증채, MMF, CMA 등',
+    label: '은행 예·적금, 국채, 지방채',
   },
   {
     value: 'MODERATE_LOW_RISK',
-    label: '채권형 펀드, 금융채, 신용도가 높은 회사채, 원금보장형 ELS/ELF 등',
+    label: '채권형 펀드, 금융채, 우량 회사채',
   },
   {
     value: 'MODERATE_RISK',
-    label: '혼합형 펀드, 신용도가 중간 등급인 회사채, 원금의 일부만 보장되는 ELS/ELF 등',
+    label: '혼합형 펀드, 일반 회사채',
   },
   {
     value: 'MODERATE_HIGH_RISK',
-    label: '인덱스 주식형 펀드, 신용도가 낮은 회사채, 원금이 보장되지 않는 ELS/ELF 등',
+    label: '인덱스 펀드, 저신용 회사채',
   },
   {
     value: 'HIGH_RISK',
-    label: '주식형 펀드, 파생상품 펀드, 주식, ELW, 선물·옵션 등',
+    label: '주식형 펀드, 파생상품 펀드, 주식, 선물·옵션',
   },
 ]
 
 const financialKnowledgeOptions = [
   {
     value: 'VERY_LOW',
-    label: '매우 낮음 - 금융상품 중 예·적금에 대해서만 알고 있음',
+    label: '예·적금 외 금융상품은 아직 익숙하지 않음',
   },
   {
     value: 'LOW',
-    label: '낮음 - 주식, 채권, 펀드의 차이를 구별할 수 있음',
+    label: '주식·채권·펀드의 차이를 구분할 수 있음',
   },
   {
     value: 'MEDIUM',
-    label: '보통 - 주식, 채권, 펀드의 기본적인 특징과 손실 가능성을 대략 이해하고 있음',
+    label: '주식·채권·펀드의 손실 가능성을 이해하고 있음',
   },
   {
     value: 'HIGH',
-    label: '높음 - 주식, 채권, 펀드 등의 구조 및 위험을 깊이 있게 이해하고 있음',
+    label: '주식·채권·펀드의 구조를 구체적으로 이해하고 있음',
   },
   {
     value: 'VERY_HIGH',
-    label: '매우 높음 - 파생상품을 포함한 대부분의 금융투자상품의 구조 및 위험을 이해하고 있음',
+    label: '대부분의 금융투자상품을 깊이 있게 이해하고 있음',
   },
 ]
 
