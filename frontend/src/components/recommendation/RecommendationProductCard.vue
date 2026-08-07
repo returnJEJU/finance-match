@@ -243,15 +243,20 @@ const toggleFavorite = () => {
             <ArrowUpRight class="h-4 w-4" stroke-width="2.5" />
           </button>
 
+          <!--
+            세로 중앙(top-1/2)에 두면 카드가 짧을 때 설명·상품명 위로 올라타 글자와 겹친다.
+            상품마다 글 길이가 달라 겹치는 지점도 제각각이라, 아래 모서리에 붙여 둔다.
+            목록 모드의 투자 상품만 위험도 배지와 줄을 맞춰야 해서 예외로 둔다.
+          -->
           <div
             v-if="!listMode || slotType === 'INVESTMENT'"
-            class="absolute flex min-w-14 -translate-y-1/2 items-center justify-center"
+            class="absolute flex min-w-14 items-center justify-center"
             :class="
               listMode && slotType === 'INVESTMENT'
-                ? 'top-[62px] right-4'
+                ? 'top-[62px] right-4 -translate-y-1/2'
                 : compact
-                  ? 'top-1/2 right-4'
-                  : 'top-1/2 right-0'
+                  ? 'right-4 bottom-1'
+                  : 'right-0 bottom-1'
             "
           >
             <button
