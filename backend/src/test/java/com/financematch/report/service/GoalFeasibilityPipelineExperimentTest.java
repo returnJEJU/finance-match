@@ -58,7 +58,7 @@ class GoalFeasibilityPipelineExperimentTest {
                 formatter.format(expectedAsset, input.getTargetAmount(), input.getTargetPeriodMonths());
 
         System.out.println("=== 목표 달성 가능성 파이프라인 실험 ===");
-        System.out.println("goalFeasibilityScore = " + result.getGoalFeasibilityScore() + " / 15");
+        System.out.println("goalFeasibilityScore = " + result.getGoalFeasibilityScore() + " / 20");
         System.out.println("totalScore           = " + result.getTotalScore());
         System.out.println("expectedAsset        = " + expectedAsset);
         System.out.println("targetAmount         = " + input.getTargetAmount());
@@ -69,7 +69,7 @@ class GoalFeasibilityPipelineExperimentTest {
         assertNotNull(reason);
         assertFalse(reason.isBlank());
         assertTrue(result.getGoalFeasibilityScore().compareTo(BigDecimal.ZERO) >= 0);
-        assertTrue(result.getGoalFeasibilityScore().compareTo(new BigDecimal("15")) <= 0);
+        assertTrue(result.getGoalFeasibilityScore().compareTo(new BigDecimal("20")) <= 0);
     }
 
     // db/dev-seed/R__02_seed_demo.sql 의 couple id=1 값 그대로, targetAmount 만 시나리오별로 바꾼다.

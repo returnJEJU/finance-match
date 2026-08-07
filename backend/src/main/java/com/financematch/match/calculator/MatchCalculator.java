@@ -12,14 +12,14 @@ public class MatchCalculator {
     private static final double MEMBER_WEIGHT = 0.3;
     private static final double COUPLE_WEIGHT = 0.4;
 
-    private static final double ASSET_MAX_SCORE = 30.0;
+    private static final double ASSET_MAX_SCORE = 25.0;
     private static final double DEBT_MAX_SCORE = 20.0;
 
     private static final double DSR_WEIGHT = 0.7;
     private static final double DEBT_RATIO_WEIGHT = 0.3;
     private static final double DSR_LIMIT = 0.4;
 
-    private static final double GOAL_MAX_SCORE = 15.0;
+    private static final double GOAL_MAX_SCORE = 20.0;
     private static final double ANNUAL_RETURN_RATE = 0.03;
     private static final int MONTHS_IN_YEAR = 12;
     private static final String RETIREMENT_GOAL_TYPE = "RETIREMENT";

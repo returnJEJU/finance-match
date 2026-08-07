@@ -88,7 +88,7 @@ class SimpleMyDataProviderTest {
         assertTrue(result.getDebtRepaymentScore().compareTo(new BigDecimal("15.00")) > 0);
         assertTrue(result.getDebtRepaymentScore().compareTo(new BigDecimal("20.00")) < 0);
         assertTrue(result.getGoalFeasibilityScore().compareTo(new BigDecimal("8.00")) > 0);
-        assertTrue(result.getGoalFeasibilityScore().compareTo(new BigDecimal("12.00")) < 0);
+        assertTrue(result.getGoalFeasibilityScore().compareTo(new BigDecimal("20.00")) < 0);
         assertTrue(result.getTaxStrategyScore().compareTo(BigDecimal.ZERO) > 0);
         assertTrue(result.getTaxStrategyScore().compareTo(new BigDecimal("10.00")) < 0);
     }

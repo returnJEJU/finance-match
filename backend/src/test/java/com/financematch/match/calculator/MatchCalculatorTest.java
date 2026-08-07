@@ -35,7 +35,7 @@ class MatchCalculatorTest {
         BigDecimal result = calculator.calculateAssetStabilityScore(input);
 
         System.out.println("금융자산 점수: " + result);
-        assertEquals(new BigDecimal("18.62"), result);
+        assertEquals(new BigDecimal("15.52"), result);
     }
 
     @Test
@@ -124,7 +124,7 @@ class MatchCalculatorTest {
 
         System.out.println("목표 달성 가능성 점수: " + result);
 
-        assertEquals(new BigDecimal("12.79"), result);
+        assertEquals(new BigDecimal("17.05"), result);
     }
 
     @Test
@@ -226,7 +226,7 @@ class MatchCalculatorTest {
         System.out.println(result);
 
         assertEquals(
-                new BigDecimal("18.62"),
+                new BigDecimal("15.52"),
                 result.getAssetStabilityScore()
         );
 
@@ -241,7 +241,7 @@ class MatchCalculatorTest {
         );
 
         assertEquals(
-                new BigDecimal("12.79"),
+                new BigDecimal("17.05"),
                 result.getGoalFeasibilityScore()
         );
 
@@ -251,7 +251,7 @@ class MatchCalculatorTest {
         );
 
         assertEquals(
-                new BigDecimal("71"),
+                new BigDecimal("72"),
                 result.getTotalScore()
         );
     }
@@ -323,7 +323,7 @@ class MatchCalculatorTest {
         System.out.println("절세 미산출 결과: " + result);
 
         assertEquals(
-                new BigDecimal("18.62"),
+                new BigDecimal("15.52"),
                 result.getAssetStabilityScore()
         );
 
@@ -338,7 +338,7 @@ class MatchCalculatorTest {
         );
 
         assertEquals(
-                new BigDecimal("12.79"),
+                new BigDecimal("17.05"),
                 result.getGoalFeasibilityScore()
         );
 
@@ -350,7 +350,7 @@ class MatchCalculatorTest {
         assertFalse(result.isTaxStrategyCalculated());
 
         assertEquals(
-                new BigDecimal("70"),
+                new BigDecimal("71"),
                 result.getTotalScore()
         );
     }
@@ -379,7 +379,7 @@ class MatchCalculatorTest {
         BigDecimal result =
                 calculator.calculateAssetStabilityScore(input);
 
-        assertEquals(new BigDecimal("15.00"), result);
+        assertEquals(new BigDecimal("12.50"), result);
     }
 
     @Test
@@ -427,6 +427,7 @@ class MatchCalculatorTest {
                 () -> calculator.calculateAssetStabilityScore(input)
         );
     }
+
     @Test
     void 부채가_없으면_부채_점수는_20점이다() {
         MemberCalculationInput memberA = MemberCalculationInput.builder()
@@ -480,6 +481,7 @@ class MatchCalculatorTest {
                 calculator.calculateDebtRepaymentScore(input)
         );
     }
+
     @Test
     void 두_사람의_가치관이_완전히_같으면_25점이다() {
         MemberCalculationInput memberA = MemberCalculationInput.builder()
@@ -533,6 +535,7 @@ class MatchCalculatorTest {
                 () -> calculator.calculateFinancialValueScore(input)
         );
     }
+
     @Test
     void 은퇴_목표에서는_연금잔액을_제외하지_않는다() {
         MemberCalculationInput memberA = MemberCalculationInput.builder()
@@ -562,7 +565,7 @@ class MatchCalculatorTest {
                 .build();
 
         assertEquals(
-                new BigDecimal("15.00"),
+                new BigDecimal("20.00"),
                 calculator.calculateGoalFeasibilityScore(input)
         );
     }
@@ -582,6 +585,7 @@ class MatchCalculatorTest {
                 () -> calculator.calculateGoalFeasibilityScore(input)
         );
     }
+
     @Test
     void 한_사람만_연금_평가대상이고_한도를_모두_활용하면_10점이다() {
         MemberCalculationInput memberA = MemberCalculationInput.builder()
