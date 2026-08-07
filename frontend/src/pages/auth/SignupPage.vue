@@ -11,8 +11,13 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import PageTitle from '@/components/ui/PageTitle.vue'
 import FunnelHeader from '@/components/layout/FunnelHeader.vue'
 
-/** 백엔드 제약(8~64자)의 최솟값. 여기서 막지 않으면 3단계에 가서야 INVALID_INPUT 이 난다. */
-const MIN_PASSWORD_LENGTH = 8
+/**
+ * 비밀번호 규칙 — 8~16자, 영문·숫자·특수문자를 모두 포함.
+ *
+ * 백엔드는 길이(8~64자)만 보고 조합은 보지 않는다. 그래도 화면에서 조합을 요구해 온 만큼
+ * 여기서 지킨다. 프론트가 더 엄격한 쪽이라 백엔드가 거절할 값이 통과할 일은 없다.
+ */
+const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,16}$/
 
 const router = useRouter()
 const signupStore = useSignupStore()
@@ -50,6 +55,15 @@ const passwordMismatch = computed(
   () => form.value.passwordConfirm !== '' && form.value.password !== form.value.passwordConfirm,
 )
 
+/**
+ * 비밀번호 규칙 위반 안내.
+ *
+ * 불일치 안내와 같은 이유로, 아직 아무것도 입력하지 않았을 때는 띄우지 않는다.
+ */
+const passwordInvalid = computed(
+  () => form.value.password !== '' && !PASSWORD_PATTERN.test(form.value.password),
+)
+
 /** 다음 단계로 넘길 수 있는지. 백엔드가 거절할 값을 여기서 미리 막는다. */
 const canSubmit = computed(() => {
   const { name, gender, birthDate, email, password, passwordConfirm } = form.value
@@ -60,7 +74,7 @@ const canSubmit = computed(() => {
     // formatBirth 가 하이픈을 넣으므로 YYYY-MM-DD 는 10자다. 부분 입력(예: '1995')을 걸러낸다.
     birthDate.length === 10 &&
     email &&
-    password.length >= MIN_PASSWORD_LENGTH &&
+    PASSWORD_PATTERN.test(password) &&
     password === passwordConfirm,
   )
 })
@@ -157,6 +171,10 @@ function goNext() {
           <component :is="showPassword ? Eye : EyeOff" class="h-[18px] w-[18px]" />
         </button>
       </div>
+
+      <p v-if="passwordInvalid" class="mt-2 text-[12px] font-medium text-red-500">
+        8~16자로 영문·숫자·특수문자를 모두 포함해 주세요.
+      </p>
 
       <label class="text-ink-sub mt-6 mb-1.5 text-[14px] font-semibold">비밀번호 확인</label>
       <div
