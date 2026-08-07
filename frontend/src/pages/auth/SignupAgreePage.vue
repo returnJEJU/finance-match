@@ -97,13 +97,13 @@ function goNext() {
     <FunnelHeader :step="2" :fallback-to="{ name: 'signup' }" />
 
     <div class="flex flex-1 flex-col px-7">
-      <PageTitle class="mt-3.5">자산 연동을 위해<br />동의가 필요해요.</PageTitle>
+      <PageTitle class="mt-3.5">자산 연동을 위해<br />동의가 필요해요</PageTitle>
 
       <p
         class="bg-brand-soft text-brand-ink rounded-field mt-4.5 px-3.5 py-3 text-[12px] leading-[1.6]"
       >
-        찰떡귱합은 마이데이터로 내 자산 정보를 불러옵니다. 연동한 자산 정보는 내가 초대한 상대방(예:
-        예비배우자)에게 <b class="font-bold">궁합 결과 형태로만</b> 공유될 수 있어요.
+        찰떡귱합은 마이데이터로 내 자산 정보를 불러옵니다. 연동한 자산 정보는 내가 초대한 상대방에게
+        <b class="font-bold">궁합 결과 형태로만</b> 공유될 수 있어요.
       </p>
 
       <!-- 전체 동의 -->
@@ -173,14 +173,6 @@ function goNext() {
         </template>
       </div>
 
-      <p class="text-muted mt-3.5 flex gap-[7px] text-[11px] leading-[1.55]">
-        <TriangleAlert class="text-required mt-px h-[13px] w-[13px] flex-none" />
-        <span>
-          초대한 상대방에게 내 자산 정보가 <b class="text-ink font-bold">궁합 결과로 제공</b>되는 데
-          동의합니다.
-        </span>
-      </p>
-
       <div class="h-6 flex-1"></div>
     </div>
 
@@ -188,6 +180,17 @@ function goNext() {
       <BaseButton :variant="requiredAgreed ? 'primary' : 'disabled'" @click="goNext">
         동의하고 계속하기
       </BaseButton>
+
+      <!-- 체크할 항목이 아니라 안내다. 동의 목록 안에 두면 빠뜨린 항목처럼 보여 버튼 아래로 뺐다. -->
+      <p
+        class="text-muted mt-3 flex items-center justify-center gap-[7px] text-center text-[11px] leading-[1.55]"
+      >
+        <TriangleAlert class="text-required h-[13px] w-[13px] flex-none" />
+        <span>
+          초대한 상대방에게 내 자산 정보가 <b class="text-ink font-bold">궁합 결과로 제공</b>되는 데
+          동의합니다.
+        </span>
+      </p>
     </div>
   </div>
 </template>
