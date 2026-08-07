@@ -19,6 +19,12 @@ import FunnelHeader from '@/components/layout/FunnelHeader.vue'
  */
 const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,16}$/
 
+/** 백엔드 제약(최대 50자)에 맞춘다. 입력칸의 maxlength 로도 막아 둔다. */
+const NAME_MAX_LENGTH = 50
+
+/** 백엔드 @Email 이 거절할 값을 미리 막는다. 공백 없이 a@b.c 꼴이면 통과. */
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 const router = useRouter()
 const signupStore = useSignupStore()
 
@@ -46,6 +52,42 @@ function formatBirth(event) {
 }
 
 /**
+ * 실제로 있는 날짜이면서 지난 날인지.
+ *
+ * 자릿수만 세면 9999-99-99 나 내일 날짜가 통과해 3단계(가입 요청)에 가서야 거절당한다.
+ */
+function isValidBirthDate(value) {
+  const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!matched) return false
+
+  const [, year, month, day] = matched.map(Number)
+  const date = new Date(year, month - 1, day)
+
+  // new Date(2025, 1, 30) 은 3월 2일로 넘어간다. 넣은 값과 되돌려 비교해 없는 날짜를 걸러낸다.
+  const isRealDate =
+    date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
+
+  return isRealDate && date < new Date()
+}
+
+/** 앞뒤 공백을 뺀 이름. 공백만 넣고 넘어가는 것을 막는다. */
+const trimmedName = computed(() => form.value.name.trim())
+
+/**
+ * 생년월일 안내.
+ *
+ * 다 입력했을 때만 본다. 치는 중(예: '1995')에 빨간 문구가 따라다니면 방해가 된다.
+ */
+const birthDateInvalid = computed(
+  () => form.value.birthDate.length === 10 && !isValidBirthDate(form.value.birthDate),
+)
+
+/** 이메일 형식 안내. */
+const emailInvalid = computed(
+  () => form.value.email !== '' && !EMAIL_PATTERN.test(form.value.email),
+)
+
+/**
  * 비밀번호 불일치 안내.
  *
  * 확인란을 아직 건드리지 않았을 때는 띄우지 않는다 — 입력을 시작하기도 전에 빨간 문구가 뜨면
@@ -66,14 +108,13 @@ const passwordInvalid = computed(
 
 /** 다음 단계로 넘길 수 있는지. 백엔드가 거절할 값을 여기서 미리 막는다. */
 const canSubmit = computed(() => {
-  const { name, gender, birthDate, email, password, passwordConfirm } = form.value
+  const { gender, birthDate, email, password, passwordConfirm } = form.value
 
   return Boolean(
-    name &&
+    trimmedName.value &&
     gender &&
-    // formatBirth 가 하이픈을 넣으므로 YYYY-MM-DD 는 10자다. 부분 입력(예: '1995')을 걸러낸다.
-    birthDate.length === 10 &&
-    email &&
+    isValidBirthDate(birthDate) &&
+    EMAIL_PATTERN.test(email) &&
     PASSWORD_PATTERN.test(password) &&
     password === passwordConfirm,
   )
@@ -81,9 +122,9 @@ const canSubmit = computed(() => {
 
 /** passwordConfirm 은 화면에서만 쓰는 값이라 스토어에 담지 않는다. */
 function goNext() {
-  const { name, gender, birthDate, email, password } = form.value
+  const { gender, birthDate, email, password } = form.value
 
-  signupStore.setForm({ name, gender, birthDate, email, password })
+  signupStore.setForm({ name: trimmedName.value, gender, birthDate, email, password })
   router.push({ name: 'signup-agree' })
 }
 </script>
@@ -110,6 +151,7 @@ function goNext() {
       <input
         v-model="form.name"
         type="text"
+        :maxlength="NAME_MAX_LENGTH"
         placeholder="성함을 입력해 주세요"
         class="border-line-field rounded-field placeholder:text-muted-soft h-12 border bg-white px-3.5 text-[14px] outline-none"
       />
@@ -142,6 +184,10 @@ function goNext() {
         @input="formatBirth"
       />
 
+      <p v-if="birthDateInvalid" class="mt-2 text-[12px] font-medium text-red-500">
+        생년월일이 올바르지 않습니다.
+      </p>
+
       <label class="text-ink-sub mt-6 mb-1.5 text-[14px] font-semibold">이메일(아이디)</label>
       <input
         v-model="form.email"
@@ -151,6 +197,10 @@ function goNext() {
         placeholder="example@gmail.com"
         class="border-line-field rounded-field placeholder:text-muted-soft h-12 border bg-white px-3.5 text-[14px] outline-none"
       />
+
+      <p v-if="emailInvalid" class="mt-2 text-[12px] font-medium text-red-500">
+        이메일 형식이 올바르지 않습니다.
+      </p>
 
       <label class="text-ink-sub mt-6 mb-1.5 text-[14px] font-semibold">비밀번호</label>
       <div
