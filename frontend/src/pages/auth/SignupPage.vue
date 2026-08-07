@@ -3,7 +3,7 @@
 //
 // 입력값은 signupStore 에 담아 다음 단계로 넘긴다. 실제 가입 요청은 3단계(인증서)에서
 // 1·2단계를 합쳐 한 번에 보낸다.
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Eye, EyeOff } from 'lucide-vue-next'
 import { useSignupStore } from '@/stores/signup'
@@ -118,6 +118,42 @@ const canSubmit = computed(() => {
     PASSWORD_PATTERN.test(password) &&
     password === passwordConfirm,
   )
+})
+
+/**
+ * 키보드가 올라올 때 입력칸이 가려지지 않게 한다.
+ *
+ * 아래쪽 칸(비밀번호 등)을 누르면 키보드가 그 칸을 덮은 채로 올라와, 사용자가 다시 스크롤을
+ * 내려야 했다. 브라우저가 자동으로 밀어 올려 주기도 하지만 이 화면에서는 그러지 않는다.
+ *
+ * 키보드 높이는 알 수 없다. 대신 키보드가 올라오면 <b>보이는 영역(visualViewport)이 줄어드는</b>
+ * 것을 신호로 삼아, 그 순간 입력 중인 칸을 화면 가운데로 끌어온다. 타이머로 시간을 재면 기기마다
+ * 키보드 속도가 달라 어긋난다.
+ */
+function bringFocusedFieldIntoView() {
+  const focused = document.activeElement
+  if (!(focused instanceof HTMLInputElement)) return
+
+  // 키보드에 가려지지 않고 실제로 보이는 높이. visualViewport 가 없는 브라우저는 창 높이로 본다.
+  const visibleHeight = window.visualViewport?.height ?? window.innerHeight
+
+  // 이미 보이면 그냥 둔다. 화면 크기가 바뀔 때마다 스크롤이 튀면 그게 더 거슬린다.
+  if (focused.getBoundingClientRect().bottom <= visibleHeight) return
+
+  // 부드럽게 굴리지 않는다. 키보드가 올라오는 중에 스크롤까지 따로 움직이면 화면이 두 번 흔들린다.
+  focused.scrollIntoView({ block: 'center' })
+}
+
+// iOS 는 키보드가 올라와도 창 높이(window)가 그대로라 visualViewport 로만 알 수 있고,
+// 안드로이드는 창 자체가 줄어든다. 기기마다 오는 신호가 달라 둘 다 받는다.
+onMounted(() => {
+  window.visualViewport?.addEventListener('resize', bringFocusedFieldIntoView)
+  window.addEventListener('resize', bringFocusedFieldIntoView)
+})
+
+onUnmounted(() => {
+  window.visualViewport?.removeEventListener('resize', bringFocusedFieldIntoView)
+  window.removeEventListener('resize', bringFocusedFieldIntoView)
 })
 
 /** passwordConfirm 은 화면에서만 쓰는 값이라 스토어에 담지 않는다. */
