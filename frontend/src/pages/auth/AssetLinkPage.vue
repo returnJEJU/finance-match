@@ -38,7 +38,7 @@ const authStore = useAuthStore()
   <div class="flex min-h-dvh flex-col">
     <FunnelHeader :step="4" :fallback-to="{ name: 'signup-cert' }" />
 
-    <!-- pb-10 은 안내문과 아래 버튼 사이 여백이다. 이걸 안쪽 빈 div 로 두면 내용이 길어질 때
+    <!-- pb-10 은 자산 목록과 아래 버튼 사이 여백이다. 이걸 안쪽 빈 div 로 두면 내용이 길어질 때
          flex 가 찌그러뜨려 0 이 된다 — 패딩은 그런 일이 없다. -->
     <div class="flex flex-1 flex-col px-7 pb-10">
       <img :src="characterWorking" alt="" class="mt-1.5 w-32 self-center" />
@@ -100,23 +100,28 @@ const authStore = useAuthStore()
           </div>
         </template>
       </div>
+    </div>
 
-      <p class="text-muted mt-3.5 flex gap-[7px] text-[11px] leading-[1.55]">
-        <Info class="mt-px h-[13px] w-[13px] flex-none" />
+    <div class="flex flex-none flex-col px-7 pb-7">
+      <!-- 두 버튼을 한 줄에 둔다. 위아래로 쌓으면 버튼 영역만 130px 을 넘겨 본문이 눌린다. -->
+      <div class="flex gap-2.5">
+        <BaseButton class="flex-1" :to="{ name: 'signup-asset-linking' }">자산 불러오기</BaseButton>
+
+        <BaseButton class="flex-1" :to="{ name: 'signup-asset-institutions' }" variant="ghost">
+          기관 직접 선택
+        </BaseButton>
+      </div>
+
+      <!-- 고를 항목이 아니라 안내다. 목록 아래에 두면 항목처럼 보여 버튼 아래로 뺐다. -->
+      <p
+        class="text-muted mt-3 flex items-center justify-center gap-[7px] text-center text-[11px] leading-[1.55]"
+      >
+        <Info class="h-[13px] w-[13px] flex-none" />
         <span>
           불러온 정보는 <b class="text-ink font-bold">분석 목적으로만</b> 사용되며, 상대방에게는
           궁합 결과만 공유돼요.
         </span>
       </p>
-    </div>
-
-    <!-- 두 버튼을 한 줄에 둔다. 위아래로 쌓으면 버튼 영역만 130px 을 넘겨 본문이 눌린다. -->
-    <div class="flex flex-none gap-2.5 px-7 pb-7">
-      <BaseButton class="flex-1" :to="{ name: 'signup-asset-linking' }">자산 불러오기</BaseButton>
-
-      <BaseButton class="flex-1" :to="{ name: 'signup-asset-institutions' }" variant="ghost">
-        기관 직접 선택
-      </BaseButton>
     </div>
   </div>
 </template>
