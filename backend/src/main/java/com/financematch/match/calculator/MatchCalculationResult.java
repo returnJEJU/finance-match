@@ -11,10 +11,10 @@ import lombok.ToString;
 @ToString
 public class MatchCalculationResult {
 
-    private BigDecimal assetStabilityScore;  //30점
+    private BigDecimal assetStabilityScore;  //25점
     private BigDecimal debtRepaymentScore;   //20점
     private BigDecimal financialValueScore;  //25점
-    private BigDecimal goalFeasibilityScore; //15점
+    private BigDecimal goalFeasibilityScore; //20점
     private BigDecimal taxStrategyScore;     //10점
 
     // 목표기간 후 예상 자산. report 도메인 reason 문구 생성용 (점수 계산과 무관, 표시 전용).
