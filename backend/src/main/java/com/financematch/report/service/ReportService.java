@@ -47,7 +47,7 @@ public class ReportService {
                                 "ASSET_STABILITY",
                                 "금융 자산",
                                 row.getAssetStabilityScore(),
-                                30,
+                                25,
                                 row.getAssetStabilityReason()),
                         new ScoreAxis(
                                 "DEBT_REPAYMENT",
@@ -65,7 +65,7 @@ public class ReportService {
                                 "GOAL_FEASIBILITY",
                                 "목표 달성 가능성",
                                 row.getGoalFeasibilityScore(),
-                                15,
+                                20,
                                 row.getGoalFeasibilityReason()),
                         new ScoreAxis(
                                 "TAX_STRATEGY",
