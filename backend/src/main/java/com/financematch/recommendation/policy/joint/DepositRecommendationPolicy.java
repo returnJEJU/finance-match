@@ -19,7 +19,7 @@ public class DepositRecommendationPolicy
         implements JointRecommendationPolicy {
 
     private static final BigDecimal MIN_DEPOSIT_AVAILABLE_BALANCE =
-            BigDecimal.valueOf(6_000_000L);
+            BigDecimal.valueOf(9_100_000L);
 
     private final DepositMapper depositMapper;
 
