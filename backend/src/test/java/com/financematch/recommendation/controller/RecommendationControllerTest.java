@@ -38,7 +38,7 @@ class RecommendationControllerTest {
     @Test
     void returnsRecommendationForLoginMember() {
         RecommendationResponse recommendation =
-                new RecommendationResponse(100L, false, List.of(), null, null);
+                new RecommendationResponse(100L, "신혼집 스타터 패키지", false, List.of(), null, null);
         when(recommendationService.getRecommendation(1L))
                 .thenReturn(recommendation);
 

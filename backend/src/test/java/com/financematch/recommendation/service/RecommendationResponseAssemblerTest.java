@@ -59,6 +59,7 @@ class RecommendationResponseAssemblerTest {
                         List.of(investmentProduct()));
 
         assertEquals(100L, response.recommendationId());
+        assertEquals("신혼집 스타터 패키지", response.packageName());
         assertEquals(3, response.packageSlots().size());
         assertEquals(
                 "연 2.80%",
@@ -113,6 +114,7 @@ class RecommendationResponseAssemblerTest {
         RecommendationResult result = new RecommendationResult();
         result.setRecommendationId(100L);
         result.setCoupleId(1L);
+        result.setFirstGoalType("MARRIAGE");
         result.setHasHighInterestDebt(true);
         return result;
     }

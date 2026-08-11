@@ -10,6 +10,7 @@ public class RecommendationResult {
 
     private Long recommendationId;
     private Long coupleId;
+    private String firstGoalType;
     private LocalDateTime updatedAt;
     private boolean hasHighInterestDebt;
 }

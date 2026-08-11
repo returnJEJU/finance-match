@@ -9,6 +9,7 @@
                type="com.financematch.recommendation.domain.RecommendationResult">
         <id property="recommendationId" column="recommendation_id"/>
         <result property="coupleId" column="couple_id"/>
+        <result property="firstGoalType" column="first_goal_type"/>
         <result property="updatedAt" column="updated_at"/>
         <result property="hasHighInterestDebt"
                 column="has_high_interest_debt"/>
@@ -162,6 +163,7 @@
         SELECT
         r.id AS recommendation_id,
         r.couple_id,
+        cs.first_goal_type,
         r.updated_at,
         (
         COALESCE(
@@ -176,6 +178,10 @@
         FROM recommendation r
         INNER JOIN couple c
         ON c.id = r.couple_id
+        INNER JOIN invitation_code invitation
+        ON invitation.id = c.invitation_code_id
+        INNER JOIN common_survey cs
+        ON cs.id = invitation.common_survey_id
         INNER JOIN financial_summary inviter_finance
         ON inviter_finance.member_id = c.inviter_id
         INNER JOIN financial_summary invitee_finance
