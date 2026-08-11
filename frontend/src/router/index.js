@@ -91,12 +91,10 @@ const routes = [
         component: () => import('@/pages/ServiceIntroductionPage.vue'),
       },
       {
-        // 커플 연동의 시작점. 화면(CoupleStartPage)은 아직 뼈대뿐이고, 초대 화면이 이미 그 역할을
-        // 한다 — 코드 입력과 "공동 목표 설정하고 초대 코드 만들기" 양쪽이 그 안에 있다.
-        // 그래서 이 주소로 들어오면 초대 화면으로 넘긴다. (담당자가 시작 화면을 채우면 되돌린다)
+        // 커플 연동 방법을 선택하는 시작 화면.
         path: 'couple',
         name: 'couple-start',
-        redirect: { name: 'couple-invite' },
+        component: () => import('@/pages/CoupleStartPage.vue'),
       },
       {
         path: 'couple/invite',

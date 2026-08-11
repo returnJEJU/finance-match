@@ -1,19 +1,13 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useMutation, useQuery } from '@tanstack/vue-query'
-import {
-  ChevronRight,
-  CirclePlus,
-  Heart,
-  HeartHandshake,
-  LoaderCircle,
-  Ticket,
-} from 'lucide-vue-next'
+import { useMutation } from '@tanstack/vue-query'
+import { Heart, LoaderCircle } from 'lucide-vue-next'
 import { createCouple } from '@/api/couple'
-import { getOnboardingStatus } from '@/api/onboarding'
+import characterWorking from '@/assets/images/characters/character-working.png'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import PageTitle from '@/components/ui/PageTitle.vue'
+import AppHeader from '@/components/layout/AppHeader.vue'
 
 const CODE_LENGTH = 8
 const INVITE_CODE_PATTERN = /^[A-Z0-9]{8}$/
@@ -21,19 +15,12 @@ const INVITE_CODE_PATTERN = /^[A-Z0-9]{8}$/
 const router = useRouter()
 const inviteCode = ref('')
 const inviteCodeError = ref('')
-const isSurveyNoticeOpen = ref(false)
-
-const { data: onboardingStatus } = useQuery({
-  queryKey: ['onboardingStatus'],
-  queryFn: getOnboardingStatus,
-})
 
 const codeCharacters = computed(() =>
   Array.from({ length: CODE_LENGTH }, (_, index) => inviteCode.value[index] || '-'),
 )
 
 const isInviteCodeValid = computed(() => INVITE_CODE_PATTERN.test(inviteCode.value))
-const hasCreatedInvitation = computed(() => onboardingStatus.value?.hasInvitation === true)
 
 const createCoupleMutation = useMutation({
   mutationFn: createCouple,
@@ -76,42 +63,38 @@ const submitInviteCode = () => {
 const focusInviteCodeInput = () => {
   document.getElementById('invite-code')?.focus()
 }
-
-const goToCoupleSurvey = () => {
-  isSurveyNoticeOpen.value = true
-}
-
-const closeSurveyNotice = () => {
-  isSurveyNoticeOpen.value = false
-}
-
-const startCoupleSurvey = () => {
-  isSurveyNoticeOpen.value = false
-  router.push({ name: 'survey-couple' })
-}
-
-const goToCreatedInviteCode = () => {
-  router.push({ name: 'couple-invite-created' })
-}
 </script>
 
 <template>
   <section class="flex min-h-screen flex-col px-5 pt-3 pb-8">
-    <header class="flex h-8 flex-none items-center justify-center">
-      <h1 class="text-center text-[20px] font-semibold text-ink">커플 연동</h1>
-    </header>
+    <AppHeader
+      title="커플 연동"
+      variant="plain"
+      :fallback-to="{ name: 'couple-start' }"
+      class="h-8 !px-0 !pt-0 !pb-0 [&_h1]:!text-[20px] [&_h1]:!font-semibold"
+    />
 
     <main class="mt-16 flex flex-1 flex-col">
       <div class="text-center">
         <PageTitle align="center" class="!text-[32px]">초대 코드 입력</PageTitle>
-
         <p class="text-muted mt-4 text-[16px] leading-[1.55]">
           파트너로부터 받은 8자리 초대 코드를 입력하고<br />
           두 분의 금융 궁합을 확인해 보세요!
         </p>
+        <div class="relative mx-auto mt-6 flex h-[190px] w-[190px] items-center justify-center">
+          <span
+            class="absolute h-[190px] w-[190px] rounded-full bg-[radial-gradient(circle,_rgba(255,244,79,0.32)_0%,_rgba(255,244,79,0.14)_50%,_transparent_74%)]"
+            aria-hidden="true"
+          ></span>
+          <img
+            :src="characterWorking"
+            alt="초대 코드를 입력하는 찰떡귱합 캐릭터"
+            class="relative z-10 h-[170px] w-[170px] object-contain"
+          />
+        </div>
       </div>
 
-      <div class="h-12 flex-none"></div>
+      <div class="h-8 flex-none"></div>
 
       <div>
         <div
@@ -160,132 +143,6 @@ const goToCreatedInviteCode = () => {
         <Heart v-else :size="18" fill="currentColor" :stroke-width="2.2" />
         {{ isConnecting ? '커플 연동 중' : '커플 연동하기' }}
       </BaseButton>
-
-      <div class="mt-6 flex items-center gap-3">
-        <div class="bg-line-soft h-px flex-1"></div>
-        <span class="text-muted text-[16px] font-semibold">OR</span>
-        <div class="bg-line-soft h-px flex-1"></div>
-      </div>
-
-      <div class="mt-6 space-y-3">
-        <button
-          v-if="!hasCreatedInvitation"
-          type="button"
-          class="border-line-card rounded-card flex w-full items-center border bg-white px-3.5 py-3.5 text-left shadow-sm transition hover:bg-gray-50"
-          @click="goToCoupleSurvey"
-        >
-          <span
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-50 text-orange-500"
-          >
-            <CirclePlus :size="18" :stroke-width="2" />
-          </span>
-
-          <span class="ml-3 min-w-0 flex-1">
-            <span class="block text-[18px] font-extrabold text-gray-900">
-              공동 목표 설정하고 초대 코드 만들기
-            </span>
-            <span class="mt-0.5 block text-[16px] font-medium text-gray-500">
-              아직 코드가 없다면 새로 생성
-            </span>
-          </span>
-
-          <ChevronRight :size="19" :stroke-width="1.8" class="text-gray-500" />
-        </button>
-
-        <button
-          v-else
-          type="button"
-          class="border-line-card rounded-card flex w-full items-center border bg-white px-3.5 py-3.5 text-left shadow-sm transition hover:bg-gray-50"
-          @click="goToCreatedInviteCode"
-        >
-          <span
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500"
-          >
-            <Ticket :size="17" :stroke-width="2" />
-          </span>
-
-          <span class="ml-3 min-w-0 flex-1">
-            <span class="block text-[18px] font-extrabold text-gray-900">
-              내가 만든 초대 코드 확인하기
-            </span>
-            <span class="mt-0.5 block text-[16px] font-medium text-gray-500">
-              이미 생성한 내 코드를 공유하기
-            </span>
-          </span>
-
-          <ChevronRight :size="19" :stroke-width="1.8" class="text-gray-500" />
-        </button>
-      </div>
     </main>
-    <Teleport to="body">
-      <Transition
-        enter-active-class="transition duration-200 ease-out"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="transition duration-150 ease-in"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div
-          v-if="isSurveyNoticeOpen"
-          class="fixed inset-0 z-50 flex items-end justify-center bg-black/45 px-5 pb-6 sm:items-center sm:pb-0"
-          role="presentation"
-          @click.self="closeSurveyNotice"
-        >
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="survey-notice-title"
-            aria-describedby="survey-notice-description"
-            class="w-full max-w-[390px] rounded-[24px] bg-white px-6 pt-7 pb-5 shadow-xl"
-          >
-            <div
-              class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FFF56E] text-gray-900"
-            >
-              <HeartHandshake :size="29" :stroke-width="2" />
-            </div>
-
-            <div class="mt-5 text-center">
-              <h2 id="survey-notice-title" class="text-[20px] font-extrabold text-gray-950">
-                공동 설문은 초대자가 대표로 답해요
-              </h2>
-
-              <p
-                id="survey-notice-description"
-                class="mt-3 text-[14px] leading-[1.7] font-medium text-gray-600"
-              >
-                두 분 모두 작성하더라도 공동 결과에는<br />
-                <strong class="font-extrabold text-gray-900">
-                  초대 코드를 만든 분의 답변만 반영돼요.
-                </strong>
-              </p>
-            </div>
-
-            <div class="mt-5 rounded-[14px] bg-[#FFFDE8] px-4 py-3">
-              <p class="text-center text-[14px] leading-[1.6] font-semibold text-gray-700">
-                그래서 한 분만 작성해도<br />
-                궁합·추천·리포트를 함께 이용할 수 있어요.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              class="mt-5 flex h-[52px] w-full items-center justify-center rounded-[14px] bg-[#FFF56E] text-[14px] font-extrabold text-gray-950 transition active:scale-[0.99]"
-              @click="startCoupleSurvey"
-            >
-              확인했어요, 설문 시작하기
-            </button>
-
-            <button
-              type="button"
-              class="mt-2 flex h-10 w-full items-center justify-center text-[14px] font-bold text-gray-500"
-              @click="closeSurveyNotice"
-            >
-              뒤로 가기
-            </button>
-          </section>
-        </div>
-      </Transition>
-    </Teleport>
   </section>
 </template>
