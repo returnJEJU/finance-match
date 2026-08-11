@@ -9,10 +9,10 @@ import static org.mockito.ArgumentMatchers.anyLong;
 
 import java.math.BigDecimal;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -57,8 +57,19 @@ class MatchServiceTest {
     @Mock
     private TaxStrategyScoreService taxStrategyScoreService;
 
-    @InjectMocks
     private MatchService matchService;
+
+    @BeforeEach
+    void setUp() {
+        matchService = new MatchService(
+                matchMapper,
+                matchCalculationPersistenceService,
+                goalFeasibilityScoreService,
+                assetStabilityScoreService,
+                debtRepaymentScoreService,
+                financialValueScoreService,
+                taxStrategyScoreService);
+    }
 
     @Test
     void 기존_결과가_있으면_재계산하지_않고_반환한다() {

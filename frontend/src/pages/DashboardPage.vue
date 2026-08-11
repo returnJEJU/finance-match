@@ -11,6 +11,7 @@ import {
 } from 'lucide-vue-next'
 
 import { getCompatibility } from '@/api/match'
+import { getReport } from '@/api/report'
 
 const router = useRouter()
 
@@ -18,6 +19,19 @@ const result = ref(null)
 const loading = ref(true)
 const errorMessage = ref('')
 const openedHelpKey = ref(null)
+
+// 대시보드 카드 key -> ReportResponse.scoreAxes[].key 매핑
+const AXIS_KEY_BY_CARD = {
+  asset: 'ASSET_STABILITY',
+  debt: 'DEBT_REPAYMENT',
+  value: 'FINANCIAL_VALUE',
+  goal: 'GOAL_FEASIBILITY',
+  tax: 'TAX_STRATEGY',
+}
+
+// axis.key -> reason 문자열. 리포트가 아직 준비 안 됐으면 빈 상태로 두고 카드의 하드코딩
+// description으로 자연스럽게 폴백한다(대시보드 자체는 점수만으로도 정상 동작해야 하므로).
+const reasonsByAxisKey = ref({})
 
 const totalScore = computed(() => Math.round(result.value?.totalScore ?? 0))
 
@@ -134,6 +148,19 @@ const getProgressWidth = (card) => {
   return `${limitedPercentage}%`
 }
 
+// 리포트 reason 조회 — 아직 준비 안 됐거나(404) 실패해도 대시보드 점수 표시엔 영향 없어야
+// 하므로 별도 try/catch로 감싸고, 실패 시 조용히 하드코딩 description으로 폴백한다.
+const loadReasons = async () => {
+  try {
+    const report = await getReport()
+    reasonsByAxisKey.value = Object.fromEntries(
+      report.scoreAxes.map((axis) => [axis.key, axis.reason]),
+    )
+  } catch {
+    reasonsByAxisKey.value = {}
+  }
+}
+
 // 대시보드 데이터 조회
 const loadDashboard = async () => {
   loading.value = true
@@ -149,9 +176,12 @@ const loadDashboard = async () => {
     }
 
     errorMessage.value = error?.message || '금융 궁합도 결과를 불러오지 못했습니다.'
+    return
   } finally {
     loading.value = false
   }
+
+  loadReasons()
 }
 
 // 도움말 열기/닫기
@@ -325,7 +355,7 @@ onMounted(() => {
             role="tooltip"
             class="absolute top-7 left-7 z-50 max-w-[300px] rounded-[10px] bg-[#d5fae7] px-3 py-2 text-[11px] leading-4 font-medium text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
           >
-            {{ card.description }}
+            {{ reasonsByAxisKey[AXIS_KEY_BY_CARD[card.key]] || card.description }}
           </div>
         </article>
       </div>

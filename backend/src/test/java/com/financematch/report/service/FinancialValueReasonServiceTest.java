@@ -3,16 +3,11 @@ package com.financematch.report.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.financematch.report.dto.reason.FinancialValueReasonInput;
-import com.financematch.report.llm.ReasonRuleValidator;
-import com.financematch.report.llm.ReportLlmClient;
-import com.financematch.report.llm.ReportPromptBuilder;
 import org.junit.jupiter.api.Test;
 
 class FinancialValueReasonServiceTest {
 
-    private final FinancialValueReasonService service =
-            new FinancialValueReasonService(
-                    (ReportLlmClient) null, (ReportPromptBuilder) null, (ReasonRuleValidator) null);
+    private final FinancialValueReasonService service = new FinancialValueReasonService();
 
     @Test
     void 전_문항_diff가_임계값_이하면_비슷하다는_문구를_반환한다() {

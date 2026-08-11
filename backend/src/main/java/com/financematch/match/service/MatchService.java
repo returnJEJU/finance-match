@@ -88,7 +88,7 @@ public class MatchService {
         }
 
         // 4~7. 계산 + compatibility_result 최초 저장 — 여기까지만 짧은 트랜잭션(MatchCalculationPersistenceService).
-        // 아래 8~12(reason 생성)는 LLM 호출이 섞여 있어 오래 걸릴 수 있으므로 트랜잭션 밖에서 진행한다.
+        // 아래 8~12(reason 생성)는 모두 결정론적 로직이지만, 저장까지 포함하므로 트랜잭션 밖에서 진행한다.
         MatchCalculationPersistenceResult persisted =
                 matchCalculationPersistenceService.calculateAndPersist(couple, memberA, memberB);
 
@@ -96,7 +96,7 @@ public class MatchService {
         MatchCalculationInput calculationInput = persisted.calculationInput();
         MatchCalculationResult calculationResult = persisted.calculationResult();
 
-        // 8. 목표 달성 가능성 축 reason 생성·저장 (LLM 미사용 · 결정론적)
+        // 8. 목표 달성 가능성 축 reason 생성·저장 (결정론적)
         goalFeasibilityScoreService.generateAndSave(
                 savedResult.getId(),
                 calculationResult.getExpectedAsset(),
@@ -104,13 +104,13 @@ public class MatchService {
                 calculationInput.getTargetPeriodMonths()
         );
 
-        // 9. 금융 자산 축 reason 생성·저장 (LLM 미사용 · 결정론적)
+        // 9. 금융 자산 축 reason 생성·저장 (결정론적)
         assetStabilityScoreService.generateAndSave(
                 savedResult.getId(),
                 calculationResult.getCoupleAssetRatio()
         );
 
-        // 10. 부채 축 reason 생성·저장 (LLM 사용)
+        // 10~12. 부채·투자가치관·절세 축 reason 생성·저장 (결정론적)
         DebtRepaymentReasonInput debtRepaymentReasonInput = new DebtRepaymentReasonInput(
                 memberA.getMemberName(),
                 memberB.getMemberName(),
@@ -119,9 +119,7 @@ public class MatchService {
                 calculationResult.getMemberADebtScore(),
                 calculationResult.getMemberBDebtScore()
         );
-        debtRepaymentScoreService.generateAndSave(savedResult.getId(), debtRepaymentReasonInput);
 
-        // 11. 투자 가치관 일치도 축 reason 생성·저장 (LLM 사용)
         FinancialValueReasonInput financialValueReasonInput = new FinancialValueReasonInput(
                 calculationInput.getMemberA().getFinancialAssetRatioScore(),
                 calculationInput.getMemberA().getInvestmentExperienceScore(),
@@ -132,15 +130,16 @@ public class MatchService {
                 calculationInput.getMemberB().getFinancialKnowledgeScore(),
                 calculationInput.getMemberB().getCapitalPreservationScore()
         );
-        financialValueScoreService.generateAndSave(savedResult.getId(), financialValueReasonInput);
 
-        // 12. 절세 활용도 축 reason 생성·저장 (LLM 사용)
         TaxStrategyReasonInput taxStrategyReasonInput = new TaxStrategyReasonInput(
                 memberA.getMemberName(),
                 memberB.getMemberName(),
                 buildTaxSavingProfile(calculationInput.getMemberA()),
                 buildTaxSavingProfile(calculationInput.getMemberB())
         );
+
+        debtRepaymentScoreService.generateAndSave(savedResult.getId(), debtRepaymentReasonInput);
+        financialValueScoreService.generateAndSave(savedResult.getId(), financialValueReasonInput);
         taxStrategyScoreService.generateAndSave(savedResult.getId(), taxStrategyReasonInput);
 
         return savedResult;

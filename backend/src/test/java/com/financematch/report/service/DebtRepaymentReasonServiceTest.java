@@ -3,18 +3,12 @@ package com.financematch.report.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.financematch.report.dto.reason.DebtRepaymentReasonInput;
-import com.financematch.report.llm.ReasonRuleValidator;
-import com.financematch.report.llm.ReportLlmClient;
-import com.financematch.report.llm.ReportPromptBuilder;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
 class DebtRepaymentReasonServiceTest {
 
-    // fallback() 은 LLM 을 안 타는 결정론적 로직이라, 협력 객체는 null 로 둬도 테스트에 영향 없다.
-    private final DebtRepaymentReasonService service =
-            new DebtRepaymentReasonService(
-                    (ReportLlmClient) null, (ReportPromptBuilder) null, (ReasonRuleValidator) null);
+    private final DebtRepaymentReasonService service = new DebtRepaymentReasonService();
 
     @Test
     void 둘_다_부채가_없으면_이름_없는_문구를_반환한다() {
