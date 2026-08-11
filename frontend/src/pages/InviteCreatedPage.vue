@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import { ArrowRight, Check, Copy, KeyRound, LoaderCircle } from 'lucide-vue-next'
+import { ArrowRight, Check, Copy, LoaderCircle } from 'lucide-vue-next'
 import { getCommonSurvey, getInvitation } from '@/api/invitation'
 import { getOnboardingStatus } from '@/api/onboarding'
 import CommonGoalSummaryCard from '@/components/couple/CommonGoalSummaryCard.vue'
@@ -81,11 +81,6 @@ function goToNextStep() {
   router.push(
     personalSurveyCompleted.value ? { name: 'dashboard-waiting' } : { name: 'survey-personal' },
   )
-}
-
-// 코드를 만들어 두고도 파트너가 먼저 코드를 보낸 경우가 있다. 그때 입력할 화면으로 갈 길을 준다.
-function goToInviteCodeInput() {
-  router.push({ name: 'couple-invite' })
 }
 </script>
 
@@ -170,7 +165,7 @@ function goToInviteCodeInput() {
       </template>
     </main>
 
-    <div class="mt-7 flex flex-none flex-col gap-3">
+    <div class="mt-7 flex flex-none flex-col">
       <!-- 진행 상태를 불러오기 전에는 어디로 갈지 정할 수 없어 누를 수 없게 둔다 -->
       <BaseButton
         class="text-[20px] shadow-[0_8px_18px_rgba(250,230,77,0.28)]"
@@ -179,16 +174,6 @@ function goToInviteCodeInput() {
       >
         {{ personalSurveyCompleted ? '파트너 기다리기' : '개인 설문 시작하기' }}
         <ArrowRight :size="18" :stroke-width="2.4" />
-      </BaseButton>
-
-      <BaseButton
-        v-if="!coupleConnected"
-        class="text-[20px]"
-        variant="ghost"
-        @click="goToInviteCodeInput"
-      >
-        <KeyRound :size="17" :stroke-width="2.2" />
-        파트너 코드 입력하기
       </BaseButton>
     </div>
   </section>
