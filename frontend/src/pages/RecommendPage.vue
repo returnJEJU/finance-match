@@ -53,7 +53,7 @@ const compatibilityScore = computed(() =>
 </script>
 
 <template>
-  <section class="min-h-[calc(100vh-108px)] bg-white px-4 pt-5 pb-10">
+  <section class="mx-auto min-h-[calc(100dvh-108px)] w-full max-w-[428px] bg-white px-7 pt-5 pb-7">
     <div v-if="isPending" class="flex min-h-[460px] flex-col items-center justify-center">
       <LoaderCircle class="h-7 w-7 animate-spin text-brand-deep" />
       <p class="mt-3 text-[14px] text-muted">맞춤 상품을 준비하고 있어요</p>
@@ -113,7 +113,11 @@ const compatibilityScore = computed(() =>
         :class="recommendationsDimmed ? 'pointer-events-none opacity-20 blur-[0.5px]' : ''"
         :aria-hidden="recommendationsDimmed"
       >
-        <RecommendationPackage v-if="visibleSlots.length" :slots="visibleSlots" />
+        <RecommendationPackage
+          v-if="visibleSlots.length"
+          :slots="visibleSlots"
+          :package-name="recommendation.packageName"
+        />
 
         <PersonalRecommendation
           :tax-saving="recommendation.personalTaxSavingRecommendation"

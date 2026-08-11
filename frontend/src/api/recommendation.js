@@ -8,6 +8,7 @@ const packageProductSchema = z
     productId: z.number(),
     productName: z.string(),
     description: optionalTextSchema,
+    recommendationReason: optionalTextSchema.optional(),
     productUrl: z.string(),
     comparisonLabel: optionalTextSchema,
     comparisonValue: optionalTextSchema,
@@ -34,6 +35,7 @@ const taxSavingProductSchema = z.object({
   productId: z.number(),
   productName: z.string(),
   description: optionalTextSchema,
+  recommendationReason: optionalTextSchema.optional(),
   productUrl: z.string(),
   accountType: z.enum(['ISA', 'PENSION_SAVINGS', 'IRP']),
 })
@@ -42,6 +44,7 @@ const investmentProductSchema = z.object({
   productId: z.number(),
   productName: z.string(),
   description: optionalTextSchema,
+  recommendationReason: optionalTextSchema.optional(),
   productUrl: z.string(),
   riskLevel: z.number().int().min(1).max(6),
   riskLabel: z.enum(['초고위험', '고위험', '위험', '중립', '안정']),
@@ -62,6 +65,7 @@ const personalInvestmentSchema = z.object({
 
 export const recommendationSchema = z.object({
   recommendationId: z.number(),
+  packageName: z.string().min(1),
   hasHighInterestDebt: z.boolean(),
   packageSlots: z.array(packageSlotSchema),
   personalTaxSavingRecommendation: personalTaxSavingSchema.nullable(),

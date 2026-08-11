@@ -8,12 +8,15 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  packageName: {
+    type: String,
+    required: true,
+  },
 })
 
 const selectedProductIds = ref({})
 const activeSlot = ref(null)
 const pendingProduct = ref(null)
-const favoriteProductIds = ref(new Set())
 
 watch(
   () => props.slots,
@@ -74,59 +77,40 @@ const confirmProductChange = () => {
   }
   pendingProduct.value = null
 }
-
-const isFavorite = (productId) => favoriteProductIds.value.has(productId)
-
-const toggleFavorite = (productId) => {
-  const nextFavoriteProductIds = new Set(favoriteProductIds.value)
-  if (nextFavoriteProductIds.has(productId)) {
-    nextFavoriteProductIds.delete(productId)
-  } else {
-    nextFavoriteProductIds.add(productId)
-  }
-  favoriteProductIds.value = nextFavoriteProductIds
-}
-
-const addAllPackageProducts = () => {
-  const nextFavoriteProductIds = new Set(favoriteProductIds.value)
-  selectedProducts.value.forEach(({ product }) => nextFavoriteProductIds.add(product.productId))
-  favoriteProductIds.value = nextFavoriteProductIds
-}
 </script>
 
 <template>
-  <section class="rounded-[18px] border border-ink bg-[#FFF56E] p-3">
+  <section class="rounded-[20px] border border-ink bg-[#FFF56E] p-4">
     <div class="mb-3">
       <span class="rounded-full bg-ink px-3 py-1.5 text-[12px] font-semibold text-[#A2F5E6]">
         찰떡 PICK 패키지
       </span>
 
-      <h2 class="mt-3 text-[18px] font-bold">우리 커플을 위한 맞춤 패키지</h2>
+      <h2 class="mt-3 text-[18px] font-bold">{{ packageName }}</h2>
 
       <p class="mt-1.5 text-[14px] leading-5 text-brand-ink">
         현재 조건에 맞는 {{ slots.length }}가지 금융상품을 골랐어요
       </p>
     </div>
 
-    <div class="divide-y divide-line-soft rounded-card bg-white px-3">
-      <RecommendationProductCard
+    <div class="space-y-4 rounded-card bg-white p-3">
+      <fieldset
         v-for="{ slot, product } in selectedProducts"
         :key="slot.slotId"
-        :product="product"
-        :slot-type="slot.slotType"
-        :favorite-state="isFavorite(product.productId)"
-        @select="openProductList(slot)"
-        @toggle-favorite="toggleFavorite"
-      />
-    </div>
+        class="rounded-card border border-line-card bg-transparent px-4 pb-1"
+      >
+        <legend class="px-1 text-[13px] font-bold text-ink">
+          {{ slot.slotName }}
+        </legend>
 
-    <button
-      type="button"
-      class="mt-3 h-12 w-full rounded-xl bg-ink text-[15px] font-semibold text-white"
-      @click="addAllPackageProducts"
-    >
-      이 패키지 모두 담기
-    </button>
+        <RecommendationProductCard
+          :product="product"
+          :slot-type="slot.slotType"
+          :show-recommendation-reason="product.productId === slot.selectedProductId"
+          @select="openProductList(slot)"
+        />
+      </fieldset>
+    </div>
   </section>
 
   <Teleport to="body">
@@ -139,7 +123,7 @@ const addAllPackageProducts = () => {
       @click.self="closeProductList"
     >
       <section
-        class="max-h-[82vh] w-full max-w-[428px] overflow-y-auto rounded-t-[24px] bg-white px-4 pt-4 pb-8"
+        class="max-h-[82dvh] w-full max-w-[428px] overflow-y-auto rounded-t-[24px] bg-white px-7 pt-5 pb-7"
       >
         <header class="flex items-start gap-3">
           <div class="ml-3 min-w-0 flex-1">
@@ -165,13 +149,13 @@ const addAllPackageProducts = () => {
             <RecommendationProductCard
               :product="product"
               :slot-type="activeSlot.slotType"
-              :favorite-state="isFavorite(product.productId)"
               :current="product.productId === selectedProductIds[activeSlot.slotId]"
+              :recommended="product.productId === activeSlot.selectedProductId"
+              :show-recommendation-reason="product.productId === activeSlot.selectedProductId"
               compact
               roomy
               list-mode
               @select="requestProductChange(product)"
-              @toggle-favorite="toggleFavorite"
             />
           </div>
         </div>

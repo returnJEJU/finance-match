@@ -1,13 +1,13 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import {
   ArrowUpRight,
   Briefcase,
   CarFront,
   Check,
   Flame,
-  Heart,
   House,
+  Lightbulb,
   Building2,
   PiggyBank,
   Rocket,
@@ -40,22 +40,25 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  favoriteState: {
-    type: Boolean,
-    default: null,
-  },
   current: {
+    type: Boolean,
+    default: false,
+  },
+  recommended: {
+    type: Boolean,
+    default: false,
+  },
+  showRecommendationReason: {
+    type: Boolean,
+    default: false,
+  },
+  personalMode: {
     type: Boolean,
     default: false,
   },
 })
 
-const emit = defineEmits(['select', 'toggle-favorite'])
-
-const localFavorite = ref(false)
-const isFavorite = computed(() =>
-  props.favoriteState === null ? localFavorite.value : props.favoriteState,
-)
+const emit = defineEmits(['select'])
 
 const productIcon = computed(() => {
   if (props.slotType === 'TAX_SAVING') {
@@ -136,13 +139,19 @@ const formattedAum = computed(() =>
   props.product.aum == null ? null : `${props.product.aum.toLocaleString('ko-KR')}억 원`,
 )
 
-const toggleFavorite = () => {
-  if (props.favoriteState === null) {
-    localFavorite.value = !localFavorite.value
-    return
+const recommendationReason = computed(() => {
+  if (props.product.recommendationReason) return props.product.recommendationReason
+
+  const reasons = {
+    DEPOSIT: '목표 기간과 현재 보유 자금 조건에 잘 맞는 상품이에요.',
+    SAVINGS: '월 저축 가능 금액과 목표 기간을 고려한 상품이에요.',
+    INVESTMENT: '투자 성향과 금융 목표에 맞는 위험등급의 상품이에요.',
+    LOAN: '대출 목적과 가입 조건을 함께 고려한 상품이에요.',
+    TAX_SAVING: '절세 가능 여부와 계좌 활용 우선순위를 반영했어요.',
   }
-  emit('toggle-favorite', props.product.productId)
-}
+
+  return reasons[props.slotType] ?? '현재 입력한 금융 조건을 고려한 상품이에요.'
+})
 </script>
 
 <template>
@@ -151,160 +160,99 @@ const toggleFavorite = () => {
     :class="[
       compact
         ? roomy
-          ? 'px-4 py-6 shadow-[0_2px_12px_rgba(0,0,0,0.04)]'
-          : 'p-4 shadow-[0_2px_12px_rgba(0,0,0,0.04)]'
-        : 'py-5',
+          ? 'px-5 py-6 shadow-[0_2px_12px_rgba(0,0,0,0.04)]'
+          : 'p-5 shadow-[0_2px_12px_rgba(0,0,0,0.04)]'
+        : 'pt-2 pb-6',
       compact && current ? 'border-2 border-[#FFF56E]' : compact ? 'border border-line-card' : '',
     ]"
     @click="emit('select')"
   >
     <div class="flex items-start gap-3">
       <div
-        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg"
+        class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl"
         :class="productIconClass"
       >
         <component
           :is="productIcon"
-          class="h-6 w-6"
+          class="h-8 w-8"
           :class="slotType === 'SAVINGS' ? 'fill-[#F7A8B8]' : ''"
           stroke-width="2"
         />
       </div>
 
       <div class="min-w-0 flex-1">
-        <div class="flex items-start gap-2">
-          <h3 class="min-w-0 flex-1 text-[18px] leading-6 font-bold text-ink">
+        <div class="flex min-h-14 items-start gap-3">
+          <h3
+            class="flex min-h-14 min-w-0 flex-1 items-center text-[19px] leading-7 font-bold text-ink"
+          >
             {{ product.productName }}
           </h3>
 
-          <button
-            v-if="listMode && slotType !== 'INVESTMENT'"
-            type="button"
-            class="flex min-w-14 shrink-0 items-center justify-center"
-            :aria-label="isFavorite ? '찜 해제' : '찜하기'"
-            :aria-pressed="isFavorite"
-            @click.stop="toggleFavorite"
-          >
-            <Heart
-              class="h-5 w-5 transition-colors"
-              :class="
-                isFavorite ? 'fill-[#fb7185] text-[#fb7185]' : 'fill-transparent text-gray-300'
-              "
-            />
-          </button>
-
-          <div
-            v-else-if="slotType === 'INVESTMENT' && product.riskLabel"
-            class="flex w-[72px] translate-x-2 shrink-0 justify-center pt-0.5"
-          >
-            <span
-              class="whitespace-nowrap rounded-md border px-2 py-0.5 text-center text-[12px] font-semibold"
-              :class="riskBadgeClass"
-            >
-              {{ product.riskLabel }}
-            </span>
-          </div>
-
           <span
-            v-else-if="product.comparisonValue"
-            class="w-[72px] translate-x-2 shrink-0 pt-0.5 text-center text-[15px] leading-5 font-bold text-ink"
-          >
-            {{ product.comparisonValue }}
-          </span>
-
-          <div
-            v-else-if="product.riskLabel"
-            class="flex w-[72px] translate-x-2 shrink-0 justify-center pt-0.5"
-          >
-            <span
-              class="whitespace-nowrap rounded-md border px-2 py-0.5 text-center text-[12px] font-semibold"
-              :class="riskBadgeClass"
-            >
-              {{ product.riskLabel }}
-            </span>
-          </div>
-        </div>
-
-        <p
-          v-if="product.description"
-          class="mt-1.5 flex items-start gap-1.5 text-[14px] leading-5 text-muted"
-        >
-          <Check class="mt-0.5 h-4 w-4 shrink-0 text-muted" stroke-width="2.5" />
-          <span>{{ product.description }}</span>
-        </p>
-
-        <div class="mt-3 flex items-center">
-          <button
-            type="button"
-            class="inline-flex items-center gap-1 border-b border-ink text-[14px] font-bold text-ink"
-            @click.stop="openProduct(product.productUrl)"
-          >
-            상품 상세 보기
-            <ArrowUpRight class="h-4 w-4" stroke-width="2.5" />
-          </button>
-
-          <!--
-            세로 중앙(top-1/2)에 두면 카드가 짧을 때 설명·상품명 위로 올라타 글자와 겹친다.
-            상품마다 글 길이가 달라 겹치는 지점도 제각각이라, 아래 모서리에 붙여 둔다.
-            목록 모드의 투자 상품만 위험도 배지와 줄을 맞춰야 해서 예외로 둔다.
-          -->
-          <div
-            v-if="!listMode || slotType === 'INVESTMENT'"
-            class="absolute flex min-w-14 items-center justify-center"
-            :class="
-              listMode && slotType === 'INVESTMENT'
-                ? 'top-[62px] right-4 -translate-y-1/2'
-                : compact
-                  ? 'right-4 bottom-1'
-                  : 'right-0 bottom-1'
-            "
-          >
-            <button
-              type="button"
-              class="flex min-h-11 min-w-14 items-center justify-center"
-              :aria-label="isFavorite ? '찜 해제' : '찜하기'"
-              :aria-pressed="isFavorite"
-              @click.stop="toggleFavorite"
-            >
-              <Heart
-                class="h-5 w-5 transition-colors"
-                :class="
-                  isFavorite ? 'fill-[#fb7185] text-[#fb7185]' : 'fill-transparent text-gray-300'
-                "
-              />
-            </button>
-          </div>
-        </div>
-
-        <div v-if="listMode" class="mt-4 -ml-[56px] flex min-h-6 items-center">
-          <div v-if="slotType === 'INVESTMENT' && formattedAum" class="flex items-baseline gap-2">
-            <span class="text-[13px] text-muted">순자산</span>
-            <strong class="text-[15px] text-ink">{{ formattedAum }}</strong>
-          </div>
-
-          <div v-else-if="product.comparisonValue" class="flex items-baseline gap-2">
-            <span class="text-[13px] text-muted">
-              {{ product.comparisonLabel }}
-            </span>
-            <strong class="text-[15px] text-ink">
-              {{ product.comparisonValue }}
-            </strong>
-          </div>
-
-          <span
-            v-else-if="product.riskLabel"
-            class="rounded-md border px-2 py-0.5 text-center text-[12px] font-semibold"
+            v-if="slotType === 'INVESTMENT' && product.riskLabel"
+            class="shrink-0 whitespace-nowrap rounded-md border px-2 py-0.5 text-center text-[12px] font-semibold"
             :class="riskBadgeClass"
           >
             {{ product.riskLabel }}
           </span>
 
           <span
-            v-if="current"
-            class="ml-auto rounded bg-ink px-2 py-1 text-[12px] font-semibold text-[#FFF56E]"
+            v-else-if="!listMode && product.comparisonValue"
+            class="shrink-0 whitespace-nowrap pt-0.5 text-[15px] leading-5 font-bold text-ink"
           >
-            현재 대표
+            {{ product.comparisonValue }}
           </span>
+        </div>
+
+        <p
+          v-if="product.description"
+          class="mt-2 -ml-[68px] flex items-start gap-2 text-[15px] leading-6 text-muted"
+        >
+          <Check class="mt-0.5 h-5 w-5 shrink-0 text-muted" stroke-width="2.5" />
+          <span>{{ product.description }}</span>
+        </p>
+
+        <button
+          type="button"
+          class="-ml-[48px] inline-flex items-center gap-1.5 border-b border-ink text-[15px] font-bold text-ink"
+          :class="personalMode && !showRecommendationReason ? 'mt-7' : 'mt-4'"
+          @click.stop="openProduct(product.productUrl)"
+        >
+          상품 상세 보기
+          <ArrowUpRight class="h-5 w-5" stroke-width="2.5" />
+        </button>
+        <div v-if="listMode" class="mt-7 -ml-[68px] flex min-h-7 items-center">
+          <div v-if="slotType === 'INVESTMENT' && formattedAum" class="flex items-baseline gap-2">
+            <span class="text-[14px] text-muted">순자산</span>
+            <strong class="text-[16px] text-ink">{{ formattedAum }}</strong>
+          </div>
+
+          <div v-else-if="product.comparisonValue" class="flex items-baseline gap-2">
+            <span class="text-[14px] text-muted">
+              {{ product.comparisonLabel }}
+            </span>
+            <strong class="text-[16px] text-ink">
+              {{ product.comparisonValue }}
+            </strong>
+          </div>
+
+          <span
+            class="ml-auto translate-y-2 rounded-md px-2.5 py-1.5 text-[13px] leading-none font-semibold"
+            :class="recommended ? 'bg-ink text-[#FFF56E]' : 'bg-[#F3F4F6] text-muted'"
+          >
+            {{ recommended ? '추천 상품' : '대안 상품' }}
+          </span>
+        </div>
+
+        <div
+          v-if="showRecommendationReason"
+          class="mt-4 -ml-[68px] flex items-start gap-2.5 rounded-xl bg-[#FFFBE0] px-3.5 py-3.5 text-[15px] leading-6 text-[#665F18]"
+        >
+          <Lightbulb class="mt-0.5 h-5 w-5 shrink-0 text-[#C79B00]" stroke-width="2.3" />
+          <p>
+            <strong class="mr-1 font-bold text-ink">추천 이유</strong>
+            {{ recommendationReason }}
+          </p>
         </div>
       </div>
     </div>
