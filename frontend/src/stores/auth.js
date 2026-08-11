@@ -7,6 +7,7 @@ import {
   withdraw as requestWithdraw,
 } from '@/api/auth'
 import { clearAccessToken, getAccessToken, setAccessToken } from '@/api/client'
+import { useAssetLinkStore } from '@/stores/assetLink'
 
 /**
  * 로그인 상태.
@@ -125,6 +126,7 @@ export const useAuthStore = defineStore('auth', () => {
     clearAccessToken()
     accessToken.value = null
     member.value = null
+    useAssetLinkStore().reset()
   }
 
   return {

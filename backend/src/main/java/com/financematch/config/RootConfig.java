@@ -60,8 +60,8 @@ import org.apache.ibatis.annotations.Mapper;
 public class RootConfig {
 
     /**
-     * {@code @Async} 메서드가 도는 전용 스레드풀. 커플 양쪽 설문이 끝난 시점에 리포트(LLM 3회 호출,
-     * 수십 초~수 분 소요)를 백그라운드로 생성하는 데 쓴다 — HTTP 요청 스레드를 막지 않기 위함
+     * {@code @Async} 메서드가 도는 전용 스레드풀. 커플 양쪽 설문이 끝난 시점에 리포트 계산·저장을
+     * 백그라운드로 실행하는 데 쓴다 — HTTP 요청 스레드를 막지 않기 위함
      * ({@code CoupleReportTriggerListener} 참고). 빈 이름을 "taskExecutor"로 두면 {@code @Async}가
      * 별도 지정 없이도 이 executor 를 기본으로 쓴다.
      */

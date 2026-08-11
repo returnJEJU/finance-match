@@ -6,17 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.financematch.report.dto.reason.TaxAccountInput;
 import com.financematch.report.dto.reason.TaxSavingProfile;
 import com.financematch.report.dto.reason.TaxStrategyReasonInput;
-import com.financematch.report.llm.ReasonRuleValidator;
-import com.financematch.report.llm.ReportLlmClient;
-import com.financematch.report.llm.ReportPromptBuilder;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
 class TaxStrategyReasonServiceTest {
 
-    private final TaxStrategyReasonService service =
-            new TaxStrategyReasonService(
-                    (ReportLlmClient) null, (ReportPromptBuilder) null, (ReasonRuleValidator) null);
+    private final TaxStrategyReasonService service = new TaxStrategyReasonService();
 
     private static final TaxAccountInput OPEN_FULL =
             new TaxAccountInput(true, new BigDecimal(20_000_000), new BigDecimal(20_000_000));
@@ -75,6 +70,59 @@ class TaxStrategyReasonServiceTest {
         String reason = service.fallback(input);
 
         assertTrue(reason.indexOf("철수") < reason.indexOf("영희"), "가나다순(철수 먼저)이어야 함: " + reason);
+    }
+
+    @Test
+    void 둘_다_미개설_계좌가_있으면_추천탭_안내는_맨_뒤에서_한_번만_한다() {
+        // TAX-03과 동일 입력이지만, 이번엔 "추천탭" 문구가 정확히 한 번만 등장하고 문장 맨 뒤에 오는지 확인.
+        TaxSavingProfile me = new TaxSavingProfile(OPEN_FULL, TaxAccountInput.unopened(), OPEN_FULL);
+        TaxSavingProfile partner = new TaxSavingProfile(OPEN_FULL, OPEN_FULL, TaxAccountInput.unopened());
+        TaxStrategyReasonInput input = new TaxStrategyReasonInput("김철수", "이영희", me, partner);
+
+        String reason = service.fallback(input);
+
+        assertEquals(
+                "철수님은 IRP 계좌를 개설하지 않았어요. 영희님은 연금저축 계좌를 개설하지 않았어요. 추천탭에서 상품들을 만나보세요.",
+                reason);
+        assertEquals(reason.lastIndexOf("추천탭"), reason.indexOf("추천탭"), "추천탭 언급은 한 번뿐이어야 함: " + reason);
+        assertTrue(reason.endsWith("추천탭에서 상품들을 만나보세요."), "추천탭 안내는 문장 맨 뒤여야 함: " + reason);
+    }
+
+    @Test
+    void 미개설_사람이_앞에_오면_추천탭_안내도_그_사람_설명_바로_뒤에_온다() {
+        // 철수(가나다순 먼저)는 IRP 미개설, 영희(뒤)는 한도 미달만 있음 — 추천탭은 "철수" 설명 바로 뒤,
+        // 즉 문장 맨 뒤(영희의 한도 안내 뒤)가 아니라 중간에 와야 한다.
+        TaxAccountInput underLimitIsa =
+                new TaxAccountInput(true, new BigDecimal(12_000_000), new BigDecimal(20_000_000));
+        TaxSavingProfile me = new TaxSavingProfile(OPEN_FULL, TaxAccountInput.unopened(), OPEN_FULL);
+        TaxSavingProfile partner = new TaxSavingProfile(underLimitIsa, OPEN_FULL, OPEN_FULL);
+        TaxStrategyReasonInput input = new TaxStrategyReasonInput("김철수", "이영희", me, partner);
+
+        String reason = service.fallback(input);
+
+        assertEquals(
+                "철수님은 IRP 계좌를 개설하지 않았어요. 추천탭에서 상품들을 만나보세요. "
+                        + "영희님은 올해 ISA 한도 2000만원을 다 채우지 않았어요. 더 채우고 세제 혜택 받으세요.",
+                reason);
+        assertTrue(!reason.endsWith("추천탭에서 상품들을 만나보세요."), "추천탭이 맨 뒤가 아니라 철수 설명 뒤에 와야 함: " + reason);
+    }
+
+    @Test
+    void 미개설_사람이_뒤에_오면_추천탭_안내는_맨_뒤에_온다() {
+        // 철수(앞)는 한도 미달만 있음, 영희(뒤)는 IRP 미개설 — 추천탭은 영희 설명 뒤이자 문장 맨 뒤.
+        TaxAccountInput underLimitIsa =
+                new TaxAccountInput(true, new BigDecimal(12_000_000), new BigDecimal(20_000_000));
+        TaxSavingProfile me = new TaxSavingProfile(underLimitIsa, OPEN_FULL, OPEN_FULL);
+        TaxSavingProfile partner = new TaxSavingProfile(OPEN_FULL, TaxAccountInput.unopened(), OPEN_FULL);
+        TaxStrategyReasonInput input = new TaxStrategyReasonInput("김철수", "이영희", me, partner);
+
+        String reason = service.fallback(input);
+
+        assertEquals(
+                "철수님은 올해 ISA 한도 2000만원을 다 채우지 않았어요. 더 채우고 세제 혜택 받으세요. "
+                        + "영희님은 IRP 계좌를 개설하지 않았어요. 추천탭에서 상품들을 만나보세요.",
+                reason);
+        assertTrue(reason.endsWith("추천탭에서 상품들을 만나보세요."), "추천탭이 맨 뒤여야 함: " + reason);
     }
 
     @Test

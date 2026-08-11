@@ -18,10 +18,10 @@ import org.springframework.transaction.event.TransactionalEventListener;
  * {@link TransactionPhase#AFTER_COMMIT} 이후에만 실행된다 — 그래야 방금 저장한 값이 실제로 DB에서
  * 조회 가능한 상태가 된다.
  *
- * <p>{@code getOrCalculateCompatibilityResult}는 LLM을 여러 번 호출해 수십 초~수 분이 걸릴 수 있어
- * ({@code MatchService} 참고), 설문 저장 API의 응답을 막지 않도록 {@link Async}로 별도 스레드
- * ({@code RootConfig#taskExecutor}) 에서 실행한다 — 완전한 실행 결과를 기다리지 않는 fire-and-forget
- * 방식이라 실패해도 설문 저장 자체는 이미 성공한 상태로 남는다(로그로만 남기고 예외를 삼킨다).
+ * <p>{@code getOrCalculateCompatibilityResult}는 계산·저장이 섞여 있어 설문 저장 API의 응답을
+ * 막지 않도록 {@link Async}로 별도 스레드({@code RootConfig#taskExecutor})에서 실행한다 —
+ * 완전한 실행 결과를 기다리지 않는 fire-and-forget 방식이라 실패해도 설문 저장 자체는 이미 성공한
+ * 상태로 남는다(로그로만 남기고 예외를 삼킨다).
  */
 @Slf4j
 @Component
