@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.financematch.config.RootConfig;
 import com.financematch.recommendation.domain.RecommendationContext;
 import com.financematch.recommendation.policy.RecommendedProduct;
+import com.financematch.recommendation.type.RecommendationReasonCode;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -48,6 +49,7 @@ class SavingsRecommendationPolicyTest {
         RecommendedProduct first = result.get(0);
 
         assertEquals(6L, first.productId());
+        assertEquals(RecommendationReasonCode.SAVINGS_TERM_AND_RATE, first.reasonCode());
         assertEquals(1, first.rank());
         assertTrue(first.selected());
 
@@ -106,6 +108,9 @@ class SavingsRecommendationPolicyTest {
         // then
         RecommendedProduct first = result.get(0);
         assertEquals(5L, first.productId());
+        assertEquals(
+                RecommendationReasonCode.SAVINGS_KB_STAR_PRIORITY,
+                first.reasonCode());
         assertEquals(1, first.rank());
         assertTrue(first.selected());
     }

@@ -32,6 +32,7 @@ class RecommendationResponseAssemblerTest {
                         true,
                         "KB Star 정기예금");
         deposit.setApplicableBaseRate(new BigDecimal("2.80"));
+        deposit.setRecommendationReason("예금 추천 이유");
         JointRecommendationProduct investment =
                 jointProduct(
                         12L,
@@ -62,6 +63,9 @@ class RecommendationResponseAssemblerTest {
         assertEquals("신혼집 스타터 패키지", response.packageName());
         assertEquals(3, response.packageSlots().size());
         assertEquals(
+                "예금 추천 이유",
+                response.packageSlots().get(0).products().get(0).recommendationReason());
+        assertEquals(
                 "연 2.80%",
                 response.packageSlots().get(0).products().get(0).comparisonValue());
         assertEquals(
@@ -77,11 +81,17 @@ class RecommendationResponseAssemblerTest {
                 TaxAccountType.ISA,
                 response.personalTaxSavingRecommendation().products().get(0).accountType());
         assertEquals(
+                "절세 추천 이유",
+                response.personalTaxSavingRecommendation().products().get(0).recommendationReason());
+        assertEquals(
                 "중립",
                 response.personalInvestmentRecommendation().products().get(0).riskLabel());
         assertEquals(
                 28049,
                 response.personalInvestmentRecommendation().products().get(0).aum());
+        assertEquals(
+                "투자 추천 이유",
+                response.personalInvestmentRecommendation().products().get(0).recommendationReason());
     }
 
     @Test
@@ -148,6 +158,7 @@ class RecommendationResponseAssemblerTest {
         product.setDescription("직접 운용하는 절세 계좌");
         product.setProductUrl("https://www.kbsec.com/isa");
         product.setAccountType(TaxAccountType.ISA);
+        product.setRecommendationReason("절세 추천 이유");
         return product;
     }
 
@@ -162,6 +173,7 @@ class RecommendationResponseAssemblerTest {
         product.setProductUrl("https://www.riseetf.co.kr/product");
         product.setRiskLevel(5);
         product.setAum(28049);
+        product.setRecommendationReason("투자 추천 이유");
         return product;
     }
 }

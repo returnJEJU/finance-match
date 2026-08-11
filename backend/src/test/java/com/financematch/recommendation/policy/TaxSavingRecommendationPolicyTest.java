@@ -13,6 +13,7 @@ import com.financematch.product.type.IsaType;
 import com.financematch.product.type.TaxAccountType;
 import com.financematch.recommendation.domain.RecommendationContext;
 import com.financematch.recommendation.service.InvestmentRiskLevelCalculator;
+import com.financematch.recommendation.type.RecommendationReasonCode;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +51,9 @@ class TaxSavingRecommendationPolicyTest {
         assertEquals(List.of(4L, 5L, 2L, 1L), productIds(result.get(10L)));
         assertEquals(List.of(3L, 5L, 4L), productIds(result.get(20L)));
         assertTrue(result.get(10L).get(0).selected());
+        assertEquals(
+                RecommendationReasonCode.TAX_SAVING_IRP_INVESTMENT_TYPE,
+                result.get(10L).get(0).reasonCode());
         assertFalse(result.get(10L).get(1).selected());
     }
 

@@ -8,6 +8,7 @@ import com.financematch.product.type.LoanPurpose;
 import com.financematch.product.type.LoanTargetGroup;
 import com.financematch.recommendation.domain.RecommendationContext;
 import com.financematch.recommendation.policy.joint.JointRecommendationPolicy;
+import com.financematch.recommendation.type.RecommendationReasonCode;
 import com.financematch.recommendation.type.RecommendationSlotType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -65,7 +66,10 @@ public class LoanRecommendationPolicy implements JointRecommendationPolicy {
                                 new RecommendedProduct(
                                         rankedProducts.get(index).getProductId(),
                                         index + 1,
-                                        index == 0))
+                                        index == 0,
+                                        index == 0
+                                                ? RecommendationReasonCode.LOAN_TARGET_GROUP_RATE_AND_CHANNEL
+                                                : null))
                 .toList();
     }
 

@@ -6,6 +6,7 @@ import com.financematch.product.mapper.DepositMapper;
 import com.financematch.product.type.DepositType;
 import com.financematch.recommendation.domain.RecommendationContext;
 import com.financematch.recommendation.policy.RecommendedProduct;
+import com.financematch.recommendation.type.RecommendationReasonCode;
 import com.financematch.recommendation.type.RecommendationSlotType;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -98,7 +99,8 @@ public class DepositRecommendationPolicy
                     new RecommendedProduct(
                             candidate.product().getProductId(),
                             rank,
-                            selected
+                            selected,
+                            selected ? RecommendationReasonCode.DEPOSIT_TERM_AND_RATE : null
                     )
             );
         }

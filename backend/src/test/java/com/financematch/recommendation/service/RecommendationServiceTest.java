@@ -196,6 +196,23 @@ class RecommendationServiceTest {
                                 product ->
                                         "기본금리".equals(product.comparisonLabel())
                                                 && product.comparisonValue().startsWith("연 ")));
+        assertTrue(
+                depositSlot.products().stream()
+                        .filter(
+                                product ->
+                                        product.productId()
+                                                .equals(depositSlot.selectedProductId()))
+                        .allMatch(
+                                product ->
+                                        product.recommendationReason() != null
+                                                && !product.recommendationReason().isBlank()));
+        assertTrue(
+                depositSlot.products().stream()
+                        .filter(
+                                product ->
+                                        !product.productId()
+                                                .equals(depositSlot.selectedProductId()))
+                        .allMatch(product -> product.recommendationReason() == null));
     }
 
     @Test

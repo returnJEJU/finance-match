@@ -5,6 +5,7 @@ import com.financematch.product.mapper.InvestmentMapper;
 import com.financematch.recommendation.domain.RecommendationContext;
 import com.financematch.recommendation.policy.RecommendedProduct;
 import com.financematch.recommendation.service.InvestmentRiskLevelCalculator;
+import com.financematch.recommendation.type.RecommendationReasonCode;
 import com.financematch.recommendation.type.RecommendationSlotType;
 import java.util.Comparator;
 import java.util.List;
@@ -60,7 +61,14 @@ public class JointInvestmentRecommendationPolicy implements JointRecommendationP
                                 new RecommendedProduct(
                                         rankedProducts.get(index).getProductId(),
                                         index + 1,
-                                        index == 0))
+                                        index == 0,
+                                        index == 0
+                                                ? (prioritizeTdf
+                                                                && Boolean.TRUE.equals(
+                                                                        rankedProducts.get(index).getIsTdf())
+                                                        ? RecommendationReasonCode.INVESTMENT_RETIREMENT_TDF_PRIORITY
+                                                        : RecommendationReasonCode.INVESTMENT_RISK_AND_AUM)
+                                                : null))
                 .toList();
     }
 }

@@ -21,6 +21,7 @@ class RecommendationResponseTest {
                         101L,
                         "KB Star 정기예금",
                         "목돈을 안정적으로 운용하는 정기예금",
+                        "추천 이유",
                         "https://obank.kbstar.com/deposit",
                         "기본금리",
                         "연 2.80%",
@@ -44,6 +45,7 @@ class RecommendationResponseTest {
                                         301L,
                                         "KB증권 중개형 ISA",
                                         "직접 운용하는 절세 계좌",
+                                        null,
                                         "https://www.kbsec.com/isa",
                                         TaxAccountType.ISA)));
         PersonalInvestmentRecommendationResponse investment =
@@ -55,6 +57,7 @@ class RecommendationResponseTest {
                                         401L,
                                         "RISE 미국S&P500 ETF",
                                         "미국 대표 기업에 분산 투자하는 상품",
+                                        null,
                                         "https://www.riseetf.co.kr/product",
                                         3,
                                         "고위험",
@@ -71,6 +74,14 @@ class RecommendationResponseTest {
         JsonNode json = objectMapper.valueToTree(response);
 
         assertEquals(100L, json.get("recommendationId").longValue());
+        assertEquals(
+                "추천 이유",
+                json.get("packageSlots")
+                        .get(0)
+                        .get("products")
+                        .get(0)
+                        .get("recommendationReason")
+                        .textValue());
         assertEquals("신혼집 스타터 패키지", json.get("packageName").textValue());
         assertEquals(false, json.get("hasHighInterestDebt").booleanValue());
         assertEquals(101L, json.get("packageSlots").get(0).get("selectedProductId").longValue());
@@ -128,6 +139,7 @@ class RecommendationResponseTest {
                         101L,
                         "KB Star 정기예금",
                         null,
+                        "추천 이유",
                         "https://obank.kbstar.com/deposit",
                         "기본금리",
                         "연 2.80%",
@@ -161,6 +173,7 @@ class RecommendationResponseTest {
                         401L,
                         "RISE 미국S&P500 ETF",
                         "미국 대표 기업에 분산 투자하는 상품",
+                        null,
                         "https://www.riseetf.co.kr/product",
                         null,
                         null,
@@ -184,6 +197,7 @@ class RecommendationResponseTest {
                         new PersonalInvestmentProductResponse(
                                 401L,
                                 "RISE 미국S&P500 ETF",
+                                null,
                                 null,
                                 "https://www.riseetf.co.kr/product",
                                 4,

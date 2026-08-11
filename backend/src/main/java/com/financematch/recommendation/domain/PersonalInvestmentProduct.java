@@ -13,6 +13,7 @@ public class PersonalInvestmentProduct {
     private int rank;
     private String productName;
     private String description;
+    private String recommendationReason;
     private String productUrl;
     private int riskLevel;
     private int aum;
