@@ -17,7 +17,7 @@ public class GoalFeasibilityReasonFormatter {
         if (expectedAsset.compareTo(targetAmount) < 0) {
             BigDecimal shortfall = targetAmount.subtract(expectedAsset);
             return String.format(
-                    "%d개월 후 예상 자산은 약 %s이에요. 목표 금액 %s 대비 약 %s 모자라요. ",
+                    "%d개월 후 예상 자산은 약 %s이에요. 목표 금액 %s 대비 약 %s 모자라요.",
                     monthsUntilGoal,
                     WonAmountFormatter.format(expectedAsset),
                     WonAmountFormatter.format(targetAmount),
