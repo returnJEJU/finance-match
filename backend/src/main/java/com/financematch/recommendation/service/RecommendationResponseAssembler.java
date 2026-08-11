@@ -35,6 +35,7 @@ public class RecommendationResponseAssembler {
 
         return new RecommendationResponse(
                 result.getRecommendationId(),
+                packageName(result.getFirstGoalType()),
                 result.isHasHighInterestDebt(),
                 assemblePackageSlots(jointProducts),
                 assembleTaxSaving(taxSavingProducts),
@@ -178,6 +179,26 @@ public class RecommendationResponseAssembler {
                 first.getTargetMemberId(),
                 first.getTargetMemberName(),
                 responses);
+    }
+
+    private String packageName(String firstGoalType) {
+        if (firstGoalType == null || firstGoalType.isBlank()) {
+            throw new IllegalStateException("추천 패키지명을 만들 1순위 목표가 없습니다.");
+        }
+
+        String goalLabel =
+                switch (firstGoalType) {
+                    case "MARRIAGE" -> "신혼집";
+                    case "HOUSING" -> "내 집 마련";
+                    case "RETIREMENT" -> "노후 준비";
+                    case "INVESTMENT" -> "여유자금";
+                    case "SHORT_TERM" -> "목돈 굴리기";
+                    default ->
+                            throw new IllegalStateException(
+                                    "지원하지 않는 1순위 목표입니다: " + firstGoalType);
+                };
+
+        return goalLabel + " 스타터 패키지";
     }
 
     private String slotName(RecommendationSlotType slotType) {

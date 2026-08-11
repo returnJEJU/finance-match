@@ -61,11 +61,17 @@ class RecommendationResponseTest {
                                         28049)));
         RecommendationResponse response =
                 new RecommendationResponse(
-                        100L, false, List.of(slot), taxSaving, investment);
+                        100L,
+                        "신혼집 스타터 패키지",
+                        false,
+                        List.of(slot),
+                        taxSaving,
+                        investment);
 
         JsonNode json = objectMapper.valueToTree(response);
 
         assertEquals(100L, json.get("recommendationId").longValue());
+        assertEquals("신혼집 스타터 패키지", json.get("packageName").textValue());
         assertEquals(false, json.get("hasHighInterestDebt").booleanValue());
         assertEquals(101L, json.get("packageSlots").get(0).get("selectedProductId").longValue());
         assertEquals(
@@ -93,7 +99,7 @@ class RecommendationResponseTest {
     @Test
     void allowsNullPersonalRecommendations() {
         RecommendationResponse response =
-                new RecommendationResponse(100L, true, List.of(), null, null);
+                new RecommendationResponse(100L, "신혼집 스타터 패키지", true, List.of(), null, null);
 
         JsonNode json = objectMapper.valueToTree(response);
 

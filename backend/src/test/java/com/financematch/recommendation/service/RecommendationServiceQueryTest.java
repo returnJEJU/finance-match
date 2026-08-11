@@ -46,7 +46,7 @@ class RecommendationServiceQueryTest {
         RecommendationResult result = new RecommendationResult();
         result.setRecommendationId(100L);
         RecommendationResponse expected =
-                new RecommendationResponse(100L, false, List.of(), null, null);
+                new RecommendationResponse(100L, "신혼집 스타터 패키지", false, List.of(), null, null);
 
         when(recommendationMapper.findRecommendationResultByMemberId(1L))
                 .thenReturn(result);
