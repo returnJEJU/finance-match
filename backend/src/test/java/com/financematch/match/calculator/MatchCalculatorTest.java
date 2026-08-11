@@ -11,7 +11,13 @@ import org.junit.jupiter.api.Test;
 
 class MatchCalculatorTest {
 
-    private final MatchCalculator calculator = new MatchCalculator();
+    private final MatchCalculator calculator = new MatchCalculator(
+            new FinancialAssetEngine(),
+            new DebtRepaymentEngine(),
+            new GoalFeasibilityEngine(),
+            new FinancialValueEngine(),
+            new TaxStrategyEngine()
+    );
 
     @Test
     void 금융자산_점수를_계산한다() {

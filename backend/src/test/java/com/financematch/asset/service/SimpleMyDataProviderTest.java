@@ -4,6 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.financematch.match.calculator.DebtRepaymentEngine;
+import com.financematch.match.calculator.FinancialAssetEngine;
+import com.financematch.match.calculator.FinancialValueEngine;
+import com.financematch.match.calculator.GoalFeasibilityEngine;
+import com.financematch.match.calculator.TaxStrategyEngine;
+
 import com.financematch.asset.domain.AssetCategory;
 import com.financematch.asset.domain.MyDataAsset;
 import com.financematch.asset.domain.MyDataLoan;
@@ -81,7 +87,15 @@ class SimpleMyDataProviderTest {
                         .targetPeriodMonths(36)
                         .build();
 
-        MatchCalculationResult result = new MatchCalculator().calculate(input);
+        MatchCalculator calculator = new MatchCalculator(
+                new FinancialAssetEngine(),
+                new DebtRepaymentEngine(),
+                new GoalFeasibilityEngine(),
+                new FinancialValueEngine(),
+                new TaxStrategyEngine()
+        );
+        MatchCalculationResult result =
+                calculator.calculate(input);
 
         assertTrue(result.getAssetStabilityScore().compareTo(new BigDecimal("10.00")) > 0);
         assertTrue(result.getAssetStabilityScore().compareTo(new BigDecimal("15.00")) < 0);

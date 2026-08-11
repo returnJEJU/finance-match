@@ -4,6 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.financematch.match.calculator.DebtRepaymentEngine;
+import com.financematch.match.calculator.FinancialAssetEngine;
+import com.financematch.match.calculator.FinancialValueEngine;
+import com.financematch.match.calculator.GoalFeasibilityEngine;
+import com.financematch.match.calculator.TaxStrategyEngine;
+
 import com.financematch.match.calculator.MatchCalculationInput;
 import com.financematch.match.calculator.MatchCalculationResult;
 import com.financematch.match.calculator.MatchCalculator;
@@ -20,7 +26,13 @@ import org.junit.jupiter.api.Test;
  */
 class GoalFeasibilityPipelineExperimentTest {
 
-    private final MatchCalculator calculator = new MatchCalculator();
+    private final MatchCalculator calculator = new MatchCalculator(
+            new FinancialAssetEngine(),
+            new DebtRepaymentEngine(),
+            new GoalFeasibilityEngine(),
+            new FinancialValueEngine(),
+            new TaxStrategyEngine()
+    );
     private final GoalFeasibilityReasonFormatter formatter = new GoalFeasibilityReasonFormatter();
 
     @Test
