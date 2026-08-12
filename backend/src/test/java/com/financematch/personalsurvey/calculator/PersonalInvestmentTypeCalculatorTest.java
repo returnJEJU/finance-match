@@ -148,4 +148,173 @@ class PersonalInvestmentTypeCalculatorTest {
                 calculator.calculate(input, ASSESSMENT_DATE));
     }
 
+    @Test // 강제 안정형 조건이 아닌 낮은 환산점수로 안정형에 분류되는지 확인
+    void classifiesStableByLowScore() {
+        PersonalInvestmentCalculationInput input =
+                PersonalInvestmentCalculationInput.builder()
+                        .birthDate(LocalDate.of(1966, 7, 30))
+                        .annualIncome(30_000_000L)
+                        .financialAssetRatio(FinancialAssetRatio.UNDER_10)
+                        .investmentExperiences(Set.of(InvestmentExperience.LOW_RISK))
+                        .financialKnowledge(FinancialKnowledge.VERY_LOW)
+                        .capitalPreservationAttitude(CapitalPreservationAttitude.UNDER_20)
+                        .firstGoalType(GoalType.SHORT_TERM)
+                        .targetPeriodMonths(3)
+                        .build();
+
+        assertEquals(PersonalInvestmentType.STABLE,
+                calculator.calculate(input, ASSESSMENT_DATE));
+    }
+
+    @Test // 투자 경험이 하나도 없으면 계산할 수 없으므로 예외가 발생하는지 확인
+    void throwsWhenInvestmentExperienceIsEmpty() {
+        PersonalInvestmentCalculationInput input =
+                PersonalInvestmentCalculationInput.builder()
+                        .birthDate(LocalDate.of(1996, 1, 1))
+                        .annualIncome(50_000_000L)
+                        .financialAssetRatio(FinancialAssetRatio.UNDER_30)
+                        .investmentExperiences(Set.of())
+                        .financialKnowledge(FinancialKnowledge.MEDIUM)
+                        .capitalPreservationAttitude(CapitalPreservationAttitude.UNDER_20)
+                        .firstGoalType(GoalType.INVESTMENT)
+                        .targetPeriodMonths(12)
+                        .build();
+
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> calculator.calculate(input, ASSESSMENT_DATE));
+
+        assertEquals("투자 경험이 필요합니다.", exception.getMessage());
+    }
+
+    @Test // 만 19세와 20세의 나이 점수 차이가 최종 투자성향에 반영되는지 확인
+    void changesClassificationAtAgeTwentyBoundary() {
+        PersonalInvestmentCalculationInput ageNineteen =
+                ageBoundaryInput(LocalDate.of(2007, 7, 30), FinancialAssetRatio.UNDER_30);
+        PersonalInvestmentCalculationInput ageTwenty =
+                ageBoundaryInput(LocalDate.of(2006, 7, 30), FinancialAssetRatio.UNDER_30);
+
+        assertEquals(PersonalInvestmentType.STABLE_SEEKING,
+                calculator.calculate(ageNineteen, ASSESSMENT_DATE));
+        assertEquals(PersonalInvestmentType.NEUTRAL,
+                calculator.calculate(ageTwenty, ASSESSMENT_DATE));
+    }
+
+    @Test // 만 39세와 40세의 나이 점수 차이가 최종 투자성향에 반영되는지 확인
+    void changesClassificationAtAgeFortyBoundary() {
+        PersonalInvestmentCalculationInput ageThirtyNine =
+                ageBoundaryInput(LocalDate.of(1987, 7, 30), FinancialAssetRatio.UNDER_30);
+        PersonalInvestmentCalculationInput ageForty =
+                ageBoundaryInput(LocalDate.of(1986, 7, 30), FinancialAssetRatio.UNDER_30);
+
+        assertEquals(PersonalInvestmentType.NEUTRAL,
+                calculator.calculate(ageThirtyNine, ASSESSMENT_DATE));
+        assertEquals(PersonalInvestmentType.STABLE_SEEKING,
+                calculator.calculate(ageForty, ASSESSMENT_DATE));
+    }
+
+    @Test // 만 49세와 50세의 나이 점수 차이가 최종 투자성향에 반영되는지 확인
+    void changesClassificationAtAgeFiftyBoundary() {
+        PersonalInvestmentCalculationInput ageFortyNine =
+                ageBoundaryInput(LocalDate.of(1977, 7, 30), FinancialAssetRatio.UNDER_50);
+        PersonalInvestmentCalculationInput ageFifty =
+                ageBoundaryInput(LocalDate.of(1976, 7, 30), FinancialAssetRatio.UNDER_50);
+
+        assertEquals(PersonalInvestmentType.NEUTRAL,
+                calculator.calculate(ageFortyNine, ASSESSMENT_DATE));
+        assertEquals(PersonalInvestmentType.STABLE_SEEKING,
+                calculator.calculate(ageFifty, ASSESSMENT_DATE));
+    }
+
+    @Test // 연소득 3천만원 경계 전후의 소득 점수 차이가 최종 투자성향에 반영되는지 확인
+    void changesClassificationAboveThirtyMillionIncomeBoundary() {
+        PersonalInvestmentCalculationInput atBoundary = incomeBoundaryInput(30_000_000L);
+        PersonalInvestmentCalculationInput aboveBoundary = incomeBoundaryInput(30_000_001L);
+
+        assertEquals(PersonalInvestmentType.STABLE_SEEKING,
+                calculator.calculate(atBoundary, ASSESSMENT_DATE));
+        assertEquals(PersonalInvestmentType.NEUTRAL,
+                calculator.calculate(aboveBoundary, ASSESSMENT_DATE));
+    }
+
+    @Test // 연소득 1억원 경계 전후의 소득 점수 차이가 최종 투자성향에 반영되는지 확인
+    void changesClassificationAboveOneHundredMillionIncomeBoundary() {
+        PersonalInvestmentCalculationInput atBoundary = highIncomeBoundaryInput(100_000_000L);
+        PersonalInvestmentCalculationInput aboveBoundary = highIncomeBoundaryInput(100_000_001L);
+
+        assertEquals(PersonalInvestmentType.NEUTRAL,
+                calculator.calculate(atBoundary, ASSESSMENT_DATE));
+        assertEquals(PersonalInvestmentType.AGGRESSIVE,
+                calculator.calculate(aboveBoundary, ASSESSMENT_DATE));
+    }
+
+    @Test // 은퇴 목표가 결혼, 주거 목표보다 높은 목표 점수로 계산되는지 확인
+    void appliesRetirementGoalScore() {
+        PersonalInvestmentCalculationInput marriage = goalBoundaryInput(GoalType.MARRIAGE);
+        PersonalInvestmentCalculationInput housing = goalBoundaryInput(GoalType.HOUSING);
+        PersonalInvestmentCalculationInput retirement = goalBoundaryInput(GoalType.RETIREMENT);
+
+        assertEquals(PersonalInvestmentType.STABLE_SEEKING,
+                calculator.calculate(marriage, ASSESSMENT_DATE));
+        assertEquals(PersonalInvestmentType.STABLE_SEEKING,
+                calculator.calculate(housing, ASSESSMENT_DATE));
+        assertEquals(PersonalInvestmentType.NEUTRAL,
+                calculator.calculate(retirement, ASSESSMENT_DATE));
+    }
+
+    private PersonalInvestmentCalculationInput ageBoundaryInput(
+            LocalDate birthDate,
+            FinancialAssetRatio financialAssetRatio) {
+        return PersonalInvestmentCalculationInput.builder()
+                .birthDate(birthDate)
+                .annualIncome(30_000_000L)
+                .financialAssetRatio(financialAssetRatio)
+                .investmentExperiences(Set.of(InvestmentExperience.LOW_RISK))
+                .financialKnowledge(FinancialKnowledge.VERY_LOW)
+                .capitalPreservationAttitude(CapitalPreservationAttitude.UNDER_20)
+                .firstGoalType(GoalType.INVESTMENT)
+                .targetPeriodMonths(6)
+                .build();
+    }
+
+    private PersonalInvestmentCalculationInput incomeBoundaryInput(long annualIncome) {
+        return PersonalInvestmentCalculationInput.builder()
+                .birthDate(LocalDate.of(1966, 7, 30))
+                .annualIncome(annualIncome)
+                .financialAssetRatio(FinancialAssetRatio.UNDER_30)
+                .investmentExperiences(Set.of(InvestmentExperience.LOW_RISK))
+                .financialKnowledge(FinancialKnowledge.VERY_LOW)
+                .capitalPreservationAttitude(CapitalPreservationAttitude.UNDER_20)
+                .firstGoalType(GoalType.INVESTMENT)
+                .targetPeriodMonths(36)
+                .build();
+    }
+
+    private PersonalInvestmentCalculationInput highIncomeBoundaryInput(long annualIncome) {
+        return PersonalInvestmentCalculationInput.builder()
+                .birthDate(LocalDate.of(1996, 1, 1))
+                .annualIncome(annualIncome)
+                .financialAssetRatio(FinancialAssetRatio.UNDER_50)
+                .investmentExperiences(Set.of(InvestmentExperience.MODERATE_RISK))
+                .financialKnowledge(FinancialKnowledge.MEDIUM)
+                .capitalPreservationAttitude(CapitalPreservationAttitude.UNDER_20)
+                .firstGoalType(GoalType.HOUSING)
+                .targetPeriodMonths(12)
+                .build();
+    }
+
+    private PersonalInvestmentCalculationInput goalBoundaryInput(GoalType goalType) {
+        return PersonalInvestmentCalculationInput.builder()
+                .birthDate(LocalDate.of(1996, 1, 1))
+                .annualIncome(30_000_000L)
+                .financialAssetRatio(FinancialAssetRatio.UNDER_30)
+                .investmentExperiences(Set.of(InvestmentExperience.LOW_RISK))
+                .financialKnowledge(FinancialKnowledge.VERY_LOW)
+                .capitalPreservationAttitude(CapitalPreservationAttitude.UNDER_20)
+                .firstGoalType(goalType)
+                .targetPeriodMonths(12)
+                .build();
+    }
+
 }
