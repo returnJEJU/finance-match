@@ -232,7 +232,7 @@ const formattedAum = computed(() =>
 
         <div
           v-if="showRecommendationReason && product.recommendationReason"
-          class="mt-4 -ml-[68px] flex items-start gap-2.5 rounded-xl bg-[#FFFBE0] px-3.5 py-3.5 text-[15px] leading-6 text-[#665F18]"
+          class="mt-4 -ml-[68px] flex items-start gap-1.5 rounded-xl bg-[#FFFBE0] px-3.5 py-3.5 text-[15px] leading-6 text-[#665F18]"
         >
           <Lightbulb class="mt-0.5 h-5 w-5 shrink-0 text-[#C79B00]" stroke-width="2.3" />
           <p>

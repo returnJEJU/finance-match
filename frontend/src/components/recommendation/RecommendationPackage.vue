@@ -80,24 +80,24 @@ const confirmProductChange = () => {
 </script>
 
 <template>
-  <section class="rounded-[20px] border border-ink bg-[#FFF56E] p-4">
-    <div class="mb-3">
+  <section class="rounded-[20px] border border-ink bg-[#FFF56E] px-3 py-3">
+    <div class="mb-2.5">
       <span class="rounded-full bg-ink px-3 py-1.5 text-[12px] font-semibold text-[#A2F5E6]">
         찰떡 PICK 패키지
       </span>
 
-      <h2 class="mt-3 text-[18px] font-bold">{{ packageName }}</h2>
+      <h2 class="mt-2.5 text-[18px] font-bold">{{ packageName }}</h2>
 
-      <p class="mt-1.5 text-[14px] leading-5 text-brand-ink">
+      <p class="mt-1 text-[14px] leading-5 text-brand-ink">
         현재 조건에 맞는 {{ slots.length }}가지 금융상품을 골랐어요
       </p>
     </div>
 
-    <div class="space-y-4 rounded-card bg-white p-3">
+    <div class="space-y-3 rounded-card bg-white px-3 py-2.5">
       <fieldset
         v-for="{ slot, product } in selectedProducts"
         :key="slot.slotId"
-        class="rounded-card border border-line-card bg-transparent px-4 pb-1"
+        class="rounded-card border border-line-card bg-transparent px-4 pb-0"
       >
         <legend class="px-1 text-[13px] font-bold text-ink">
           {{ slot.slotName }}
