@@ -15,7 +15,7 @@ public class RecommendationReasonResolver {
             case DEPOSIT_TERM_AND_RATE ->
                     "두 분의 목표 기간에 맞고 기본금리가 높은 예금 상품이에요.";
             case SAVINGS_KB_STAR_PRIORITY ->
-                    "KB스타적금 가입 대상이며 목표 기간과 월 저축액에도 잘 맞아요.";
+                    "KB스타적금 가입 대상이며 목표 기간과 월 저축액에도 맞아요.";
             case SAVINGS_TERM_AND_RATE ->
                     "목표 기간과 월 저축액에 맞고 기본금리가 높은 적금 상품이에요.";
             case INVESTMENT_RETIREMENT_TDF_PRIORITY ->
