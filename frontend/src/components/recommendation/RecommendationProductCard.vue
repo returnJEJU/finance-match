@@ -138,20 +138,6 @@ const openProduct = (url) => {
 const formattedAum = computed(() =>
   props.product.aum == null ? null : `${props.product.aum.toLocaleString('ko-KR')}억 원`,
 )
-
-const recommendationReason = computed(() => {
-  if (props.product.recommendationReason) return props.product.recommendationReason
-
-  const reasons = {
-    DEPOSIT: '목표 기간과 현재 보유 자금 조건에 잘 맞는 상품이에요.',
-    SAVINGS: '월 저축 가능 금액과 목표 기간을 고려한 상품이에요.',
-    INVESTMENT: '투자 성향과 금융 목표에 맞는 위험등급의 상품이에요.',
-    LOAN: '대출 목적과 가입 조건을 함께 고려한 상품이에요.',
-    TAX_SAVING: '절세 가능 여부와 계좌 활용 우선순위를 반영했어요.',
-  }
-
-  return reasons[props.slotType] ?? '현재 입력한 금융 조건을 고려한 상품이에요.'
-})
 </script>
 
 <template>
@@ -245,13 +231,13 @@ const recommendationReason = computed(() => {
         </div>
 
         <div
-          v-if="showRecommendationReason"
+          v-if="showRecommendationReason && product.recommendationReason"
           class="mt-4 -ml-[68px] flex items-start gap-2.5 rounded-xl bg-[#FFFBE0] px-3.5 py-3.5 text-[15px] leading-6 text-[#665F18]"
         >
           <Lightbulb class="mt-0.5 h-5 w-5 shrink-0 text-[#C79B00]" stroke-width="2.3" />
           <p>
             <strong class="mr-1 font-bold text-ink">추천 이유</strong>
-            {{ recommendationReason }}
+            {{ product.recommendationReason }}
           </p>
         </div>
       </div>

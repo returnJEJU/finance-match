@@ -106,7 +106,7 @@ const confirmProductChange = () => {
         <RecommendationProductCard
           :product="product"
           :slot-type="slot.slotType"
-          :show-recommendation-reason="product.productId === slot.selectedProductId"
+          :show-recommendation-reason="Boolean(product.recommendationReason)"
           @select="openProductList(slot)"
         />
       </fieldset>
@@ -151,7 +151,7 @@ const confirmProductChange = () => {
               :slot-type="activeSlot.slotType"
               :current="product.productId === selectedProductIds[activeSlot.slotId]"
               :recommended="product.productId === activeSlot.selectedProductId"
-              :show-recommendation-reason="product.productId === activeSlot.selectedProductId"
+              :show-recommendation-reason="Boolean(product.recommendationReason)"
               compact
               roomy
               list-mode
