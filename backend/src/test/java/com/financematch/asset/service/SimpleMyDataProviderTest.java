@@ -65,7 +65,7 @@ class SimpleMyDataProviderTest {
 
         assertEquals(new BigDecimal("180000000"), totalAsset(snapshot));
         assertEquals(
-                new BigDecimal("3000000"),
+                new BigDecimal("6000000"),
                 amountOf(snapshot, AssetCategory.BANK_CHECKING));
         assertEquals(new BigDecimal("40000000"), totalDebt(snapshot));
         assertEquals(new BigDecimal("10000000"), annualDebtPayment(snapshot));

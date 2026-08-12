@@ -50,10 +50,10 @@ public enum MyDataScenario {
         MyDataSnapshot build(LocalDateTime fetchedAt) {
             return new MyDataSnapshot(
                     List.of(
-                            checking("토스뱅크", "토스뱅크 통장", 3_000_000L),
+                            checking("토스뱅크", "토스뱅크 통장", 6_000_000L),
                             savings("KB국민은행", "KB Star 정기예금", 40_000_000L),
                             securities("KB증권", "인덱스펀드", 60_000_000L),
-                            securities("KB증권", "해외주식 위탁계좌", 42_000_000L),
+                            securities("KB증권", "해외주식 위탁계좌", 39_000_000L),
                             securities("KB증권", "KB 연금저축펀드", 20_000_000L),
                             securities("KB증권", "KB 개인형IRP", 15_000_000L)),
                     List.of(loan("KB국민은행", "KB 직장인든든 신용대출", 40_000_000L, 10_000_000L, "5.20")),
