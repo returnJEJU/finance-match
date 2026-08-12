@@ -203,6 +203,29 @@ class LoanRecommendationPolicyTest {
         verify(loanMapper).findByPurpose(LoanPurpose.JEONSE);
     }
 
+    @Test
+    void recommendsBusinessLoansForOtherTargetGroupByLowestRate() {
+        LoanProduct first =
+                product(38L, LoanTargetGroup.OTHER, null, null, IncomeBasis.INDIVIDUAL, null,
+                        ApplicationChannel.MOBILE, "5.32");
+        LoanProduct second =
+                product(39L, LoanTargetGroup.OTHER, null, null, IncomeBasis.INDIVIDUAL, null,
+                        ApplicationChannel.MOBILE, "5.72");
+        LoanProduct third =
+                product(40L, LoanTargetGroup.OTHER, null, null, IncomeBasis.INDIVIDUAL, null,
+                        ApplicationChannel.MOBILE, "3.39");
+        when(loanMapper.findByPurpose(LoanPurpose.BUSINESS))
+                .thenReturn(List.of(first, second, third));
+        LoanRecommendationPolicy policy = new LoanRecommendationPolicy(loanMapper);
+        RecommendationContext context = context();
+        context.setLoanPurpose("BUSINESS");
+
+        List<RecommendedProduct> result = policy.recommend(context);
+
+        assertEquals(List.of(40L, 38L, 39L), productIds(result));
+        verify(loanMapper).findByPurpose(LoanPurpose.BUSINESS);
+    }
+
     private RecommendationContext context() {
         RecommendationContext context = new RecommendationContext();
         context.setLoanPurpose("JEONSE");
