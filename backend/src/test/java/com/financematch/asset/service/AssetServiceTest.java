@@ -8,7 +8,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.financematch.asset.domain.AssetCategory;
 import com.financematch.asset.domain.FinancialSummary;
+import com.financematch.asset.domain.MyDataAsset;
+import com.financematch.asset.domain.MyDataLoan;
+import com.financematch.asset.domain.MyDataPensionIsa;
+import com.financematch.asset.domain.MyDataSnapshot;
 import com.financematch.asset.domain.PensionIsaAccount;
 import com.financematch.asset.dto.AssetLinkResponse;
 import com.financematch.asset.mapper.AssetLinkRow;
@@ -17,6 +22,7 @@ import com.financematch.common.ErrorCode;
 import com.financematch.exception.ApiException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,7 +40,7 @@ class AssetServiceTest {
 
     @BeforeEach
     void setUp() {
-        assetService = new AssetService(assetMapper, new SimpleMyDataProvider());
+        assetService = new AssetService(assetMapper, new FixedMyDataProvider());
     }
 
     @Test
@@ -82,7 +88,7 @@ class AssetServiceTest {
     }
 
     @Test
-    void storesHousingLoanOnlyForEvenMemberScenario() {
+    void storesDebtSummaryWhenSnapshotHasLoan() {
         when(assetMapper.insertFinancialSummary(any())).thenReturn(1);
         when(assetMapper.insertPensionIsaAccount(any())).thenReturn(1);
 
@@ -102,7 +108,7 @@ class AssetServiceTest {
     }
 
     @Test
-    void refreshesBothSummariesWithSameMockSnapshot() {
+    void refreshesBothSummariesWithSameSnapshot() {
         when(assetMapper.upsertFinancialSummary(any())).thenReturn(2);
         when(assetMapper.upsertPensionIsaAccount(any())).thenReturn(2);
 
@@ -156,5 +162,81 @@ class AssetServiceTest {
         assertEquals(ErrorCode.MYDATA_LINK_FAILED, exception.getErrorCode());
         verify(assetMapper, never()).insertFinancialSummary(any());
         verify(assetMapper, never()).insertPensionIsaAccount(any());
+    }
+
+    /**
+     * 고정 스냅샷을 돌려주는 테스트용 마이데이터.
+     *
+     * <p>이 테스트가 검증하는 것은 {@link AssetService}의 합산·저장 로직이지 데모 시나리오가 아니다.
+     * {@code MyDataScenario}의 값이 바뀌어도 이 테스트는 영향을 받지 않아야 하므로 provider 를 직접
+     * 붙이지 않는다. 7L 은 무부채, 8L 은 대출 보유 회원이다.
+     */
+    private static final class FixedMyDataProvider implements MyDataProvider {
+
+        @Override
+        public MyDataSnapshot fetch(Long memberId) {
+            return memberId == 8L ? withLoan() : debtFree();
+        }
+
+        private MyDataSnapshot debtFree() {
+            return new MyDataSnapshot(
+                    List.of(
+                            asset(AssetCategory.BANK_CHECKING, 12_630_000L),
+                            asset(AssetCategory.BANK_SAVINGS, 50_520_000L),
+                            asset(AssetCategory.SECURITIES, 9_050_000L),
+                            asset(AssetCategory.SECURITIES, 6_000_000L),
+                            asset(AssetCategory.SECURITIES, 6_000_000L)),
+                    List.of(),
+                    new MyDataPensionIsa(
+                            true,
+                            false,
+                            false,
+                            true,
+                            BigDecimal.valueOf(6_000_000L),
+                            BigDecimal.ZERO,
+                            BigDecimal.valueOf(4_800_000L),
+                            BigDecimal.ZERO,
+                            BigDecimal.ZERO,
+                            BigDecimal.valueOf(6_000_000L),
+                            "ELIGIBLE",
+                            "ELIGIBLE"),
+                    LocalDateTime.of(2026, 8, 5, 10, 30));
+        }
+
+        private MyDataSnapshot withLoan() {
+            return new MyDataSnapshot(
+                    List.of(
+                            asset(AssetCategory.BANK_CHECKING, 8_400_000L),
+                            asset(AssetCategory.BANK_SAVINGS, 30_600_000L),
+                            asset(AssetCategory.SECURITIES, 20_000_000L),
+                            asset(AssetCategory.SECURITIES, 4_000_000L)),
+                    List.of(
+                            new MyDataLoan(
+                                    "KB국민은행",
+                                    "KB 전세금안심대출",
+                                    BigDecimal.valueOf(35_000_000L),
+                                    BigDecimal.valueOf(3_600_000L),
+                                    new BigDecimal("4.15"),
+                                    false)),
+                    new MyDataPensionIsa(
+                            false,
+                            true,
+                            false,
+                            false,
+                            BigDecimal.ZERO,
+                            BigDecimal.valueOf(4_000_000L),
+                            BigDecimal.ZERO,
+                            BigDecimal.valueOf(3_000_000L),
+                            BigDecimal.ZERO,
+                            BigDecimal.ZERO,
+                            "ELIGIBLE",
+                            "ELIGIBLE"),
+                    LocalDateTime.of(2026, 8, 5, 10, 30));
+        }
+
+        private MyDataAsset asset(AssetCategory category, long balance) {
+            return new MyDataAsset(
+                    "KB국민은행", "테스트 계좌", category, BigDecimal.valueOf(balance));
+        }
     }
 }
