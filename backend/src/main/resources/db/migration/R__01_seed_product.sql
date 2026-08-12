@@ -54,7 +54,10 @@ INSERT INTO product (id, product_type, product_name, description, url, company_n
 (34, 'LOAN', 'KB스타 아파트담보대출(주택자금)', '아파트 구입 및 주택자금 마련을 위한 담보대출', 'https://obank.kbstar.com/quics?page=C103557&cc=b104363:b104516&%EB%B8%8C%EB%9E%9C%EB%93%9C%EC%83%81%ED%92%88%EC%BD%94%EB%93%9C=LN20001350&%EB%85%B8%EB%93%9C%EC%BD%94%EB%93%9C=00019&prcode=LN20001350', 'KB국민은행'),
 (35, 'LOAN', 'KB 매직카대출(신차 구매용)', '신차 구매 시 이용하는 자동차 구매 전용 대출', 'https://obank.kbstar.com/quics?page=C103573&cc=b104363:b104516&%EB%B8%8C%EB%9E%9C%EB%93%9C%EC%83%81%ED%92%88%EC%BD%94%EB%93%9C=LN20000047&%EB%85%B8%EB%93%9C%EC%BD%94%EB%93%9C=00019&prcode=LN20000047', 'KB국민은행'),
 (36, 'LOAN', 'KB 친환경 매직카대출(신차 구매용)', '친환경 차량 구매 고객을 위한 우대 자동차 대출', 'https://obank.kbstar.com/quics?page=C103573&cc=b104363:b104516&%EB%B8%8C%EB%9E%9C%EB%93%9C%EC%83%81%ED%92%88%EC%BD%94%EB%93%9C=LN20001390&%EB%85%B8%EB%93%9C%EC%BD%94%EB%93%9C=00019&prcode=LN20001390', 'KB국민은행'),
-(37, 'LOAN', 'KB 매직카대출(중고차 구매용)', '중고차 구매 자금을 지원하는 자동차 대출', 'https://obank.kbstar.com/quics?page=C103573&cc=b104363:b104516&%EB%B8%8C%EB%9E%9C%EB%93%9C%EC%83%81%ED%92%88%EC%BD%94%EB%93%9C=LN20000108&%EB%85%B8%EB%93%9C%EC%BD%94%EB%93%9C=00019&prcode=LN20000108', 'KB국민은행');
+(37, 'LOAN', 'KB 매직카대출(중고차 구매용)', '중고차 구매 자금을 지원하는 자동차 대출', 'https://obank.kbstar.com/quics?page=C103573&cc=b104363:b104516&%EB%B8%8C%EB%9E%9C%EB%93%9C%EC%83%81%ED%92%88%EC%BD%94%EB%93%9C=LN20000108&%EB%85%B8%EB%93%9C%EC%BD%94%EB%93%9C=00019&prcode=LN20000108', 'KB국민은행'),
+(38, 'LOAN', 'KB소상공인 신용대출', '사업기간 1년 이상 개인사업자를 위한 비대면 사업자 신용대출', 'https://zloan.kbstar.com/quics?page=C106666', 'KB국민은행'),
+(39, 'LOAN', 'KB사장님+ 마이너스통장', '카드 가맹대금을 KB계좌로 입금받는 개인사업자를 위한 한도대출', 'https://zloan.kbstar.com/quics?page=C110940', 'KB국민은행'),
+(40, 'LOAN', '소상공인 정책자금대출', '소상공인시장진흥공단 정책자금 지원대상 소상공인을 위한 보증서 대출', 'https://zloan.kbstar.com/quics?page=C112618', 'KB국민은행');
 
 SELECT * FROM product;
 
@@ -130,7 +133,10 @@ INSERT INTO loan (id,loan_purpose,target_group,min_age,max_age,income_basis,max_
 (34, 'HOUSING', 'GENERAL', 19, NULL, NULL, NULL, 'MOBILE', 5.51),
 (35, 'CAR', 'GENERAL', 19, NULL, NULL, NULL, 'MOBILE', 6.88),
 (36, 'CAR', 'GENERAL', 19, NULL, NULL, NULL, 'MOBILE', 6.88),
-(37, 'CAR', 'GENERAL', 19, NULL, NULL, NULL, 'MOBILE', 7.89);
+(37, 'CAR', 'GENERAL', 19, NULL, NULL, NULL, 'MOBILE', 7.89),
+(38, 'BUSINESS', 'OTHER', NULL, NULL, 'INDIVIDUAL', NULL, 'MOBILE', 5.32),
+(39, 'BUSINESS', 'OTHER', NULL, NULL, 'INDIVIDUAL', NULL, 'MOBILE', 5.72),
+(40, 'BUSINESS', 'OTHER', NULL, NULL, 'INDIVIDUAL', NULL, 'MOBILE', 3.39);
 
 -- age_group_asset_median (연령대별 금융자산 중앙값 · KOSIS 가계금융복지조사 2025 · 만원×10000=원)
 INSERT INTO age_group_asset_median (age_min,age_max,median_financial_asset,base_year) VALUES
