@@ -54,7 +54,7 @@
 | 근거 코드 | 적용 조건 | 사용자 문장 |
 | --- | --- | --- |
 | `DEPOSIT_TERM_AND_RATE` | 예금 1등 | 두 분의 목표 기간에 맞고 기본금리가 높은 예금 상품이에요. |
-| `SAVINGS_KB_STAR_PRIORITY` | KB스타적금 가입 가능 및 목표기간 조건을 충족해 KB스타적금이 1등 | KB스타적금 가입 대상이며 목표 기간과 월 저축액에도 잘 맞아요. |
+| `SAVINGS_KB_STAR_PRIORITY` | KB스타적금 가입 가능 및 목표기간 조건을 충족해 KB스타적금이 1등 | KB스타적금 가입 대상이며 목표 기간과 월 저축액에도 맞아요. |
 | `SAVINGS_TERM_AND_RATE` | 일반 적금 1등 | 목표 기간과 월 저축액에 맞고 기본금리가 높은 적금 상품이에요. |
 | `INVESTMENT_RETIREMENT_TDF_PRIORITY` | 1순위 목표가 노후이고 TDF가 투자 1등 | 노후 목표와 투자성향에 맞는 TDF 상품을 우선 골랐어요. |
 | `INVESTMENT_RISK_AND_AUM` | 일반 투자 1등 | 투자성향에 맞는 위험등급 중 순자산이 큰 상품을 골랐어요. |
