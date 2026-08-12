@@ -93,6 +93,26 @@ class RecommendationServiceCreationTest {
     }
 
     @Test
+    void returnsNotReadyWhenRecommendationInputIsInvalid() {
+        LocalDateTime inputVersion = LocalDateTime.of(2026, 8, 12, 10, 0);
+
+        when(recommendationMapper.findCoupleIdByMemberId(1L)).thenReturn(10L);
+        when(recommendationMapper.lockCoupleIdByIdNowait(10L)).thenReturn(10L);
+        when(recommendationMapper.findLatestInputUpdatedAtByMemberId(1L))
+                .thenReturn(inputVersion);
+        when(recommendationContextMapper.findByMemberId(1L))
+                .thenThrow(new IllegalArgumentException("추천 입력정보가 올바르지 않습니다."));
+
+        ApiException exception =
+                assertThrows(
+                        ApiException.class,
+                        () -> recommendationService.createRecommendation(1L));
+
+        assertEquals(ErrorCode.RECOMMENDATION_NOT_READY, exception.getErrorCode());
+        verifyNoInteractions(recommendationPlanner);
+    }
+
+    @Test
     void rejectsResultWhenRecommendationInputChangesDuringGeneration() {
         LocalDateTime before =
                 LocalDateTime.of(2026, 7, 30, 10, 0);

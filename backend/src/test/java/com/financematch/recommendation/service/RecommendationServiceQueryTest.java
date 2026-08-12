@@ -115,4 +115,18 @@ class RecommendationServiceQueryTest {
 
         assertEquals(ErrorCode.COUPLE_NOT_CONNECTED, exception.getErrorCode());
     }
+
+    @Test
+    void returnsFailedWhenRecommendationQueryRaisesUnexpectedError() {
+        when(recommendationMapper.findRecommendationResultByMemberId(1L))
+                .thenThrow(new IllegalStateException("DB 조회 실패"));
+
+        ApiException exception =
+                assertThrows(
+                        ApiException.class,
+                        () -> recommendationService.getRecommendation(1L));
+
+        assertEquals(ErrorCode.RECOMMENDATION_FAILED, exception.getErrorCode());
+        verifyNoInteractions(responseAssembler);
+    }
 }
