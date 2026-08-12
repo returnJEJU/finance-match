@@ -118,6 +118,7 @@ public class RecommendationResponseAssembler {
                 product.getProductId(),
                 product.getProductName(),
                 product.getDescription(),
+                product.getRecommendationReason(),
                 product.getProductUrl(),
                 comparisonLabel,
                 comparisonValue,
@@ -143,6 +144,7 @@ public class RecommendationResponseAssembler {
                                                 product.getProductId(),
                                                 product.getProductName(),
                                                 product.getDescription(),
+                                                product.getRecommendationReason(),
                                                 product.getProductUrl(),
                                                 product.getAccountType()))
                         .toList();
@@ -169,6 +171,7 @@ public class RecommendationResponseAssembler {
                                                 product.getProductId(),
                                                 product.getProductName(),
                                                 product.getDescription(),
+                                                product.getRecommendationReason(),
                                                 product.getProductUrl(),
                                                 product.getRiskLevel(),
                                                 riskLabel(product.getRiskLevel()),

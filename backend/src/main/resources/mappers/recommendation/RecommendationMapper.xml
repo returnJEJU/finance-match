@@ -26,6 +26,7 @@
         <result property="selected" column="is_selected"/>
         <result property="productName" column="product_name"/>
         <result property="description" column="description"/>
+        <result property="recommendationReason" column="recommendation_reason"/>
         <result property="productUrl" column="product_url"/>
         <result property="applicableBaseRate"
                 column="applicable_base_rate"/>
@@ -45,6 +46,7 @@
         <result property="rank" column="rank_no"/>
         <result property="productName" column="product_name"/>
         <result property="description" column="description"/>
+        <result property="recommendationReason" column="recommendation_reason"/>
         <result property="productUrl" column="product_url"/>
         <result property="accountType"
                 column="account_type"
@@ -59,6 +61,7 @@
         <result property="rank" column="rank_no"/>
         <result property="productName" column="product_name"/>
         <result property="description" column="description"/>
+        <result property="recommendationReason" column="recommendation_reason"/>
         <result property="productUrl" column="product_url"/>
         <result property="riskLevel" column="risk_level"/>
         <result property="aum" column="aum"/>
@@ -200,6 +203,7 @@
         rp.is_selected,
         p.product_name,
         p.description,
+        rp.recommendation_reason,
         p.url AS product_url,
         CASE
         WHEN rs.slot_type IN (
@@ -275,6 +279,7 @@
         personal.rank_no,
         product.product_name,
         product.description,
+        personal.recommendation_reason,
         product.url AS product_url,
         tax.account_type
         FROM personal_recommendation_tax_saving personal
@@ -297,6 +302,7 @@
         personal.rank_no,
         product.product_name,
         product.description,
+        personal.recommendation_reason,
         product.url AS product_url,
         investment.risk_level,
         investment.aum
@@ -426,12 +432,14 @@
         recommendation_slot_id,
         product_id,
         rank_no,
-        is_selected
+        is_selected,
+        recommendation_reason
         ) VALUES (
         #{slotId},
         #{product.productId},
         #{product.rank},
-        #{product.selected}
+        #{product.selected},
+        #{product.recommendationReason}
         )
     </insert>
 
@@ -444,11 +452,13 @@
         INSERT INTO personal_recommendation_tax_saving (
         member_id,
         product_id,
-        rank_no
+        rank_no,
+        recommendation_reason
         ) VALUES (
         #{memberId},
         #{product.productId},
-        #{product.rank}
+        #{product.rank},
+        #{product.recommendationReason}
         )
     </insert>
 
@@ -461,11 +471,13 @@
         INSERT INTO personal_recommendation_investment (
         member_id,
         product_id,
-        rank_no
+        rank_no,
+        recommendation_reason
         ) VALUES (
         #{memberId},
         #{product.productId},
-        #{product.rank}
+        #{product.rank},
+        #{product.recommendationReason}
         )
     </insert>
 

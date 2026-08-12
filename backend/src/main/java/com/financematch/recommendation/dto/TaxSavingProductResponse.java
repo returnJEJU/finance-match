@@ -6,6 +6,7 @@ public record TaxSavingProductResponse(
         Long productId,
         String productName,
         String description,
+        String recommendationReason,
         String productUrl,
         TaxAccountType accountType) {
 
@@ -15,6 +16,9 @@ public record TaxSavingProductResponse(
         }
         if (productName == null || productName.isBlank()) {
             throw new IllegalArgumentException("절세 추천 상품명은 필수입니다.");
+        }
+        if (recommendationReason != null && recommendationReason.isBlank()) {
+            throw new IllegalArgumentException("추천 이유는 빈 문자열일 수 없습니다.");
         }
         if (productUrl == null || productUrl.isBlank()) {
             throw new IllegalArgumentException("절세 추천 상품 공식 URL은 필수입니다.");

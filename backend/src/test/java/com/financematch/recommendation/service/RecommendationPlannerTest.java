@@ -2,12 +2,14 @@ package com.financematch.recommendation.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.financematch.config.RootConfig;
 import com.financematch.recommendation.domain.RecommendationContext;
 import com.financematch.recommendation.service.RecommendationPlan;
 import com.financematch.recommendation.policy.RecommendedProduct;
+import com.financematch.recommendation.type.RecommendationReasonCode;
 import com.financematch.recommendation.type.RecommendationSlotType;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -69,5 +71,11 @@ class RecommendationPlannerTest {
         assertEquals(2L, first.productId());
         assertEquals(1, first.rank());
         assertTrue(first.selected());
+        assertEquals(RecommendationReasonCode.DEPOSIT_TERM_AND_RATE, first.reasonCode());
+        assertEquals(
+                "두 분의 목표 기간에 맞고 기본금리가 높은 예금 상품이에요.",
+                first.recommendationReason());
+        assertNull(deposits.get(1).reasonCode());
+        assertNull(deposits.get(1).recommendationReason());
     }
 }

@@ -11,6 +11,7 @@ import com.financematch.recommendation.domain.RecommendationContext;
 import com.financematch.recommendation.policy.RecommendedProduct;
 import com.financematch.recommendation.policy.joint.JointInvestmentRecommendationPolicy;
 import com.financematch.recommendation.service.InvestmentRiskLevelCalculator;
+import com.financematch.recommendation.type.RecommendationReasonCode;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +42,9 @@ class JointInvestmentRecommendationPolicyTest {
 
         assertEquals(List.of(3L, 2L), productIds(result));
         assertTrue(result.get(0).selected());
+        assertEquals(
+                RecommendationReasonCode.INVESTMENT_RISK_AND_AUM,
+                result.get(0).reasonCode());
     }
 
     @Test
@@ -71,7 +75,12 @@ class JointInvestmentRecommendationPolicyTest {
         context.setInviteeInvestmentType("VERY_AGGRESSIVE");
         context.setFirstGoalType("RETIREMENT");
 
-        assertEquals(List.of(2L, 3L, 1L), productIds(policy.recommend(context)));
+        List<RecommendedProduct> result = policy.recommend(context);
+
+        assertEquals(List.of(2L, 3L, 1L), productIds(result));
+        assertEquals(
+                RecommendationReasonCode.INVESTMENT_RETIREMENT_TDF_PRIORITY,
+                result.get(0).reasonCode());
     }
 
     private InvestmentProduct product(Long productId, Integer riskLevel, Integer aum) {

@@ -17,6 +17,7 @@ public class JointRecommendationProduct {
     private boolean selected;
     private String productName;
     private String description;
+    private String recommendationReason;
     private String productUrl;
     private BigDecimal applicableBaseRate;
     private Integer riskLevel;

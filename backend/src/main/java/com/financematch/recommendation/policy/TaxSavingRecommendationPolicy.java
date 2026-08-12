@@ -7,6 +7,7 @@ import com.financematch.product.type.TaxAccountType;
 import com.financematch.recommendation.domain.RecommendationContext;
 import com.financematch.recommendation.service.InvestmentRiskLevelCalculator;
 import com.financematch.recommendation.type.PersonalRecommendationType;
+import com.financematch.recommendation.type.RecommendationReasonCode;
 import java.util.Comparator;
 import java.util.ArrayList;
 import java.util.List;
@@ -108,8 +109,19 @@ public class TaxSavingRecommendationPolicy implements PersonalRecommendationPoli
                                 new RecommendedProduct(
                                         rankedProducts.get(index).getProductId(),
                                         index + 1,
-                                        index == 0))
+                                        index == 0,
+                                        index == 0
+                                                ? reasonCode(rankedProducts.get(index).getAccountType())
+                                                : null))
                 .toList();
+    }
+
+    private RecommendationReasonCode reasonCode(TaxAccountType accountType) {
+        return switch (accountType) {
+            case ISA -> RecommendationReasonCode.TAX_SAVING_ISA_KNOWLEDGE;
+            case PENSION_SAVINGS -> RecommendationReasonCode.TAX_SAVING_PENSION_RETIREMENT;
+            case IRP -> RecommendationReasonCode.TAX_SAVING_IRP_INVESTMENT_TYPE;
+        };
     }
 
     private boolean isEligibleAccountType(
