@@ -26,16 +26,23 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SimpleMyDataProvider implements MyDataProvider {
 
+    /**
+     * 이메일 → 시나리오 매핑.
+     *
+     * <p>{@code Map.of} 가 아니라 {@code Map.ofEntries} 를 쓴다 — {@code Map.of} 는 10쌍이
+     * 최대라 계정을 늘리다 보면 컴파일이 깨진다. 새 데모 계정은 여기에 한 줄만 추가하면 된다.
+     * 시나리오를 새로 만들지 않고 기존 것을 재사용해도 된다.
+     */
     private static final Map<String, MyDataScenario> SCENARIO_BY_EMAIL =
-            Map.of(
-                    "demo.a@chaltteok.dev", MyDataScenario.DEMO_INVITER,
-                    "demo.b@chaltteok.dev", MyDataScenario.DEMO_INVITEE,
-                    "demo.saver@chaltteok.dev", MyDataScenario.SAVER,
-                    "demo.investor@chaltteok.dev", MyDataScenario.INVESTOR,
-                    "demo.newlywed@chaltteok.dev", MyDataScenario.NEWLYWED,
-                    "demo.renter@chaltteok.dev", MyDataScenario.RENTER,
-                    "demo.rich@chaltteok.dev", MyDataScenario.RICH,
-                    "demo.debt@chaltteok.dev", MyDataScenario.HIGH_RATE_DEBT);
+            Map.ofEntries(
+                    Map.entry("demo.a@chaltteok.dev", MyDataScenario.DEMO_INVITER),
+                    Map.entry("demo.b@chaltteok.dev", MyDataScenario.DEMO_INVITEE),
+                    Map.entry("demo.saver@chaltteok.dev", MyDataScenario.SAVER),
+                    Map.entry("demo.investor@chaltteok.dev", MyDataScenario.INVESTOR),
+                    Map.entry("demo.newlywed@chaltteok.dev", MyDataScenario.NEWLYWED),
+                    Map.entry("demo.renter@chaltteok.dev", MyDataScenario.RENTER),
+                    Map.entry("demo.rich@chaltteok.dev", MyDataScenario.RICH),
+                    Map.entry("demo.debt@chaltteok.dev", MyDataScenario.HIGH_RATE_DEBT));
 
     private final MemberMapper memberMapper;
 

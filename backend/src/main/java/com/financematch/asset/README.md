@@ -69,6 +69,26 @@ provider를 다시 호출해** 채운다. `financial_summary`에 카테고리별
 연금·ISA 보유 여부는 `pension_isa_account`에 이미 있으므로 DB에서 읽도록 바꿀 수 있다. 카테고리별
 금액까지 DB로 옮기려면 마이그레이션이 필요하다.
 
+## 새 데모 계정을 추가하려면
+
+로컬에서 다른 조합을 시험해 보고 싶을 때는 **커플을 끊었다 다시 잇는 것보다 새 회원을 만드는
+편이 깔끔하다.** 새 회원은 개인설문·투자성향이 없는 백지 상태라, 옛 값이 남아 헷갈릴 일이 없다.
+
+1. `SimpleMyDataProvider.SCENARIO_BY_EMAIL` 에 한 줄 추가한다. 시나리오는 새로 만들어도 되고
+   기존 것을 그대로 재사용해도 된다.
+
+   ```java
+   Map.entry("demo.rich2@chaltteok.dev", MyDataScenario.RICH),
+   ```
+
+2. 앱에서 **그 이메일로 회원가입**한다. 자산연동은 가입 퍼널 4/4 단계에 들어 있으므로, 가입만
+   하면 그 자리에서 정해둔 자산이 붙는다.
+
+3. 커플 연결·설문을 진행한다.
+
+`Map.ofEntries` 를 쓰므로 계정 수에 제한이 없다(`Map.of` 는 10쌍이 최대다).
+KB스타적금Ⅲ 자격이 필요하면 위의 SQL 한 줄을 함께 실행한다.
+
 ## 목 서버로 교체할 때
 
 `SimpleMyDataProvider`와 `MyDataScenario`를 함께 지우고 `MyDataProvider`의 HTTP 구현을 넣는다.
