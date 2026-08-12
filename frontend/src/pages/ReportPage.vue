@@ -8,10 +8,14 @@ import {
   Landmark,
   HeartHandshake,
   Target,
+  Lightbulb,
+  TriangleAlert,
 } from 'lucide-vue-next'
 
 import { getReport, getReportStatus } from '@/api/report'
 import AnimatedCharacter from '@/components/ui/AnimatedCharacter.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import characterExcited from '@/assets/images/characters/character-excited.png'
 import { investmentTypeMeta as investmentTypeMetaByLabel } from '@/constants/investmentTypeMeta'
 import { abbreviateKoreanName } from '@/utils/koreanName'
 
@@ -82,6 +86,121 @@ const scoreIconMeta = {
   TAX_STRATEGY: { icon: BadgeDollarSign, iconClass: 'bg-[#f5f0ff] text-[#66528c]' },
 }
 
+// TEMP: 상세 분석 화면 확정 전까지 프론트에서만 보여주는 목데이터.
+// 백엔드 계약이 확정되면 report.scoreAxes / goalProgress 기반으로 매핑한다.
+const mockScoreDetailSections = [
+  {
+    key: 'ASSET_STABILITY',
+    type: 'asset',
+    title: '금융 자산',
+    score: 20,
+    maxScore: 25,
+    referenceLabel: '또래 커플',
+    referenceValue: 1.49,
+    referenceProgress: 74.5,
+    currentLabel: '우리 커플',
+    currentValue: 1.13,
+    progress: 56.5,
+    note: '또래 커플 대비 안정적인 수준',
+  },
+  {
+    key: 'FINANCIAL_VALUE',
+    type: 'investment',
+    title: '투자 가치관 일치도',
+    score: 18,
+    maxScore: 25,
+    columns: ['지원님', '루키님'],
+    rows: [
+      { label: '투자 경험', me: '중하', partner: '하', match: '1단계' },
+      { label: '금융상품 이해도', me: '중상', partner: '중하', match: '2단계' },
+      { label: '손실 감내도', me: '70%', partner: '0%', match: '70%p' },
+    ],
+  },
+  {
+    key: 'DEBT_REPAYMENT',
+    type: 'debt',
+    title: '부채',
+    score: 20,
+    maxScore: 20,
+    summary: '부채 총액: 1억원',
+    gauges: [
+      {
+        label: 'DSR',
+        value: 18.3,
+        decimals: 1,
+        unit: '%',
+        threshold: 40,
+        thresholdLabel: '40%',
+        progress: 18.3,
+        status: '안정',
+        description: '연 소득 대비 연 상환액',
+        amountLabel: '연간 원리금 상환액',
+        amount: '1,320만원',
+      },
+      {
+        label: '금융자산 대비 부채',
+        value: 41,
+        decimals: 0,
+        unit: '%',
+        progress: 41,
+        status: '안정',
+        description: '총 부채',
+        amountLabel: '부부 연소득',
+        amount: '7,200만원',
+      },
+    ],
+  },
+  {
+    key: 'GOAL_FEASIBILITY',
+    type: 'goal',
+    title: '목표 달성률',
+    score: 13,
+    maxScore: 20,
+    shortageLabel: '목표까지 부족한 금액',
+    shortageValue: 30232,
+    shortageBadge: '3억 232만원 부족',
+    availableAsset: '1억9767만원',
+    achievementRate: '40%',
+    progress: 40,
+    monthlySaving: '0만원',
+    minMonthlySaving: 0,
+    maxMonthlySaving: 600,
+    selectedMonthlySaving: 320,
+    baseAchievement: 60,
+    maxAchievement: 84,
+    baseShortage: 8000,
+    minShortage: 3200,
+    targetAmount: '6억원',
+  },
+  {
+    key: 'TAX_STRATEGY',
+    type: 'tax',
+    title: '절세 활용도',
+    score: 8,
+    maxScore: 10,
+    columns: ['저희님', '투자님'],
+    rows: [
+      { label: 'ISA', me: '활용 중', partner: '미개설' },
+      { label: 'IRP', me: '활용 중', partner: '활용 중' },
+      { label: '연금저축', me: '활용 중', partner: '미활용' },
+    ],
+  },
+]
+
+const mockAiComment = {
+  title: 'AI 종합 코멘트',
+  headline: '전반적으로 위험운용형 커플이에요!',
+  body: '부채 부담은 안정적으로 관리되고 있어요. 다만, 투자 가치관의 차이가 목표 저축 달성 속도를 낮출 수 있어요. 월부채 원리금을 줄이거나 저축액을 늘리거나 목표금액을 낮게 조정해 보세요.',
+}
+
+const assetAxisTicks = [
+  { label: '0', position: 0 },
+  { label: '0.5억', position: 25 },
+  { label: '1억', position: 50 },
+  { label: '1.5억', position: 75 },
+  { label: '2억', position: 100 },
+]
+
 const queryClient = useQueryClient()
 
 const {
@@ -117,14 +236,6 @@ watch(
       queryClient.invalidateQueries({ queryKey: ['report'] })
     }
   },
-)
-
-// 목표 달성 가능성 카드의 진행 현황 — report API 의 goalProgress 를 그대로 쓴다.
-// achieved=false(부족)면 마젠타(warn 토큰), true(초과)면 초록(good 토큰)으로 갈린다.
-const goalProgress = computed(() => report.value.goalProgress)
-
-const goalDifferenceLabel = computed(() =>
-  goalProgress.value?.achieved ? '목표를 넘어선 예상액' : '목표까지 부족한 금액',
 )
 
 const coupleTypeLabel = computed(
@@ -221,8 +332,107 @@ const handleOutsideClick = (event) => {
     openDescription.value = null
   }
 }
-onMounted(() => document.addEventListener('click', handleOutsideClick))
-onUnmounted(() => document.removeEventListener('click', handleOutsideClick))
+
+const assetAnimationProgress = ref(0)
+const debtAnimationProgress = ref(0)
+const goalAnimationProgress = ref(0)
+let assetAnimationFrameId = null
+let debtAnimationFrameId = null
+let goalAnimationFrameId = null
+
+const cancelAssetAnimation = () => {
+  if (assetAnimationFrameId) {
+    cancelAnimationFrame(assetAnimationFrameId)
+    assetAnimationFrameId = null
+  }
+}
+
+const cancelDebtAnimation = () => {
+  if (debtAnimationFrameId) {
+    cancelAnimationFrame(debtAnimationFrameId)
+    debtAnimationFrameId = null
+  }
+}
+
+const cancelGoalAnimation = () => {
+  if (goalAnimationFrameId) {
+    cancelAnimationFrame(goalAnimationFrameId)
+    goalAnimationFrameId = null
+  }
+}
+
+const animateAssetBars = () => {
+  cancelAssetAnimation()
+  assetAnimationProgress.value = 0
+
+  const duration = 1000
+  const startedAt = performance.now()
+
+  const tick = (now) => {
+    const elapsed = Math.min((now - startedAt) / duration, 1)
+    assetAnimationProgress.value = 1 - Math.pow(1 - elapsed, 3)
+
+    if (elapsed < 1) {
+      assetAnimationFrameId = requestAnimationFrame(tick)
+    } else {
+      assetAnimationFrameId = null
+    }
+  }
+
+  assetAnimationFrameId = requestAnimationFrame(tick)
+}
+
+const animateDebtGauges = () => {
+  cancelDebtAnimation()
+  debtAnimationProgress.value = 0
+
+  const duration = 1100
+  const startedAt = performance.now()
+
+  const tick = (now) => {
+    const elapsed = Math.min((now - startedAt) / duration, 1)
+    debtAnimationProgress.value = 1 - Math.pow(1 - elapsed, 3)
+
+    if (elapsed < 1) {
+      debtAnimationFrameId = requestAnimationFrame(tick)
+    } else {
+      debtAnimationFrameId = null
+    }
+  }
+
+  debtAnimationFrameId = requestAnimationFrame(tick)
+}
+
+const animateGoalSummary = () => {
+  cancelGoalAnimation()
+  goalAnimationProgress.value = 0
+
+  const duration = 1000
+  const startedAt = performance.now()
+
+  const tick = (now) => {
+    const elapsed = Math.min((now - startedAt) / duration, 1)
+    goalAnimationProgress.value = 1 - Math.pow(1 - elapsed, 3)
+
+    if (elapsed < 1) {
+      goalAnimationFrameId = requestAnimationFrame(tick)
+    } else {
+      goalAnimationFrameId = null
+    }
+  }
+
+  goalAnimationFrameId = requestAnimationFrame(tick)
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleOutsideClick)
+})
+onUnmounted(() => {
+  document.removeEventListener('click', handleOutsideClick)
+  cancelAssetAnimation()
+  cancelDebtAnimation()
+  cancelGoalAnimation()
+})
 
 // 두 캐릭터 사이의 "글래스 하트" — 얇은 하트 SVG를 여러 겹 쌓아 Z축으로 펼치고 rotateY 로 돌려서
 // 3D처럼 보이게 만든다(Claude Design "Glass heart rotation effect" 포팅). 정적인 값이라 매 렌더마다
@@ -242,18 +452,132 @@ const heartLayers = Array.from({ length: HEART_LAYER_COUNT }, (_, i) => {
 })
 const heartGlintZ = (HEART_DEPTH / 2 + 1).toFixed(2)
 
-// 카드별 펼침 상태(복수 개 동시에 펼칠 수 있음). 기본은 전부 펼친 상태라, "닫힌 것만" 기록한다
-// (scoreAxes 가 비동기로 나중에 도착해도 미리 키를 알 필요가 없다).
-const closedKeys = ref(new Set())
+// 카드별 펼침 상태(복수 개 동시에 펼칠 수 있음). 상세 리포트는 처음엔 전체 접힘으로 시작한다.
+const closedKeys = ref(new Set(mockScoreDetailSections.map((section) => section.key)))
 
 const isOpen = (key) => !closedKeys.value.has(key)
 
 const roundScore = (score) => Math.round(score)
 
+const progressWidth = (value) => `${Math.min(Math.max(value, 0), 100)}%`
+
+const animatedAssetProgressWidth = (progress) =>
+  progressWidth(progress * assetAnimationProgress.value)
+
+const animatedAssetValue = (value) => `${(value * assetAnimationProgress.value).toFixed(2)}억원`
+
+const debtGaugeStyle = (progress) => ({
+  background: `conic-gradient(from 270deg, #ff9f22 0deg ${progress * debtAnimationProgress.value * 1.8}deg, #eeeeee ${progress * debtAnimationProgress.value * 1.8}deg 180deg, transparent 180deg 360deg)`,
+})
+
+const animatedDebtValue = (gauge) => {
+  const value = gauge.value * debtAnimationProgress.value
+  return `${value.toFixed(gauge.decimals)}${gauge.unit}`
+}
+
+const goalMock = mockScoreDetailSections.find((section) => section.type === 'goal')
+const goalMonthlySaving = ref(goalMock.selectedMonthlySaving)
+
+const goalSavingRange = computed(() => goalMock.maxMonthlySaving - goalMock.minMonthlySaving)
+
+const goalSavingRatio = computed(
+  () => (goalMonthlySaving.value - goalMock.minMonthlySaving) / goalSavingRange.value,
+)
+
+const goalSimulatedAchievement = computed(() =>
+  Math.round(
+    goalMock.baseAchievement +
+      (goalMock.maxAchievement - goalMock.baseAchievement) * goalSavingRatio.value,
+  ),
+)
+
+const goalSimulatedShortage = computed(() =>
+  Math.round(
+    goalMock.baseShortage - (goalMock.baseShortage - goalMock.minShortage) * goalSavingRatio.value,
+  ),
+)
+
+const goalSliderPercent = computed(() => progressWidth(goalSavingRatio.value * 100))
+
+const goalSliderTrackStyle = computed(() => ({
+  background: `linear-gradient(to right, #fff44f 0%, #fff44f ${goalSliderPercent.value}, #e6e6e6 ${goalSliderPercent.value}, #e6e6e6 100%)`,
+}))
+
+const formatManwon = (amount) => `${amount.toLocaleString('ko-KR')}만원`
+const formatNegativeManwon = (amount) => `-${formatManwon(amount)}`
+const formatNegativeEokManwon = (amount) => {
+  const rounded = Math.round(amount)
+  const eok = Math.floor(rounded / 10000)
+  const manwon = rounded % 10000
+
+  if (eok === 0) {
+    return formatNegativeManwon(manwon)
+  }
+  return manwon === 0 ? `-${eok}억원` : `-${eok}억${manwon.toLocaleString('ko-KR')}만원`
+}
+
+const animatedGoalShortage = (amount) =>
+  formatNegativeEokManwon(amount * goalAnimationProgress.value)
+
+const animatedGoalProgressWidth = (progress) =>
+  progressWidth(progress * goalAnimationProgress.value)
+
+const animatedGoalRate = (progress) => Math.round(progress * goalAnimationProgress.value)
+
+const taxStatusClass = (status) => {
+  if (status === '활용 중') {
+    return 'text-[#22b85a]'
+  }
+  if (status === '미개설') {
+    return 'text-[#ff4f73]'
+  }
+  return 'text-[#6f5bd5]'
+}
+
+const debtThresholdMarkerStyle = (threshold) => {
+  const angle = 180 - threshold * 1.8
+  const radian = (angle * Math.PI) / 180
+  const x = 66 + 51 * Math.cos(radian)
+  const y = 66 - 51 * Math.sin(radian)
+
+  return {
+    left: `${x}px`,
+    top: `${y}px`,
+    transform: `translate(-50%, -50%) rotate(${90 - angle}deg)`,
+  }
+}
+
+const debtThresholdLabelStyle = (threshold) => {
+  const angle = 180 - threshold * 1.8
+  const radian = (angle * Math.PI) / 180
+  const x = 66 + 51 * Math.cos(radian)
+  const y = 66 - 51 * Math.sin(radian)
+
+  return {
+    left: `${x}px`,
+    top: `${Math.max(y - 20, 0)}px`,
+  }
+}
+
+const playCardAnimation = (key) => {
+  if (key === 'ASSET_STABILITY') {
+    animateAssetBars()
+    return
+  }
+  if (key === 'DEBT_REPAYMENT') {
+    animateDebtGauges()
+    return
+  }
+  if (key === 'GOAL_FEASIBILITY') {
+    animateGoalSummary()
+  }
+}
+
 const toggleCard = (key) => {
   const next = new Set(closedKeys.value)
   if (next.has(key)) {
     next.delete(key)
+    playCardAnimation(key)
   } else {
     next.add(key)
   }
@@ -514,102 +838,407 @@ const toggleCard = (key) => {
 
       <!-- 점수 상세 분석 -->
       <div class="mt-8">
-        <h2 class="text-[18px] font-bold text-ink">점수 상세 분석</h2>
-        <p class="mt-1 text-[12px] text-muted">각 점수의 근거를 확인하세요.</p>
+        <h2 class="text-[21px] font-bold text-ink">점수 상세 분석</h2>
+        <p class="mt-1 text-[15px] text-muted">항목별 우리 커플의 금융 현황을 확인하세요.</p>
 
         <div class="mt-4 space-y-3">
           <div
-            v-for="axis in report.scoreAxes"
-            :key="axis.key"
+            v-for="section in mockScoreDetailSections"
+            :key="section.key"
             class="rounded-card border border-line-card bg-white p-4"
           >
             <button
               type="button"
               class="flex w-full items-center justify-between"
-              @click="toggleCard(axis.key)"
+              @click="toggleCard(section.key)"
             >
               <span class="flex items-center gap-2.5">
                 <span
                   class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px]"
-                  :class="scoreIconMeta[axis.key]?.iconClass"
+                  :class="scoreIconMeta[section.key]?.iconClass"
                 >
-                  <component :is="scoreIconMeta[axis.key]?.icon" :size="19" :stroke-width="2" />
+                  <component :is="scoreIconMeta[section.key]?.icon" :size="19" :stroke-width="2" />
                 </span>
-                <span class="text-[18px] font-bold text-ink">{{ axis.name }}</span>
+                <span class="text-[18px] font-bold text-ink">{{ section.title }}</span>
               </span>
               <span class="flex items-center gap-1.5">
-                <span class="text-[15px] font-bold text-good"
-                  >{{ roundScore(axis.score) }}/{{ axis.maxScore }}</span
+                <span class="text-[17px] font-bold text-ink"
+                  >{{ roundScore(section.score) }}/{{ section.maxScore }}</span
                 >
-                <ChevronUp v-if="isOpen(axis.key)" :size="16" class="text-muted" />
+                <ChevronUp v-if="isOpen(section.key)" :size="16" class="text-muted" />
                 <ChevronDown v-else :size="16" class="text-muted" />
               </span>
             </button>
 
-            <div v-if="isOpen(axis.key)" class="mt-3">
-              <p class="text-[16px] leading-[1.6] text-ink-sub">{{ axis.reason }}</p>
+            <div v-if="isOpen(section.key)" class="mt-4">
+              <div v-if="section.type === 'asset'">
+                <div class="grid grid-cols-[66px_minmax(0,1fr)] gap-x-2">
+                  <div class="relative h-[98px] text-[16px] font-bold leading-none">
+                    <p class="absolute top-[20px] left-0 -translate-y-1/2 text-ink-sub">
+                      {{ section.referenceLabel }}
+                    </p>
+                    <p class="absolute top-[59px] left-0 -translate-y-1/2 text-ink">
+                      {{ section.currentLabel }}
+                    </p>
+                  </div>
 
-              <!-- 목표 달성 가능성 카드 전용: 초과/부족 진행 현황 -->
-              <div v-if="axis.key === 'GOAL_FEASIBILITY' && goalProgress" class="mt-5">
-                <p
-                  class="text-[12px] font-medium"
-                  :class="goalProgress.achieved ? 'text-good' : 'text-warn'"
-                >
-                  {{ goalDifferenceLabel }}
-                </p>
-                <p
-                  class="mt-1 text-[26px] font-extrabold"
-                  :class="goalProgress.achieved ? 'text-good' : 'text-warn'"
-                >
-                  {{ goalProgress.amountLabel }}
-                </p>
+                  <div class="min-w-0">
+                    <div class="relative h-[98px]">
+                      <span
+                        class="absolute left-0 top-0 h-[72px] border-l border-[#d5dbe4]"
+                        aria-hidden="true"
+                      />
+                      <span
+                        class="absolute left-1/2 top-0 h-[72px] border-l border-dashed border-[#9fa4ac]"
+                        aria-hidden="true"
+                      />
+                      <span
+                        class="absolute left-0 right-0 top-[72px] border-t border-[#d5dbe4]"
+                        aria-hidden="true"
+                      />
 
+                      <div class="absolute left-0 right-0 top-[8px] h-6">
+                        <div
+                          class="h-full rounded-[4px] bg-[#f8f6da]"
+                          :style="{ width: animatedAssetProgressWidth(section.referenceProgress) }"
+                        />
+                        <span
+                          class="absolute top-1/2 ml-2 -translate-y-1/2 whitespace-nowrap text-[15px] font-extrabold text-ink-sub"
+                          :style="{ left: animatedAssetProgressWidth(section.referenceProgress) }"
+                        >
+                          {{ animatedAssetValue(section.referenceValue) }}
+                        </span>
+                      </div>
+
+                      <div class="absolute left-0 right-0 top-[47px] h-6">
+                        <div
+                          class="h-full rounded-[4px] bg-[#7fbd72]"
+                          :style="{ width: animatedAssetProgressWidth(section.progress) }"
+                        />
+                        <span
+                          class="absolute top-1/2 ml-2 -translate-y-1/2 whitespace-nowrap text-[15px] font-extrabold text-ink"
+                          :style="{ left: animatedAssetProgressWidth(section.progress) }"
+                        >
+                          {{ animatedAssetValue(section.currentValue) }}
+                        </span>
+                      </div>
+
+                      <span
+                        v-for="tick in assetAxisTicks"
+                        :key="tick.label"
+                        class="absolute top-[72px] h-2 border-l border-[#c9cfd8]"
+                        :style="{ left: progressWidth(tick.position) }"
+                        aria-hidden="true"
+                      />
+                      <span
+                        v-for="tick in assetAxisTicks"
+                        :key="`${tick.label}-label`"
+                        class="absolute top-[82px] -translate-x-1/2 whitespace-nowrap text-[14px] font-medium text-[#969daa]"
+                        :style="{ left: progressWidth(tick.position) }"
+                      >
+                        {{ tick.label }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
                 <div
-                  class="relative mt-3 h-10 w-4/5 mx-auto overflow-hidden rounded-full bg-line-card"
+                  class="mx-auto mt-4 flex w-fit items-center gap-1.5 rounded-full bg-[#fff8db] px-3 py-1 text-[14px] font-semibold text-brand-ink"
                 >
+                  <Lightbulb :size="14" :stroke-width="2.2" class="shrink-0 text-brand-ink" />
+                  {{ section.note }}
+                </div>
+              </div>
+
+              <div v-else-if="section.type === 'debt'">
+                <p class="text-[16px] font-bold text-[#4a4a4a]">{{ section.summary }}</p>
+                <div class="mt-5 grid grid-cols-2 divide-x divide-line-soft">
                   <div
-                    class="absolute inset-y-0 left-0 rounded-full"
-                    :class="goalProgress.achieved ? 'bg-good' : 'bg-warn'"
-                    :style="{
-                      width: goalProgress.achieved ? '100%' : goalProgress.achievementRate,
-                    }"
-                  />
-                  <div class="relative flex h-full items-center justify-end px-4">
+                    v-for="gauge in section.gauges"
+                    :key="gauge.label"
+                    class="min-w-0 px-2 first:pl-0 last:pr-0"
+                  >
+                    <div class="min-h-[76px]">
+                      <p class="text-center text-[16px] font-extrabold text-ink">
+                        {{ gauge.label }}
+                      </p>
+                      <p class="mt-1 text-center text-[13px] leading-[1.35] text-muted">
+                        {{ gauge.description }}
+                      </p>
+                      <p
+                        v-if="gauge.thresholdLabel"
+                        class="mt-0.5 text-center text-[13px] font-bold text-muted"
+                      >
+                        기준 {{ gauge.thresholdLabel }}
+                      </p>
+                      <p v-else class="mt-0.5 text-center text-[13px] font-bold text-transparent">
+                        기준 없음
+                      </p>
+                    </div>
+
+                    <div class="relative mx-auto mt-2 h-[98px] w-[132px] max-w-full">
+                      <div class="relative mx-auto h-[80px] w-[132px] max-w-full overflow-hidden">
+                        <div
+                          class="absolute top-0 left-1/2 h-[132px] w-[132px] max-w-[132px] -translate-x-1/2 rounded-full"
+                          :style="debtGaugeStyle(gauge.progress)"
+                        />
+                        <div
+                          class="absolute top-[27px] left-1/2 h-[78px] w-[78px] -translate-x-1/2 rounded-full bg-white"
+                        />
+
+                        <template v-if="gauge.threshold">
+                          <span
+                            class="absolute z-[1] h-8 w-[3px] rounded-full bg-[#ff6b6b] shadow-[0_0_0_2px_rgba(255,255,255,0.85)]"
+                            :style="debtThresholdMarkerStyle(gauge.threshold)"
+                            aria-hidden="true"
+                          />
+                          <span
+                            class="absolute z-[1] -translate-x-1/2 rounded-full bg-white px-1.5 text-[13px] font-extrabold text-[#ff6b6b] shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+                            :style="debtThresholdLabelStyle(gauge.threshold)"
+                          >
+                            {{ gauge.thresholdLabel }}
+                          </span>
+                        </template>
+                      </div>
+
+                      <div class="pointer-events-none absolute inset-x-0 top-[46px] text-center">
+                        <p class="text-[21px] font-extrabold text-ink">
+                          {{ animatedDebtValue(gauge) }}
+                        </p>
+                        <p class="mt-1 text-[18px] font-extrabold text-[#35a853]">
+                          {{ gauge.status }}
+                        </p>
+                      </div>
+
+                      <div
+                        class="absolute inset-x-0 bottom-1 flex justify-between text-[13px] font-bold text-muted"
+                      >
+                        <span>0%</span>
+                        <span>100%</span>
+                      </div>
+                    </div>
+
+                    <div class="mt-3 border-t border-line-soft pt-3 text-center">
+                      <p class="text-[12px] font-semibold text-muted">{{ gauge.amountLabel }}</p>
+                      <p class="mt-1 text-[17px] font-extrabold text-ink">{{ gauge.amount }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else-if="section.type === 'investment'">
+                <div class="grid grid-cols-[1.55fr_0.8fr_0.8fr_0.9fr] text-[15px]">
+                  <span class="pb-3 text-center font-bold text-muted">항목</span>
+                  <span class="pb-3 text-center font-bold text-muted">{{
+                    section.columns[0]
+                  }}</span>
+                  <span class="pb-3 text-center font-bold text-muted">{{
+                    section.columns[1]
+                  }}</span>
+                  <span class="pb-3 text-center font-bold text-muted">차이</span>
+
+                  <template v-for="row in section.rows" :key="row.label">
+                    <div class="flex items-center justify-center border-t border-line-soft py-4">
+                      <span class="text-[19px] font-extrabold text-ink">{{ row.label }}</span>
+                    </div>
+                    <div class="flex items-center justify-center border-t border-line-soft py-4">
+                      <span
+                        class="rounded-full px-3 py-1 text-[16px] font-extrabold"
+                        :class="
+                          row.me.includes('%')
+                            ? 'bg-[#d9f8e5] text-[#1f8b4b]'
+                            : 'bg-[#f4f4f6] text-ink'
+                        "
+                      >
+                        {{ row.me }}
+                      </span>
+                    </div>
+                    <div class="flex items-center justify-center border-t border-line-soft py-4">
+                      <span
+                        class="rounded-full px-3 py-1 text-[16px] font-extrabold"
+                        :class="
+                          row.partner === '0%'
+                            ? 'bg-[#ffe0e0] text-[#ff4b1f]'
+                            : 'bg-[#f4f4f6] text-ink'
+                        "
+                      >
+                        {{ row.partner }}
+                      </span>
+                    </div>
+                    <div
+                      class="flex items-center justify-center gap-1.5 border-t border-line-soft py-4 text-center text-[17px] font-extrabold text-[#ff4b1f]"
+                    >
+                      {{ row.match }}
+                      <TriangleAlert :size="13" :stroke-width="2.4" class="shrink-0" />
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <div v-else-if="section.type === 'goal'">
+                <p class="text-[16px] font-bold text-warn">{{ section.shortageLabel }}</p>
+                <p class="mt-2 text-[33px] font-extrabold tracking-[-0.2px] text-warn">
+                  {{ animatedGoalShortage(section.shortageValue) }}
+                </p>
+                <div class="mt-6">
+                  <div class="flex justify-end text-[14px] font-extrabold text-muted">
+                    목표 금액 {{ section.targetAmount }}
+                  </div>
+                  <div class="relative mt-2 h-8 overflow-hidden rounded-full bg-line-card">
+                    <div
+                      class="flex h-full items-center justify-center rounded-full bg-warn text-[14px] font-extrabold text-white"
+                      :style="{ width: animatedGoalProgressWidth(section.progress) }"
+                    >
+                      <span class="whitespace-nowrap"
+                        >달성률 {{ animatedGoalRate(section.progress) }}%</span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-5 flex items-baseline gap-2">
+                  <span class="text-[15px] font-semibold text-muted">예상 가용자산</span>
+                  <span class="text-[28px] font-extrabold text-ink">{{
+                    section.availableAsset
+                  }}</span>
+                </div>
+
+                <div class="mt-8">
+                  <p class="text-[16px] font-extrabold text-ink">월 저축액을 옮겨 보세요</p>
+                  <div class="relative mt-4 px-3">
+                    <input
+                      v-model.number="goalMonthlySaving"
+                      type="range"
+                      class="goal-saving-range w-full"
+                      :min="section.minMonthlySaving"
+                      :max="section.maxMonthlySaving"
+                      step="10"
+                      :style="goalSliderTrackStyle"
+                      aria-label="월 저축액 조정"
+                    />
+                  </div>
+                  <div class="mt-4 grid grid-cols-3 items-start text-[14px] text-muted">
                     <span
-                      class="text-[12px] font-semibold"
-                      :class="goalProgress.achieved ? 'text-white' : 'text-ink'"
-                      >{{ goalProgress.barLabel }}</span
+                      >최소 월 저축액<br /><b class="text-[17px] text-ink">{{
+                        section.monthlySaving
+                      }}</b></span
+                    >
+                    <span class="text-center"
+                      >월 저축액<br /><b class="text-[17px] text-ink"
+                        >{{ goalMonthlySaving }}만원</b
+                      ></span
+                    >
+                    <span class="text-right"
+                      >최대 월 저축액<br /><b class="text-[17px] text-ink"
+                        >{{ section.maxMonthlySaving }}만원</b
+                      ></span
                     >
                   </div>
                 </div>
 
-                <div class="mt-4 flex items-center justify-between">
-                  <div>
-                    <p class="text-[11px] text-muted">예상 가용자산</p>
-                    <p class="mt-1 text-[16px] font-bold text-ink">
-                      {{ goalProgress.availableAsset }}
-                    </p>
+                <div class="mt-6 space-y-0 border-t border-line-soft text-[15px]">
+                  <div class="flex items-center justify-between">
+                    <span class="py-4 font-semibold text-muted">달성률</span>
+                    <span class="py-4 font-extrabold">
+                      <span class="text-[#c9c9c9]">{{ section.baseAchievement }}%</span>
+                      <span class="mx-1 text-[#c9c9c9]">→</span>
+                      <span class="text-[#35b978]">{{ goalSimulatedAchievement }}%</span>
+                    </span>
                   </div>
-                  <div class="text-right">
-                    <p class="text-[11px] text-muted">달성률</p>
-                    <p
-                      class="mt-1 text-[16px] font-bold"
-                      :class="goalProgress.achieved ? 'text-good' : 'text-warn'"
-                    >
-                      {{ goalProgress.achieved ? '100%' : goalProgress.achievementRate }}
-                    </p>
+                  <div class="flex items-center justify-between border-t border-line-soft">
+                    <span class="py-4 font-semibold text-muted">부족한 금액</span>
+                    <span class="py-4 font-extrabold">
+                      <span class="text-[#c9c9c9]">{{
+                        formatNegativeManwon(section.baseShortage)
+                      }}</span>
+                      <span class="mx-1 text-[#c9c9c9]">→</span>
+                      <span class="text-[#2f9f89]">{{
+                        formatNegativeManwon(goalSimulatedShortage)
+                      }}</span>
+                    </span>
                   </div>
+                </div>
+              </div>
+
+              <div v-else-if="section.type === 'tax'">
+                <div class="grid grid-cols-[1fr_1fr_1fr] gap-y-4 text-center text-[14px]">
+                  <span class="font-semibold text-muted">항목</span>
+                  <span
+                    v-for="column in section.columns"
+                    :key="column"
+                    class="font-semibold text-muted"
+                  >
+                    {{ column }}
+                  </span>
+                  <template v-for="row in section.rows" :key="row.label">
+                    <span class="text-[15px] font-extrabold text-ink">{{ row.label }}</span>
+                    <span class="text-[15px] font-extrabold" :class="taxStatusClass(row.me)">
+                      {{ row.me }}
+                    </span>
+                    <span class="text-[15px] font-extrabold" :class="taxStatusClass(row.partner)">
+                      {{ row.partner }}
+                    </span>
+                  </template>
                 </div>
               </div>
             </div>
           </div>
+
+          <div class="rounded-card border border-line-card bg-white p-4">
+            <div class="flex items-center gap-2.5">
+              <span
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[#fff5eb] text-[#9c5f27]"
+              >
+                <HeartHandshake :size="19" :stroke-width="2" />
+              </span>
+              <h3 class="text-[18px] font-bold text-ink">{{ mockAiComment.title }}</h3>
+            </div>
+            <div class="mt-4 flex items-end gap-3">
+              <div class="min-w-0 flex-1">
+                <p class="text-[16px] font-extrabold text-warn">{{ mockAiComment.headline }}</p>
+                <p class="mt-2 text-[15px] leading-[1.65] text-ink-sub">
+                  {{ mockAiComment.body }}
+                </p>
+              </div>
+              <AnimatedCharacter
+                :src="characterExcited"
+                alt="AI 코멘트 캐릭터"
+                img-class="h-20 w-20 object-contain"
+              />
+            </div>
+          </div>
         </div>
+
+        <BaseButton class="mt-5 w-full" to="/recommend">추천 상품 보러가기</BaseButton>
       </div>
     </template>
   </section>
 </template>
 
 <style scoped>
+.goal-saving-range {
+  height: 10px;
+  appearance: none;
+  border-radius: 9999px;
+  outline: none;
+}
+.goal-saving-range::-webkit-slider-thumb {
+  width: 24px;
+  height: 24px;
+  appearance: none;
+  cursor: pointer;
+  background: #ffffff;
+  border: 5px solid #fff44f;
+  border-radius: 9999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+}
+.goal-saving-range::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  background: #ffffff;
+  border: 5px solid #fff44f;
+  border-radius: 9999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+}
 .heart-spin {
   animation: heart-spin-y 6s linear infinite;
 }
