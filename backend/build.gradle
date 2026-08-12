@@ -16,6 +16,7 @@ buildscript {
 plugins {
     id 'java'
     id 'war'
+    id 'jacoco'                                 // 테스트 커버리지 측정
     id 'org.flywaydb.flyway' version '13.0.0'   // buildscript.ext.flywayVersion 과 동일하게
 }
 
@@ -138,6 +139,30 @@ test {
     // 실제 LLM 호출 실험 테스트(TaxStrategyPipelineExperimentTest 등)를 켜는 스위치.
     // -DrunLlmExperiment=true 로 실행하지 않으면 기본적으로 스킵된다(비용·지연 있는 실제 API 호출이라).
     systemProperty 'runLlmExperiment', System.getProperty('runLlmExperiment', 'false')
+
+    // 테스트가 끝나면 커버리지 리포트를 자동으로 만든다.
+    // 테스트가 실패해도 리포트는 생성된다 — "어디를 못 덮었나" 는 실패했을 때 더 알고 싶은 정보다.
+    finalizedBy jacocoTestReport
+}
+
+// -------------------------------------------------------------------
+//  JaCoCo 커버리지
+//    ./gradlew test          → 실행 후 리포트까지 자동 생성
+//    리포트 위치: build/reports/jacoco/test/html/index.html
+//  toolVersion 을 고정해 팀원·CI 간 수치가 갈리지 않게 한다.
+// -------------------------------------------------------------------
+jacoco {
+    toolVersion = '0.8.13'
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        html.required = true   // 사람이 보는 용도
+        xml.required = true    // SonarQube·Codecov 등이 읽는 용도 (지금은 미사용, 켜둬도 비용 없음)
+        csv.required = false
+    }
 }
 
 // Flyway 설정 (flywayInfo · flywayMigrate · flywayValidate · flywayRepair)
