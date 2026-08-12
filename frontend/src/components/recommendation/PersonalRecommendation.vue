@@ -33,7 +33,6 @@ const originalProducts = computed(() =>
     ? (props.taxSaving?.products ?? [])
     : (props.investment?.products ?? []),
 )
-const recommendedProductId = computed(() => originalProducts.value[0]?.productId ?? null)
 const visibleProducts = computed(() => {
   const products = originalProducts.value
 
@@ -109,7 +108,7 @@ const visibleProducts = computed(() => {
         :key="product.productId"
         :product="product"
         :slot-type="activeType === 'investment' ? 'INVESTMENT' : 'TAX_SAVING'"
-        :show-recommendation-reason="product.productId === recommendedProductId"
+        :show-recommendation-reason="Boolean(product.recommendationReason)"
         personal-mode
         compact
       />
