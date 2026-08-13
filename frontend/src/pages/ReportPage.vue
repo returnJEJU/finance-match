@@ -86,112 +86,13 @@ const scoreIconMeta = {
   TAX_STRATEGY: { icon: BadgeDollarSign, iconClass: 'bg-[#f5f0ff] text-[#66528c]' },
 }
 
-// TEMP: 상세 분석 화면 확정 전까지 프론트에서만 보여주는 목데이터.
-// 백엔드 계약이 확정되면 report.scoreAxes / goalProgress 기반으로 매핑한다.
-const mockScoreDetailSections = [
-  {
-    key: 'ASSET_STABILITY',
-    type: 'asset',
-    title: '금융 자산',
-    score: 20,
-    maxScore: 25,
-    referenceLabel: '또래 커플',
-    referenceValue: 1.49,
-    referenceProgress: 74.5,
-    currentLabel: '우리 커플',
-    currentValue: 1.13,
-    progress: 56.5,
-    note: '또래 커플 대비 안정적인 수준',
-  },
-  {
-    key: 'FINANCIAL_VALUE',
-    type: 'investment',
-    title: '투자 가치관 일치도',
-    score: 18,
-    maxScore: 25,
-    columns: ['지원님', '루키님'],
-    rows: [
-      { label: '투자 경험', me: '중하', partner: '하', match: '1단계' },
-      { label: '금융상품 이해도', me: '중상', partner: '중하', match: '2단계' },
-      { label: '손실 감내도', me: '70%', partner: '0%', match: '70%p' },
-    ],
-  },
-  {
-    key: 'DEBT_REPAYMENT',
-    type: 'debt',
-    title: '부채',
-    score: 20,
-    maxScore: 20,
-    summary: '부채 총액: 1억원',
-    gauges: [
-      {
-        label: 'DSR',
-        value: 18.3,
-        decimals: 1,
-        unit: '%',
-        threshold: 40,
-        thresholdLabel: '40%',
-        progress: 18.3,
-        status: '안정',
-        description: '연 소득 대비 연 상환액',
-        amountLabel: '연간 원리금 상환액',
-        amount: '1,320만원',
-      },
-      {
-        label: '금융자산 대비 부채',
-        value: 41,
-        decimals: 0,
-        unit: '%',
-        progress: 41,
-        status: '안정',
-        description: '총 부채',
-        amountLabel: '부부 연소득',
-        amount: '7,200만원',
-      },
-    ],
-  },
-  {
-    key: 'GOAL_FEASIBILITY',
-    type: 'goal',
-    title: '목표 달성률',
-    score: 13,
-    maxScore: 20,
-    shortageLabel: '목표까지 부족한 금액',
-    shortageValue: 30232,
-    shortageBadge: '3억 232만원 부족',
-    availableAsset: '1억9767만원',
-    achievementRate: '40%',
-    progress: 40,
-    monthlySaving: '0만원',
-    minMonthlySaving: 0,
-    maxMonthlySaving: 600,
-    selectedMonthlySaving: 320,
-    baseAchievement: 60,
-    maxAchievement: 84,
-    baseShortage: 8000,
-    minShortage: 3200,
-    targetAmount: '6억원',
-  },
-  {
-    key: 'TAX_STRATEGY',
-    type: 'tax',
-    title: '절세 활용도',
-    score: 8,
-    maxScore: 10,
-    columns: ['저희님', '투자님'],
-    rows: [
-      { label: 'ISA', me: '활용 중', partner: '미개설' },
-      { label: 'IRP', me: '활용 중', partner: '활용 중' },
-      { label: '연금저축', me: '활용 중', partner: '미활용' },
-    ],
-  },
+const scoreDetailKeys = [
+  'ASSET_STABILITY',
+  'FINANCIAL_VALUE',
+  'DEBT_REPAYMENT',
+  'GOAL_FEASIBILITY',
+  'TAX_STRATEGY',
 ]
-
-const mockAiComment = {
-  title: 'AI 종합 코멘트',
-  headline: '전반적으로 위험운용형 커플이에요!',
-  body: '부채 부담은 안정적으로 관리되고 있어요. 다만, 투자 가치관의 차이가 목표 저축 달성 속도를 낮출 수 있어요. 월부채 원리금을 줄이거나 저축액을 늘리거나 목표금액을 낮게 조정해 보세요.',
-}
 
 const assetAxisTicks = [
   { label: '0', position: 0 },
@@ -236,6 +137,46 @@ watch(
       queryClient.invalidateQueries({ queryKey: ['report'] })
     }
   },
+)
+
+const scoreAxisByKey = computed(
+  () => new Map(report.value?.scoreAxes?.map((axis) => [axis.key, axis]) ?? []),
+)
+
+const scoreSection = (key, type, detail) => {
+  const axis = scoreAxisByKey.value.get(key)
+  return {
+    key,
+    type,
+    title: axis?.name ?? '',
+    score: axis?.score ?? 0,
+    maxScore: axis?.maxScore ?? 0,
+    ...detail,
+  }
+}
+
+const scoreDetailSections = computed(() => {
+  const details = report.value?.scoreDetails
+  if (!details) {
+    return []
+  }
+
+  return [
+    scoreSection('ASSET_STABILITY', 'asset', details.asset),
+    scoreSection('FINANCIAL_VALUE', 'investment', details.investmentValue),
+    scoreSection('DEBT_REPAYMENT', 'debt', details.debt),
+    scoreSection('GOAL_FEASIBILITY', 'goal', details.goal),
+    scoreSection('TAX_STRATEGY', 'tax', details.tax),
+  ]
+})
+
+const aiComment = computed(
+  () =>
+    report.value?.scoreDetails?.aiComment ?? {
+      title: 'AI 종합 코멘트',
+      headline: '',
+      body: '',
+    },
 )
 
 const coupleTypeLabel = computed(
@@ -453,7 +394,7 @@ const heartLayers = Array.from({ length: HEART_LAYER_COUNT }, (_, i) => {
 const heartGlintZ = (HEART_DEPTH / 2 + 1).toFixed(2)
 
 // 카드별 펼침 상태(복수 개 동시에 펼칠 수 있음). 상세 리포트는 처음엔 전체 접힘으로 시작한다.
-const closedKeys = ref(new Set(mockScoreDetailSections.map((section) => section.key)))
+const closedKeys = ref(new Set(scoreDetailKeys))
 
 const isOpen = (key) => !closedKeys.value.has(key)
 
@@ -475,27 +416,95 @@ const animatedDebtValue = (gauge) => {
   return `${value.toFixed(gauge.decimals)}${gauge.unit}`
 }
 
-const goalMock = mockScoreDetailSections.find((section) => section.type === 'goal')
-const goalMonthlySaving = ref(goalMock.selectedMonthlySaving)
+const debtStatusClass = (status) => {
+  if (status === '안정') {
+    return 'text-[#35a853]'
+  }
+  if (status === '주의') {
+    return 'text-[#f28b22]'
+  }
+  return 'text-[#e05252]'
+}
 
-const goalSavingRange = computed(() => goalMock.maxMonthlySaving - goalMock.minMonthlySaving)
+const goalSection = computed(() =>
+  scoreDetailSections.value.find((section) => section.type === 'goal'),
+)
+const goalMonthlySaving = ref(0)
 
-const goalSavingRatio = computed(
-  () => (goalMonthlySaving.value - goalMock.minMonthlySaving) / goalSavingRange.value,
+watch(
+  () => goalSection.value?.selectedMonthlySaving,
+  (selectedMonthlySaving) => {
+    if (typeof selectedMonthlySaving === 'number') {
+      goalMonthlySaving.value = selectedMonthlySaving
+    }
+  },
 )
 
-const goalSimulatedAchievement = computed(() =>
-  Math.round(
-    goalMock.baseAchievement +
-      (goalMock.maxAchievement - goalMock.baseAchievement) * goalSavingRatio.value,
+const goalSavingRange = computed(() =>
+  Math.max(
+    (goalSection.value?.maxMonthlySaving ?? 0) - (goalSection.value?.minMonthlySaving ?? 0),
+    0,
   ),
 )
 
-const goalSimulatedShortage = computed(() =>
-  Math.round(
-    goalMock.baseShortage - (goalMock.baseShortage - goalMock.minShortage) * goalSavingRatio.value,
-  ),
+const goalSavingRatio = computed(() =>
+  goalSavingRange.value === 0
+    ? 0
+    : (goalMonthlySaving.value - (goalSection.value?.minMonthlySaving ?? 0)) /
+      goalSavingRange.value,
 )
+
+const goalSimulation = computed(() => {
+  const section = goalSection.value
+  if (!section) {
+    return {
+      achievement: 0,
+      shortage: 0,
+    }
+  }
+
+  const selectedMonthlySaving = section.selectedMonthlySaving
+  const savingDifference = goalMonthlySaving.value - selectedMonthlySaving
+
+  if (savingDifference === 0) {
+    return {
+      achievement: section.baseAchievement,
+      shortage: section.baseShortage,
+    }
+  }
+
+  const isIncreasing = savingDifference > 0
+  const simulationRange = isIncreasing
+    ? section.maxMonthlySaving - selectedMonthlySaving
+    : selectedMonthlySaving - section.minMonthlySaving
+
+  if (simulationRange <= 0) {
+    return {
+      achievement: section.baseAchievement,
+      shortage: section.baseShortage,
+    }
+  }
+
+  const ratio = Math.min(Math.abs(savingDifference) / simulationRange, 1)
+  const achievementGap = section.maxAchievement - section.baseAchievement
+  const shortageGap = section.baseShortage - section.minShortage
+
+  if (isIncreasing) {
+    return {
+      achievement: section.baseAchievement + achievementGap * ratio,
+      shortage: section.baseShortage - shortageGap * ratio,
+    }
+  }
+
+  return {
+    achievement: Math.max(section.baseAchievement - achievementGap * ratio, 0),
+    shortage: section.baseShortage + shortageGap * ratio,
+  }
+})
+
+const goalSimulatedAchievement = computed(() => Math.round(goalSimulation.value.achievement))
+
+const goalSimulatedShortage = computed(() => Math.round(goalSimulation.value.shortage))
 
 const goalSliderPercent = computed(() => progressWidth(goalSavingRatio.value * 100))
 
@@ -503,21 +512,27 @@ const goalSliderTrackStyle = computed(() => ({
   background: `linear-gradient(to right, #fff44f 0%, #fff44f ${goalSliderPercent.value}, #e6e6e6 ${goalSliderPercent.value}, #e6e6e6 100%)`,
 }))
 
-const formatManwon = (amount) => `${amount.toLocaleString('ko-KR')}만원`
-const formatNegativeManwon = (amount) => `-${formatManwon(amount)}`
-const formatNegativeEokManwon = (amount) => {
+const formatManwon = (amount) => {
   const rounded = Math.round(amount)
   const eok = Math.floor(rounded / 10000)
   const manwon = rounded % 10000
 
   if (eok === 0) {
-    return formatNegativeManwon(manwon)
+    return `${manwon.toLocaleString('ko-KR')}만원`
   }
-  return manwon === 0 ? `-${eok}억원` : `-${eok}억${manwon.toLocaleString('ko-KR')}만원`
+  return manwon === 0
+    ? `${eok.toLocaleString('ko-KR')}억원`
+    : `${eok.toLocaleString('ko-KR')}억 ${manwon.toLocaleString('ko-KR')}만원`
 }
+const formatNegativeManwon = (amount) => `-${formatManwon(amount)}`
 
-const animatedGoalShortage = (amount) =>
-  formatNegativeEokManwon(amount * goalAnimationProgress.value)
+const normalizeMoneyLabel = (label) =>
+  label.replace(/(\d[\d,]*)만원/g, (_, value) => {
+    const manwon = Number(value.replaceAll(',', ''))
+    return formatManwon(manwon)
+  })
+
+const animatedGoalShortage = (amount) => formatNegativeManwon(amount * goalAnimationProgress.value)
 
 const animatedGoalProgressWidth = (progress) =>
   progressWidth(progress * goalAnimationProgress.value)
@@ -528,11 +543,52 @@ const taxStatusClass = (status) => {
   if (status === '활용 중') {
     return 'text-[#22b85a]'
   }
-  if (status === '미개설') {
+  if (status === '미설계') {
     return 'text-[#ff4f73]'
   }
   return 'text-[#6f5bd5]'
 }
+
+const investmentDifferenceValue = (match) => {
+  const value = Number.parseInt(match, 10)
+  return Number.isNaN(value) ? 0 : value
+}
+
+const investmentDifferenceLevel = (match) => {
+  const value = investmentDifferenceValue(match)
+
+  if (match.includes('%p')) {
+    if (value <= 25) {
+      return 'low'
+    }
+    if (value <= 75) {
+      return 'medium'
+    }
+    return 'high'
+  }
+
+  if (value <= 1) {
+    return 'low'
+  }
+  if (value <= 3) {
+    return 'medium'
+  }
+  return 'high'
+}
+
+const investmentDifferenceClass = (match) => {
+  const level = investmentDifferenceLevel(match)
+
+  if (level === 'low') {
+    return 'text-[#22b85a]'
+  }
+  if (level === 'medium') {
+    return 'text-[#f28b22]'
+  }
+  return 'text-[#ff4b1f]'
+}
+
+const showInvestmentDifferenceAlert = (match) => investmentDifferenceLevel(match) !== 'low'
 
 const debtThresholdMarkerStyle = (threshold) => {
   const angle = 180 - threshold * 1.8
@@ -843,7 +899,7 @@ const toggleCard = (key) => {
 
         <div class="mt-4 space-y-3">
           <div
-            v-for="section in mockScoreDetailSections"
+            v-for="section in scoreDetailSections"
             :key="section.key"
             class="rounded-card border border-line-card bg-white p-4"
           >
@@ -950,7 +1006,9 @@ const toggleCard = (key) => {
               </div>
 
               <div v-else-if="section.type === 'debt'">
-                <p class="text-[16px] font-bold text-[#4a4a4a]">{{ section.summary }}</p>
+                <p class="text-[16px] font-bold text-[#4a4a4a]">
+                  {{ normalizeMoneyLabel(section.summary) }}
+                </p>
                 <div class="mt-5 grid grid-cols-2 divide-x divide-line-soft">
                   <div
                     v-for="gauge in section.gauges"
@@ -1004,7 +1062,10 @@ const toggleCard = (key) => {
                         <p class="text-[21px] font-extrabold text-ink">
                           {{ animatedDebtValue(gauge) }}
                         </p>
-                        <p class="mt-1 text-[18px] font-extrabold text-[#35a853]">
+                        <p
+                          class="mt-1 text-[18px] font-extrabold"
+                          :class="debtStatusClass(gauge.status)"
+                        >
                           {{ gauge.status }}
                         </p>
                       </div>
@@ -1019,7 +1080,9 @@ const toggleCard = (key) => {
 
                     <div class="mt-3 border-t border-line-soft pt-3 text-center">
                       <p class="text-[12px] font-semibold text-muted">{{ gauge.amountLabel }}</p>
-                      <p class="mt-1 text-[17px] font-extrabold text-ink">{{ gauge.amount }}</p>
+                      <p class="mt-1 text-[17px] font-extrabold text-ink">
+                        {{ normalizeMoneyLabel(gauge.amount) }}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1065,10 +1128,16 @@ const toggleCard = (key) => {
                       </span>
                     </div>
                     <div
-                      class="flex items-center justify-center gap-1.5 border-t border-line-soft py-4 text-center text-[17px] font-extrabold text-[#ff4b1f]"
+                      class="flex items-center justify-center gap-1.5 border-t border-line-soft py-4 text-center text-[17px] font-extrabold"
+                      :class="investmentDifferenceClass(row.match)"
                     >
+                      <TriangleAlert
+                        v-if="showInvestmentDifferenceAlert(row.match)"
+                        :size="13"
+                        :stroke-width="2.4"
+                        class="shrink-0"
+                      />
                       {{ row.match }}
-                      <TriangleAlert :size="13" :stroke-width="2.4" class="shrink-0" />
                     </div>
                   </template>
                 </div>
@@ -1081,7 +1150,7 @@ const toggleCard = (key) => {
                 </p>
                 <div class="mt-6">
                   <div class="flex justify-end text-[14px] font-extrabold text-muted">
-                    목표 금액 {{ section.targetAmount }}
+                    목표 금액 {{ normalizeMoneyLabel(section.targetAmount) }}
                   </div>
                   <div class="relative mt-2 h-8 overflow-hidden rounded-full bg-line-card">
                     <div
@@ -1089,7 +1158,7 @@ const toggleCard = (key) => {
                       :style="{ width: animatedGoalProgressWidth(section.progress) }"
                     >
                       <span class="whitespace-nowrap"
-                        >달성률 {{ animatedGoalRate(section.progress) }}%</span
+                        >예상 달성률 {{ animatedGoalRate(section.progress) }}%</span
                       >
                     </div>
                   </div>
@@ -1097,7 +1166,7 @@ const toggleCard = (key) => {
                 <div class="mt-5 flex items-baseline gap-2">
                   <span class="text-[15px] font-semibold text-muted">예상 가용자산</span>
                   <span class="text-[28px] font-extrabold text-ink">{{
-                    section.availableAsset
+                    normalizeMoneyLabel(section.availableAsset)
                   }}</span>
                 </div>
 
@@ -1118,25 +1187,25 @@ const toggleCard = (key) => {
                   <div class="mt-4 grid grid-cols-3 items-start text-[14px] text-muted">
                     <span
                       >최소 월 저축액<br /><b class="text-[17px] text-ink">{{
-                        section.monthlySaving
+                        normalizeMoneyLabel(section.monthlySaving)
                       }}</b></span
                     >
                     <span class="text-center"
-                      >월 저축액<br /><b class="text-[17px] text-ink"
-                        >{{ goalMonthlySaving }}만원</b
-                      ></span
+                      >월 저축액<br /><b class="text-[17px] text-ink">{{
+                        formatManwon(goalMonthlySaving)
+                      }}</b></span
                     >
                     <span class="text-right"
-                      >최대 월 저축액<br /><b class="text-[17px] text-ink"
-                        >{{ section.maxMonthlySaving }}만원</b
-                      ></span
+                      >최대 월 저축액<br /><b class="text-[17px] text-ink">{{
+                        formatManwon(section.maxMonthlySaving)
+                      }}</b></span
                     >
                   </div>
                 </div>
 
                 <div class="mt-6 space-y-0 border-t border-line-soft text-[15px]">
                   <div class="flex items-center justify-between">
-                    <span class="py-4 font-semibold text-muted">달성률</span>
+                    <span class="py-4 font-semibold text-muted">예상 달성률</span>
                     <span class="py-4 font-extrabold">
                       <span class="text-[#c9c9c9]">{{ section.baseAchievement }}%</span>
                       <span class="mx-1 text-[#c9c9c9]">→</span>
@@ -1150,7 +1219,7 @@ const toggleCard = (key) => {
                         formatNegativeManwon(section.baseShortage)
                       }}</span>
                       <span class="mx-1 text-[#c9c9c9]">→</span>
-                      <span class="text-[#2f9f89]">{{
+                      <span class="text-[#e05252]">{{
                         formatNegativeManwon(goalSimulatedShortage)
                       }}</span>
                     </span>
@@ -1189,13 +1258,13 @@ const toggleCard = (key) => {
               >
                 <HeartHandshake :size="19" :stroke-width="2" />
               </span>
-              <h3 class="text-[18px] font-bold text-ink">{{ mockAiComment.title }}</h3>
+              <h3 class="text-[18px] font-bold text-ink">{{ aiComment.title }}</h3>
             </div>
             <div class="mt-4 flex items-end gap-3">
               <div class="min-w-0 flex-1">
-                <p class="text-[16px] font-extrabold text-warn">{{ mockAiComment.headline }}</p>
+                <p class="text-[16px] font-extrabold text-warn">{{ aiComment.headline }}</p>
                 <p class="mt-2 text-[15px] leading-[1.65] text-ink-sub">
-                  {{ mockAiComment.body }}
+                  {{ aiComment.body }}
                 </p>
               </div>
               <AnimatedCharacter

@@ -28,7 +28,7 @@ public class ReportDetailFactory {
     private static final BigDecimal DSR_WARNING_THRESHOLD = BigDecimal.valueOf(40);
     private static final BigDecimal DSR_DANGER_THRESHOLD = BigDecimal.valueOf(70);
     private static final BigDecimal DEBT_RATIO_WARNING_THRESHOLD = BigDecimal.valueOf(50);
-    private static final BigDecimal DEBT_RATIO_DANGER_THRESHOLD = BigDecimal.valueOf(100);
+    private static final BigDecimal DEBT_RATIO_DANGER_THRESHOLD = BigDecimal.valueOf(80);
 
     public ReportDetails create(
             Long memberId,
@@ -219,25 +219,7 @@ public class ReportDetailFactory {
             return new AiCommentDetail("AI 종합 코멘트", "AI가 분석한 종합 평가예요.", couple.getExpertComment());
         }
 
-        BigDecimal coupleAsset = won(me.getFinancialAsset()).add(won(partner.getFinancialAsset()));
-        BigDecimal assetRatio = percentage(coupleAsset, won(peerAssetMedian), 0);
-        BigDecimal totalDebt = won(me.getTotalDebt()).add(won(partner.getTotalDebt()));
-        BigDecimal annualDebtPayment =
-                won(me.getAnnualDebtPayment()).add(won(partner.getAnnualDebtPayment()));
-        BigDecimal annualIncome = won(me.getAnnualIncome()).add(won(partner.getAnnualIncome()));
-        BigDecimal dsr = percentage(annualDebtPayment, annualIncome, 1);
-
-        String headline = "전반적으로 균형을 맞춰가는 커플이에요.";
-        String body =
-                "또래 커플 대비 금융자산은 "
-                        + assetRatio
-                        + "% 수준이고, DSR은 "
-                        + dsr
-                        + "%입니다. 부채 총액은 "
-                        + WonAmountFormatter.format(toWholeWon(totalDebt))
-                        + "으로 확인돼요. 목표 달성률을 높이려면 월 저축액과 절세 계좌 활용도를 함께 점검하는 것이 좋습니다.";
-
-        return new AiCommentDetail("AI 종합 코멘트", headline, body);
+        return new AiCommentDetail("AI 종합 코멘트", "", "");
     }
 
     private BigDecimal won(BigDecimal value) {

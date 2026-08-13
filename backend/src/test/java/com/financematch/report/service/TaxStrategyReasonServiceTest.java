@@ -41,7 +41,7 @@ class TaxStrategyReasonServiceTest {
 
         String reason = service.fallback(input);
 
-        assertEquals("철수님은 올해 ISA 한도 2000만원을 다 채우지 않았어요. 더 채우고 세제 혜택 받으세요.", reason);
+        assertEquals("철수님은 올해 ISA 한도 2,000만원을 다 채우지 않았어요. 더 채우고 세제 혜택 받으세요.", reason);
         assertTrue(!reason.contains("영희"));
         assertTrue(!reason.contains("추천탭")); // 규칙 3번: 한도 미달만 있을 땐 추천탭 언급 불필요
     }
@@ -102,7 +102,7 @@ class TaxStrategyReasonServiceTest {
 
         assertEquals(
                 "철수님은 IRP 계좌를 개설하지 않았어요. 추천탭에서 상품들을 만나보세요. "
-                        + "영희님은 올해 ISA 한도 2000만원을 다 채우지 않았어요. 더 채우고 세제 혜택 받으세요.",
+                        + "영희님은 올해 ISA 한도 2,000만원을 다 채우지 않았어요. 더 채우고 세제 혜택 받으세요.",
                 reason);
         assertTrue(!reason.endsWith("추천탭에서 상품들을 만나보세요."), "추천탭이 맨 뒤가 아니라 철수 설명 뒤에 와야 함: " + reason);
     }
@@ -119,7 +119,7 @@ class TaxStrategyReasonServiceTest {
         String reason = service.fallback(input);
 
         assertEquals(
-                "철수님은 올해 ISA 한도 2000만원을 다 채우지 않았어요. 더 채우고 세제 혜택 받으세요. "
+                "철수님은 올해 ISA 한도 2,000만원을 다 채우지 않았어요. 더 채우고 세제 혜택 받으세요. "
                         + "영희님은 IRP 계좌를 개설하지 않았어요. 추천탭에서 상품들을 만나보세요.",
                 reason);
         assertTrue(reason.endsWith("추천탭에서 상품들을 만나보세요."), "추천탭이 맨 뒤여야 함: " + reason);
