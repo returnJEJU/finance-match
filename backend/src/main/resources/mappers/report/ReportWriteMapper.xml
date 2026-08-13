@@ -34,4 +34,10 @@
         VALUES (#{compatibilityResultId}, #{reason})
         ON DUPLICATE KEY UPDATE tax_strategy_reason = VALUES(tax_strategy_reason)
     </insert>
+
+    <insert id="upsertExpertComment">
+        INSERT INTO report (compatibility_result_id, expert_comment)
+        VALUES (#{compatibilityResultId}, #{comment})
+        ON DUPLICATE KEY UPDATE expert_comment = VALUES(expert_comment)
+    </insert>
 </mapper>

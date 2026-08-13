@@ -187,12 +187,6 @@ const mockScoreDetailSections = [
   },
 ]
 
-const mockAiComment = {
-  title: 'AI 종합 코멘트',
-  headline: '전반적으로 위험운용형 커플이에요!',
-  body: '부채 부담은 안정적으로 관리되고 있어요. 다만, 투자 가치관의 차이가 목표 저축 달성 속도를 낮출 수 있어요. 월부채 원리금을 줄이거나 저축액을 늘리거나 목표금액을 낮게 조정해 보세요.',
-}
-
 const assetAxisTicks = [
   { label: '0', position: 0 },
   { label: '0.5억', position: 25 },
@@ -1189,13 +1183,17 @@ const toggleCard = (key) => {
               >
                 <HeartHandshake :size="19" :stroke-width="2" />
               </span>
-              <h3 class="text-[18px] font-bold text-ink">{{ mockAiComment.title }}</h3>
+              <h3 class="text-[18px] font-bold text-ink">
+                {{ report.scoreDetails.aiComment.title }}
+              </h3>
             </div>
             <div class="mt-4 flex items-end gap-3">
               <div class="min-w-0 flex-1">
-                <p class="text-[16px] font-extrabold text-warn">{{ mockAiComment.headline }}</p>
+                <p class="text-[16px] font-extrabold text-warn">
+                  {{ report.scoreDetails.aiComment.headline }}
+                </p>
                 <p class="mt-2 text-[15px] leading-[1.65] text-ink-sub">
-                  {{ mockAiComment.body }}
+                  {{ report.scoreDetails.aiComment.body }}
                 </p>
               </div>
               <AnimatedCharacter

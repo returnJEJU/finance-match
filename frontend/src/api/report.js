@@ -26,6 +26,12 @@ const goalProgressSchema = z
   })
   .nullable()
 
+const aiCommentSchema = z.object({
+  title: z.string(),
+  headline: z.string(),
+  body: z.string(),
+})
+
 const reportResponseSchema = z.object({
   name: z.string(),
   partnerName: z.string(),
@@ -35,6 +41,9 @@ const reportResponseSchema = z.object({
   loanPurpose: z.string(),
   investmentProfile: investmentProfileSchema,
   goalProgress: goalProgressSchema,
+  scoreDetails: z.object({
+    aiComment: aiCommentSchema,
+  }),
 })
 
 export async function getReport() {

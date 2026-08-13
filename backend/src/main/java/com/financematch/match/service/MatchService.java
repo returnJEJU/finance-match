@@ -12,6 +12,9 @@ import com.financematch.match.domain.MatchCoupleData;
 import com.financematch.match.domain.MatchMemberData;
 import com.financematch.match.mapper.MatchMapper;
 
+import com.financematch.overall_comment.OverallCommentInputBuilder;
+import com.financematch.overall_comment.OverallCommentService;
+import com.financematch.overall_comment.dto.OverallCommentPromptInput;
 import com.financematch.report.dto.reason.DebtRepaymentReasonInput;
 import com.financematch.report.dto.reason.FinancialValueReasonInput;
 import com.financematch.report.dto.reason.TaxAccountInput;
@@ -41,6 +44,8 @@ public class MatchService {
     private final DebtRepaymentScoreService debtRepaymentScoreService;
     private final FinancialValueScoreService financialValueScoreService;
     private final TaxStrategyScoreService taxStrategyScoreService;
+    private final OverallCommentInputBuilder overallCommentInputBuilder;
+    private final OverallCommentService overallCommentService;
 
 
     public CompatibilityResult getOrCalculateCompatibilityResult(
@@ -131,16 +136,32 @@ public class MatchService {
                 calculationInput.getMemberB().getCapitalPreservationScore()
         );
 
+        TaxSavingProfile memberATaxProfile = buildTaxSavingProfile(calculationInput.getMemberA());
+        TaxSavingProfile memberBTaxProfile = buildTaxSavingProfile(calculationInput.getMemberB());
+
         TaxStrategyReasonInput taxStrategyReasonInput = new TaxStrategyReasonInput(
                 memberA.getMemberName(),
                 memberB.getMemberName(),
-                buildTaxSavingProfile(calculationInput.getMemberA()),
-                buildTaxSavingProfile(calculationInput.getMemberB())
+                memberATaxProfile,
+                memberBTaxProfile
         );
 
         debtRepaymentScoreService.generateAndSave(savedResult.getId(), debtRepaymentReasonInput);
         financialValueScoreService.generateAndSave(savedResult.getId(), financialValueReasonInput);
         taxStrategyScoreService.generateAndSave(savedResult.getId(), taxStrategyReasonInput);
+
+        // 13. 종합 코멘트(expert_comment) 생성·저장 — 5축 중 유일하게 LLM을 쓰는 부분이라
+        // OverallCommentService 내부에서 @Async(taskExecutor)로 돌아 이 메서드를 막지 않는다.
+        OverallCommentPromptInput overallCommentInput =
+                overallCommentInputBuilder.build(
+                        calculationInput,
+                        calculationResult,
+                        memberA.getMemberName(),
+                        memberB.getMemberName(),
+                        couple.getFirstGoalType(),
+                        memberATaxProfile,
+                        memberBTaxProfile);
+        overallCommentService.generateAndSave(savedResult.getId(), overallCommentInput);
 
         return savedResult;
     }
