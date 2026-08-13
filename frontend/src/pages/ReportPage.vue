@@ -1145,22 +1145,22 @@ const toggleCard = (key) => {
 
               <div v-else-if="section.type === 'goal'">
                 <p class="text-[16px] font-bold text-warn">{{ section.shortageLabel }}</p>
-                <p class="mt-2 text-[33px] font-extrabold tracking-[-0.2px] text-warn">
-                  {{ animatedGoalShortage(section.shortageValue) }}
-                </p>
-                <div class="mt-6">
-                  <div class="flex justify-end text-[14px] font-extrabold text-muted">
+                <div class="mt-2 flex items-end justify-between gap-3">
+                  <p class="text-[33px] font-extrabold leading-none tracking-[-0.2px] text-warn">
+                    {{ animatedGoalShortage(section.shortageValue) }}
+                  </p>
+                  <div class="pb-[1px] text-right text-[14px] font-extrabold text-muted">
                     목표 금액 {{ normalizeMoneyLabel(section.targetAmount) }}
                   </div>
-                  <div class="relative mt-2 h-8 overflow-hidden rounded-full bg-line-card">
-                    <div
-                      class="flex h-full items-center justify-center rounded-full bg-warn text-[14px] font-extrabold text-white"
-                      :style="{ width: animatedGoalProgressWidth(section.progress) }"
+                </div>
+                <div class="relative mt-2 h-8 overflow-hidden rounded-full bg-line-card">
+                  <div
+                    class="flex h-full items-center justify-center rounded-full bg-warn text-[14px] font-extrabold text-white"
+                    :style="{ width: animatedGoalProgressWidth(section.progress) }"
+                  >
+                    <span class="whitespace-nowrap"
+                      >예상 달성률 {{ animatedGoalRate(section.progress) }}%</span
                     >
-                      <span class="whitespace-nowrap"
-                        >예상 달성률 {{ animatedGoalRate(section.progress) }}%</span
-                      >
-                    </div>
                   </div>
                 </div>
                 <div class="mt-5 flex items-baseline gap-2">
@@ -1228,7 +1228,7 @@ const toggleCard = (key) => {
               </div>
 
               <div v-else-if="section.type === 'tax'">
-                <div class="grid grid-cols-[1fr_1fr_1fr] gap-y-4 text-center text-[14px]">
+                <div class="grid grid-cols-[1fr_1fr_1fr] gap-y-4 text-center text-[15px]">
                   <span class="font-semibold text-muted">항목</span>
                   <span
                     v-for="column in section.columns"
@@ -1238,11 +1238,11 @@ const toggleCard = (key) => {
                     {{ column }}
                   </span>
                   <template v-for="row in section.rows" :key="row.label">
-                    <span class="text-[15px] font-extrabold text-ink">{{ row.label }}</span>
-                    <span class="text-[15px] font-extrabold" :class="taxStatusClass(row.me)">
+                    <span class="text-[19px] font-extrabold text-ink">{{ row.label }}</span>
+                    <span class="text-[16px] font-extrabold" :class="taxStatusClass(row.me)">
                       {{ row.me }}
                     </span>
-                    <span class="text-[15px] font-extrabold" :class="taxStatusClass(row.partner)">
+                    <span class="text-[16px] font-extrabold" :class="taxStatusClass(row.partner)">
                       {{ row.partner }}
                     </span>
                   </template>
