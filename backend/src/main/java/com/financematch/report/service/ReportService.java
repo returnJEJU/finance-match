@@ -7,6 +7,7 @@ import com.financematch.report.dto.InvestmentProfile;
 import com.financematch.report.dto.ReportResponse;
 import com.financematch.report.dto.ReportStatusResponse;
 import com.financematch.report.dto.ScoreAxis;
+import com.financematch.report.dto.detail.ReportDetails;
 import com.financematch.report.mapper.ReportMapper;
 import com.financematch.report.mapper.ReportRow;
 import java.util.List;
@@ -22,6 +23,7 @@ public class ReportService {
 
     private final ReportMapper reportMapper;
     private final GoalProgressFormatter goalProgressFormatter;
+    private final ReportDetailService reportDetailService;
 
     public ReportResponse getReport(Long memberId) {
         ReportRow row = reportMapper.findReportRowByMemberId(memberId);
@@ -85,6 +87,7 @@ public class ReportService {
                 row.getExpectedAsset() == null || row.getTargetAmount() == null
                         ? null
                         : goalProgressFormatter.format(row.getExpectedAsset(), row.getTargetAmount());
+        ReportDetails scoreDetails = reportDetailService.getDetails(memberId);
 
         return new ReportResponse(
                 row.getMemberName(),
@@ -94,7 +97,8 @@ public class ReportService {
                 row.getTargetMonths(),
                 row.getLoanPurpose(),
                 investmentProfile,
-                goalProgress);
+                goalProgress,
+                scoreDetails);
     }
 
     // 리포트 준비 중 화면이 진행 바를 그릴 수 있도록, 완성된 응답 대신 진행 상황만 가볍게 조회한다.
