@@ -419,6 +419,16 @@ const progressWidth = (value) => `${Math.min(Math.max(value, 0), 100)}%`
 const animatedAssetProgressWidth = (progress) =>
   progressWidth(progress * assetAnimationProgress.value)
 
+const debtStatusClass = (status) => {
+  if (status === '안정') {
+    return 'text-[#35a853]'
+  }
+  if (status === '주의') {
+    return 'text-[#f28b22]'
+  }
+  return 'text-[#e05252]'
+}
+
 const animatedAssetValue = (value) => `${(value * assetAnimationProgress.value).toFixed(2)}억원`
 
 const debtGaugeStyle = (progress) => ({
@@ -458,29 +468,8 @@ const goalSavingRatio = computed(() => {
   return (goalMonthlySaving.value - detail.minMonthlySaving) / goalSavingRange.value
 })
 
-const goalSimulatedAchievement = computed(() => {
-  const detail = goalDetail.value
-  if (!detail) {
-    return 0
-  }
-  return Math.round(
-    detail.baseAchievement +
-      (detail.maxAchievement - detail.baseAchievement) * goalSavingRatio.value,
-  )
-})
-
-const goalSimulatedShortage = computed(() => {
-  const detail = goalDetail.value
-  if (!detail) {
-    return 0
-  }
-  return Math.round(
-    detail.baseShortage - (detail.baseShortage - detail.minShortage) * goalSavingRatio.value,
-  )
-})
-
 const goalSimulation = computed(() => {
-  const section = goalSection.value
+  const section = goalDetail.value
   if (!section) {
     return {
       achievement: 0,
