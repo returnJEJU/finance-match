@@ -26,10 +26,89 @@ const goalProgressSchema = z
   })
   .nullable()
 
+const assetDetailSchema = z.object({
+  referenceLabel: z.string(),
+  referenceValue: z.number(),
+  referenceProgress: z.number(),
+  currentLabel: z.string(),
+  currentValue: z.number(),
+  progress: z.number(),
+  note: z.string(),
+})
+
+const investmentValueRowSchema = z.object({
+  label: z.string(),
+  me: z.string(),
+  partner: z.string(),
+  match: z.string(),
+})
+
+const investmentValueDetailSchema = z.object({
+  columns: z.array(z.string()),
+  rows: z.array(investmentValueRowSchema),
+})
+
+const debtGaugeSchema = z.object({
+  label: z.string(),
+  value: z.number(),
+  decimals: z.number(),
+  unit: z.string(),
+  threshold: z.number().nullable(),
+  thresholdLabel: z.string().nullable(),
+  progress: z.number(),
+  status: z.string(),
+  description: z.string(),
+  amountLabel: z.string(),
+  amount: z.string(),
+})
+
+const debtDetailSchema = z.object({
+  summary: z.string(),
+  gauges: z.array(debtGaugeSchema),
+})
+
+const goalDetailSchema = z.object({
+  shortageLabel: z.string(),
+  shortageValue: z.number(),
+  shortageBadge: z.string(),
+  availableAsset: z.string(),
+  achievementRate: z.string(),
+  progress: z.number(),
+  monthlySaving: z.string(),
+  minMonthlySaving: z.number(),
+  maxMonthlySaving: z.number(),
+  selectedMonthlySaving: z.number(),
+  baseAchievement: z.number(),
+  maxAchievement: z.number(),
+  baseShortage: z.number(),
+  minShortage: z.number(),
+  targetAmount: z.string(),
+})
+
+const taxStatusRowSchema = z.object({
+  label: z.string(),
+  me: z.string(),
+  partner: z.string(),
+})
+
+const taxDetailSchema = z.object({
+  columns: z.array(z.string()),
+  rows: z.array(taxStatusRowSchema),
+})
+
 const aiCommentSchema = z.object({
   title: z.string(),
   headline: z.string(),
   body: z.string(),
+})
+
+const reportDetailsSchema = z.object({
+  asset: assetDetailSchema,
+  investmentValue: investmentValueDetailSchema,
+  debt: debtDetailSchema,
+  goal: goalDetailSchema,
+  tax: taxDetailSchema,
+  aiComment: aiCommentSchema,
 })
 
 const reportResponseSchema = z.object({
@@ -41,9 +120,7 @@ const reportResponseSchema = z.object({
   loanPurpose: z.string(),
   investmentProfile: investmentProfileSchema,
   goalProgress: goalProgressSchema,
-  scoreDetails: z.object({
-    aiComment: aiCommentSchema,
-  }),
+  scoreDetails: reportDetailsSchema,
 })
 
 export async function getReport() {

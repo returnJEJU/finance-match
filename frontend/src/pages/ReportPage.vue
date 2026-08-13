@@ -86,105 +86,14 @@ const scoreIconMeta = {
   TAX_STRATEGY: { icon: BadgeDollarSign, iconClass: 'bg-[#f5f0ff] text-[#66528c]' },
 }
 
-// TEMP: 상세 분석 화면 확정 전까지 프론트에서만 보여주는 목데이터.
-// 백엔드 계약이 확정되면 report.scoreAxes / goalProgress 기반으로 매핑한다.
-const mockScoreDetailSections = [
-  {
-    key: 'ASSET_STABILITY',
-    type: 'asset',
-    title: '금융 자산',
-    score: 20,
-    maxScore: 25,
-    referenceLabel: '또래 커플',
-    referenceValue: 1.49,
-    referenceProgress: 74.5,
-    currentLabel: '우리 커플',
-    currentValue: 1.13,
-    progress: 56.5,
-    note: '또래 커플 대비 안정적인 수준',
-  },
-  {
-    key: 'FINANCIAL_VALUE',
-    type: 'investment',
-    title: '투자 가치관 일치도',
-    score: 18,
-    maxScore: 25,
-    columns: ['지원님', '루키님'],
-    rows: [
-      { label: '투자 경험', me: '중하', partner: '하', match: '1단계' },
-      { label: '금융상품 이해도', me: '중상', partner: '중하', match: '2단계' },
-      { label: '손실 감내도', me: '70%', partner: '0%', match: '70%p' },
-    ],
-  },
-  {
-    key: 'DEBT_REPAYMENT',
-    type: 'debt',
-    title: '부채',
-    score: 20,
-    maxScore: 20,
-    summary: '부채 총액: 1억원',
-    gauges: [
-      {
-        label: 'DSR',
-        value: 18.3,
-        decimals: 1,
-        unit: '%',
-        threshold: 40,
-        thresholdLabel: '40%',
-        progress: 18.3,
-        status: '안정',
-        description: '연 소득 대비 연 상환액',
-        amountLabel: '연간 원리금 상환액',
-        amount: '1,320만원',
-      },
-      {
-        label: '금융자산 대비 부채',
-        value: 41,
-        decimals: 0,
-        unit: '%',
-        progress: 41,
-        status: '안정',
-        description: '총 부채',
-        amountLabel: '부부 연소득',
-        amount: '7,200만원',
-      },
-    ],
-  },
-  {
-    key: 'GOAL_FEASIBILITY',
-    type: 'goal',
-    title: '목표 달성률',
-    score: 13,
-    maxScore: 20,
-    shortageLabel: '목표까지 부족한 금액',
-    shortageValue: 30232,
-    shortageBadge: '3억 232만원 부족',
-    availableAsset: '1억9767만원',
-    achievementRate: '40%',
-    progress: 40,
-    monthlySaving: '0만원',
-    minMonthlySaving: 0,
-    maxMonthlySaving: 600,
-    selectedMonthlySaving: 320,
-    baseAchievement: 60,
-    maxAchievement: 84,
-    baseShortage: 8000,
-    minShortage: 3200,
-    targetAmount: '6억원',
-  },
-  {
-    key: 'TAX_STRATEGY',
-    type: 'tax',
-    title: '절세 활용도',
-    score: 8,
-    maxScore: 10,
-    columns: ['저희님', '투자님'],
-    rows: [
-      { label: 'ISA', me: '활용 중', partner: '미개설' },
-      { label: 'IRP', me: '활용 중', partner: '활용 중' },
-      { label: '연금저축', me: '활용 중', partner: '미활용' },
-    ],
-  },
+// 상세 분석 카드 5개의 고정 순서/키. report.scoreDetails 로딩 전에도 closedKeys(전체 접힘) 초기값을
+// 만들어야 해서 정적으로 둔다 — 실제 표시 데이터는 scoreDetailSections(아래, report 로딩 후 계산)에서 온다.
+const scoreDetailKeys = [
+  'ASSET_STABILITY',
+  'FINANCIAL_VALUE',
+  'DEBT_REPAYMENT',
+  'GOAL_FEASIBILITY',
+  'TAX_STRATEGY',
 ]
 
 const assetAxisTicks = [
@@ -231,6 +140,38 @@ watch(
     }
   },
 )
+
+// report.scoreAxes(점수·만점)와 report.scoreDetails(항목별 상세 데이터)를 합쳐서 카드 하나로 만든다.
+const scoreAxisByKey = computed(
+  () => new Map(report.value?.scoreAxes?.map((axis) => [axis.key, axis]) ?? []),
+)
+
+const scoreSection = (key, type, detail) => {
+  const axis = scoreAxisByKey.value.get(key)
+  return {
+    key,
+    type,
+    title: axis?.name ?? '',
+    score: axis?.score ?? 0,
+    maxScore: axis?.maxScore ?? 0,
+    ...detail,
+  }
+}
+
+const scoreDetailSections = computed(() => {
+  const details = report.value?.scoreDetails
+  if (!details) {
+    return []
+  }
+
+  return [
+    scoreSection('ASSET_STABILITY', 'asset', details.asset),
+    scoreSection('FINANCIAL_VALUE', 'investment', details.investmentValue),
+    scoreSection('DEBT_REPAYMENT', 'debt', details.debt),
+    scoreSection('GOAL_FEASIBILITY', 'goal', details.goal),
+    scoreSection('TAX_STRATEGY', 'tax', details.tax),
+  ]
+})
 
 const coupleTypeLabel = computed(
   () => coupleInvestmentTypeMeta[report.value.investmentProfile.we].label,
@@ -447,11 +388,31 @@ const heartLayers = Array.from({ length: HEART_LAYER_COUNT }, (_, i) => {
 const heartGlintZ = (HEART_DEPTH / 2 + 1).toFixed(2)
 
 // 카드별 펼침 상태(복수 개 동시에 펼칠 수 있음). 상세 리포트는 처음엔 전체 접힘으로 시작한다.
-const closedKeys = ref(new Set(mockScoreDetailSections.map((section) => section.key)))
+const closedKeys = ref(new Set(scoreDetailKeys))
 
 const isOpen = (key) => !closedKeys.value.has(key)
 
 const roundScore = (score) => Math.round(score)
+
+// AI 코멘트 body의 "**강조**" 구간을 <strong>으로 렌더링하기 위해 텍스트를 세그먼트로 쪼갠다.
+// v-html 대신 세그먼트 배열 + v-for로 렌더링해서, LLM이 생성한 텍스트에 임의의 HTML이 섞여도
+// 태그로 해석되지 않고 그대로 문자열로만 표시된다(XSS 방지).
+const parseBoldSegments = (text) => {
+  if (!text) {
+    return []
+  }
+  return text
+    .split(/(\*\*[^*]+\*\*)/g)
+    .filter((part) => part.length > 0)
+    .map((part) => {
+      const isBold = part.startsWith('**') && part.endsWith('**')
+      return { text: isBold ? part.slice(2, -2) : part, bold: isBold }
+    })
+}
+
+const aiCommentBodySegments = computed(() =>
+  parseBoldSegments(report.value?.scoreDetails?.aiComment?.body),
+)
 
 const progressWidth = (value) => `${Math.min(Math.max(value, 0), 100)}%`
 
@@ -469,27 +430,54 @@ const animatedDebtValue = (gauge) => {
   return `${value.toFixed(gauge.decimals)}${gauge.unit}`
 }
 
-const goalMock = mockScoreDetailSections.find((section) => section.type === 'goal')
-const goalMonthlySaving = ref(goalMock.selectedMonthlySaving)
+const goalDetail = computed(() => report.value?.scoreDetails?.goal)
 
-const goalSavingRange = computed(() => goalMock.maxMonthlySaving - goalMock.minMonthlySaving)
-
-const goalSavingRatio = computed(
-  () => (goalMonthlySaving.value - goalMock.minMonthlySaving) / goalSavingRange.value,
+// 슬라이더는 사용자가 직접 조작하는 로컬 상태라 ref가 필요하다 — goalDetail은 report 로딩 후에야
+// 값이 생기므로, 도착하는 시점에 실제 현재 저축액(selectedMonthlySaving)으로 한 번 맞춰준다.
+const goalMonthlySaving = ref(0)
+watch(
+  goalDetail,
+  (detail) => {
+    if (detail) {
+      goalMonthlySaving.value = detail.selectedMonthlySaving
+    }
+  },
+  { immediate: true },
 )
 
-const goalSimulatedAchievement = computed(() =>
-  Math.round(
-    goalMock.baseAchievement +
-      (goalMock.maxAchievement - goalMock.baseAchievement) * goalSavingRatio.value,
-  ),
-)
+const goalSavingRange = computed(() => {
+  const detail = goalDetail.value
+  return detail ? detail.maxMonthlySaving - detail.minMonthlySaving : 0
+})
 
-const goalSimulatedShortage = computed(() =>
-  Math.round(
-    goalMock.baseShortage - (goalMock.baseShortage - goalMock.minShortage) * goalSavingRatio.value,
-  ),
-)
+const goalSavingRatio = computed(() => {
+  const detail = goalDetail.value
+  if (!detail || goalSavingRange.value === 0) {
+    return 0
+  }
+  return (goalMonthlySaving.value - detail.minMonthlySaving) / goalSavingRange.value
+})
+
+const goalSimulatedAchievement = computed(() => {
+  const detail = goalDetail.value
+  if (!detail) {
+    return 0
+  }
+  return Math.round(
+    detail.baseAchievement +
+      (detail.maxAchievement - detail.baseAchievement) * goalSavingRatio.value,
+  )
+})
+
+const goalSimulatedShortage = computed(() => {
+  const detail = goalDetail.value
+  if (!detail) {
+    return 0
+  }
+  return Math.round(
+    detail.baseShortage - (detail.baseShortage - detail.minShortage) * goalSavingRatio.value,
+  )
+})
 
 const goalSliderPercent = computed(() => progressWidth(goalSavingRatio.value * 100))
 
@@ -837,7 +825,7 @@ const toggleCard = (key) => {
 
         <div class="mt-4 space-y-3">
           <div
-            v-for="section in mockScoreDetailSections"
+            v-for="section in scoreDetailSections"
             :key="section.key"
             class="rounded-card border border-line-card bg-white p-4"
           >
@@ -1176,7 +1164,7 @@ const toggleCard = (key) => {
             </div>
           </div>
 
-          <div class="rounded-card border border-line-card bg-white p-4">
+          <div class="relative rounded-card border border-line-card bg-white p-4">
             <div class="flex items-center gap-2.5">
               <span
                 class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[#fff5eb] text-[#9c5f27]"
@@ -1187,21 +1175,22 @@ const toggleCard = (key) => {
                 {{ report.scoreDetails.aiComment.title }}
               </h3>
             </div>
-            <div class="mt-4 flex items-end gap-3">
-              <div class="min-w-0 flex-1">
-                <p class="text-[16px] font-extrabold text-warn">
-                  {{ report.scoreDetails.aiComment.headline }}
-                </p>
-                <p class="mt-2 text-[15px] leading-[1.65] text-ink-sub">
-                  {{ report.scoreDetails.aiComment.body }}
-                </p>
-              </div>
-              <AnimatedCharacter
-                :src="characterExcited"
-                alt="AI 코멘트 캐릭터"
-                img-class="h-20 w-20 object-contain"
-              />
+            <div class="mt-4 pb-16">
+              <p class="text-[16px] font-extrabold text-warn">
+                {{ report.scoreDetails.aiComment.headline }}
+              </p>
+              <p class="mt-2 whitespace-pre-line text-[15px] leading-[1.65] text-ink-sub">
+                <template v-for="(segment, index) in aiCommentBodySegments" :key="index">
+                  <strong v-if="segment.bold" class="font-bold text-ink">{{ segment.text }}</strong>
+                  <template v-else>{{ segment.text }}</template>
+                </template>
+              </p>
             </div>
+            <AnimatedCharacter
+              :src="characterExcited"
+              alt="AI 코멘트 캐릭터"
+              img-class="absolute bottom-2 right-2 h-20 w-20 object-contain"
+            />
           </div>
         </div>
 
