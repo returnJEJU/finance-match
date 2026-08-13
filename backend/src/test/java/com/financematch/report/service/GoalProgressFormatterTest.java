@@ -18,9 +18,9 @@ class GoalProgressFormatterTest {
                 formatter.format(new BigDecimal(80_000_000), new BigDecimal(100_000_000));
 
         assertFalse(progress.isAchieved());
-        assertEquals("-2000만원", progress.getAmountLabel());
-        assertEquals("2000만원 부족", progress.getBarLabel());
-        assertEquals("8000만원", progress.getAvailableAsset());
+        assertEquals("-2,000만원", progress.getAmountLabel());
+        assertEquals("2,000만원 부족", progress.getBarLabel());
+        assertEquals("8,000만원", progress.getAvailableAsset());
         assertEquals("80%", progress.getAchievementRate());
     }
 
@@ -30,9 +30,9 @@ class GoalProgressFormatterTest {
                 formatter.format(new BigDecimal(130_000_000), new BigDecimal(100_000_000));
 
         assertTrue(progress.isAchieved());
-        assertEquals("+3000만원", progress.getAmountLabel());
-        assertEquals("3000만원 초과", progress.getBarLabel());
-        assertEquals("1억 3000만원", progress.getAvailableAsset());
+        assertEquals("+3,000만원", progress.getAmountLabel());
+        assertEquals("3,000만원 초과", progress.getBarLabel());
+        assertEquals("1억 3,000만원", progress.getAvailableAsset());
         assertEquals("130%", progress.getAchievementRate());
     }
 
