@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.financematch.report.mapper.ReportDetailMapper">
+
+    <select
+            id="findCoupleDetailByMemberId"
+            resultType="com.financematch.report.domain.ReportCoupleDetailSource">
+        SELECT
+            c.id AS couple_id,
+            cr.id AS compatibility_result_id,
+            cs.first_goal_type,
+            cs.target_amount,
+            cs.target_period_months,
+            r.expected_asset,
+            r.expert_comment
+        FROM member me
+            INNER JOIN couple c
+                ON c.inviter_id = me.id
+                OR c.invitee_id = me.id
+            INNER JOIN compatibility_result cr
+                ON cr.couple_id = c.id
+            INNER JOIN report r
+                ON r.compatibility_result_id = cr.id
+            INNER JOIN invitation_code ic
+                ON ic.id = c.invitation_code_id
+            INNER JOIN common_survey cs
+                ON cs.id = ic.common_survey_id
+        WHERE me.id = #{memberId}
+          AND me.deleted_at IS NULL
+    </select>
+
+    <select
+            id="findMemberDetailsByCoupleId"
+            resultType="com.financematch.report.domain.ReportMemberDetailSource">
+        SELECT
+            m.id AS member_id,
+            m.name AS member_name,
+            m.birth_date,
+
+            ps.annual_income,
+            ps.monthly_available_amount,
+            ps.financial_knowledge,
+            ps.capital_preservation_attitude,
+
+            COALESCE(
+                (
+                    SELECT MAX(
+                        CASE psie.investment_experience
+                            WHEN 'LOW_RISK' THEN 1
+                            WHEN 'MODERATE_LOW_RISK' THEN 2
+                            WHEN 'MODERATE_RISK' THEN 3
+                            WHEN 'MODERATE_HIGH_RISK' THEN 4
+                            WHEN 'HIGH_RISK' THEN 5
+                            ELSE 0
+                        END
+                    )
+                    FROM personal_survey_investment_experience psie
+                    WHERE psie.personal_survey_id = ps.id
+                ),
+                0
+            ) AS investment_experience_score,
+
+            fs.financial_asset,
+            fs.total_debt,
+            fs.annual_debt_payment,
+
+            pia.has_isa,
+            pia.has_irp,
+            pia.has_pension_saving,
+            pia.isa_annual_deposit,
+            pia.irp_annual_payment,
+            pia.dc_annual_payment,
+            pia.pension_annual_payment
+        FROM couple c
+            INNER JOIN member m
+                ON m.id = c.inviter_id
+                OR m.id = c.invitee_id
+            LEFT JOIN personal_survey ps
+                ON ps.member_id = m.id
+            LEFT JOIN financial_summary fs
+                ON fs.member_id = m.id
+            LEFT JOIN pension_isa_account pia
+                ON pia.member_id = m.id
+        WHERE c.id = #{coupleId}
+          AND m.deleted_at IS NULL
+    </select>
+
+    <select id="findMedianFinancialAssetByAge" resultType="java.math.BigDecimal">
+        SELECT agm.median_financial_asset
+        FROM age_group_asset_median agm
+        WHERE agm.age_min &lt;= #{age}
+          AND (
+              agm.age_max IS NULL
+              OR agm.age_max &gt;= #{age}
+          )
+          AND agm.base_year = (
+              SELECT MAX(latest_agm.base_year)
+              FROM age_group_asset_median latest_agm
+          )
+        LIMIT 1
+    </select>
+</mapper>
