@@ -99,12 +99,14 @@ INSERT INTO pension_isa_account
 (2, 1,1,0,1, 20000000,15000000, 6000000, 3000000, 0, 20000000, 'ELIGIBLE','ELIGIBLE');
 
 -- ─── 궁합도 점수 (couple 1:1 · 위 입력으로 계산식 산출값) ───
+-- 점수는 실제 MatchCalculator 산출값으로 맞춰져 있다(2026-08-13, overall_comment 실검증 시 확인).
 INSERT INTO compatibility_result
  (id,couple_id,asset_stability_score,debt_repayment_score,financial_value_score,goal_feasibility_score,tax_strategy_score,total_score,result_summary) VALUES
-(1,1, 21.41, 14.00, 16.95, 12.79, 8.00, 73.15,
- '두 분의 금융궁합은 73.15점입니다. 자산·목표는 견고하나 위험 선호 차이와 절세 여력에 보완 여지가 있습니다.');
+(1,1, 15.52, 14.00, 16.95, 17.05, 8.00, 72.00,
+ '두 분의 금융궁합은 72.00점입니다. 자산·목표는 견고하나 위험 선호 차이와 절세 여력에 보완 여지가 있습니다.');
 
 -- ─── 리포트 (축별 자연어 근거 · LLM 산출 자리) ───
+-- expert_comment는 위 점수 기준으로 실제 OverallCommentService(gpt-4o-mini)가 생성한 문장을 그대로 옮겼다.
 INSERT INTO report
  (compatibility_result_id,asset_stability_reason,debt_repayment_reason,financial_value_reason,goal_feasibility_reason,tax_strategy_reason,expert_comment) VALUES
 (1,
@@ -113,7 +115,7 @@ INSERT INTO report
  '안정추구형과 적극투자형으로 위험 선호 차이가 있어 공동자금 운용 규칙 합의가 필요합니다.',
  '3년 내 전세 목표 달성률이 약 85%로, 저축·투자 속도를 조금 높이면 도달 가능합니다.',
  '연금 세액공제 활용은 우수하나 ISA 기본 납입한도에 여력이 남아 있습니다.',
- '자산·목표는 튼튼합니다. 손실 감내 차이를 좁히는 공동 규칙과 남은 ISA 한도 활용을 먼저 권합니다.');
+ '두 분은 **목표 달성 가능성이 높아요**. 3년 뒤 목표의 85%에 도달할 것으로 예상되며, 목표 금액이 3억 5000만원이므로 5167만원 부족해요. 절세 활용이 잘 되고 있어서, 하나님과 두리님 각각의 연금저축과 ISA 한도를 잘 채우고 있어요. 이 점에서 1000만원과 2000만원 한도가 남아 있다는 점도 플러스에요. 부채 상환도 탄탄해서, 하나님은 2000만원, 두리님은 4000만원의 부채를 갖고 있어요. 금융 자산도 안정적인데, 두 분의 합산 금융자산이 2억 7000만원으로 또래 중앙값 대비 145% 이상이에요.\n\n두 분의 **투자 가치관에는 보완이 필요해요**. 현재 두 분의 투자 가치관 일치도가 68%로 이 부분에서 조금 더 신경 쓰면 좋겠어요. 투자 가치관을 조율하고 맞춰가면, 앞으로 금융 관리에 더 큰 도움이 될 수 있을 것 같아요.');
 
 -- ─── 추천 결과 (커플 슬롯 4종: DEPOSIT·SAVINGS·INVESTMENT·LOAN / 절세는 개인추천) ───
 INSERT INTO recommendation (id,couple_id) VALUES (1,1);

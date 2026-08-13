@@ -86,6 +86,8 @@ const scoreIconMeta = {
   TAX_STRATEGY: { icon: BadgeDollarSign, iconClass: 'bg-[#f5f0ff] text-[#66528c]' },
 }
 
+// 상세 분석 카드 5개의 고정 순서/키. report.scoreDetails 로딩 전에도 closedKeys(전체 접힘) 초기값을
+// 만들어야 해서 정적으로 둔다 — 실제 표시 데이터는 scoreDetailSections(아래, report 로딩 후 계산)에서 온다.
 const scoreDetailKeys = [
   'ASSET_STABILITY',
   'FINANCIAL_VALUE',
@@ -139,6 +141,7 @@ watch(
   },
 )
 
+// report.scoreAxes(점수·만점)와 report.scoreDetails(항목별 상세 데이터)를 합쳐서 카드 하나로 만든다.
 const scoreAxisByKey = computed(
   () => new Map(report.value?.scoreAxes?.map((axis) => [axis.key, axis]) ?? []),
 )
@@ -169,15 +172,6 @@ const scoreDetailSections = computed(() => {
     scoreSection('TAX_STRATEGY', 'tax', details.tax),
   ]
 })
-
-const aiComment = computed(
-  () =>
-    report.value?.scoreDetails?.aiComment ?? {
-      title: 'AI 종합 코멘트',
-      headline: '',
-      body: '',
-    },
-)
 
 const coupleTypeLabel = computed(
   () => coupleInvestmentTypeMeta[report.value.investmentProfile.we].label,
@@ -400,6 +394,26 @@ const isOpen = (key) => !closedKeys.value.has(key)
 
 const roundScore = (score) => Math.round(score)
 
+// AI 코멘트 body의 "**강조**" 구간을 <strong>으로 렌더링하기 위해 텍스트를 세그먼트로 쪼갠다.
+// v-html 대신 세그먼트 배열 + v-for로 렌더링해서, LLM이 생성한 텍스트에 임의의 HTML이 섞여도
+// 태그로 해석되지 않고 그대로 문자열로만 표시된다(XSS 방지).
+const parseBoldSegments = (text) => {
+  if (!text) {
+    return []
+  }
+  return text
+    .split(/(\*\*[^*]+\*\*)/g)
+    .filter((part) => part.length > 0)
+    .map((part) => {
+      const isBold = part.startsWith('**') && part.endsWith('**')
+      return { text: isBold ? part.slice(2, -2) : part, bold: isBold }
+    })
+}
+
+const aiCommentBodySegments = computed(() =>
+  parseBoldSegments(report.value?.scoreDetails?.aiComment?.body),
+)
+
 const progressWidth = (value) => `${Math.min(Math.max(value, 0), 100)}%`
 
 const animatedAssetProgressWidth = (progress) =>
@@ -416,43 +430,54 @@ const animatedDebtValue = (gauge) => {
   return `${value.toFixed(gauge.decimals)}${gauge.unit}`
 }
 
-const debtStatusClass = (status) => {
-  if (status === '안정') {
-    return 'text-[#35a853]'
-  }
-  if (status === '주의') {
-    return 'text-[#f28b22]'
-  }
-  return 'text-[#e05252]'
-}
+const goalDetail = computed(() => report.value?.scoreDetails?.goal)
 
-const goalSection = computed(() =>
-  scoreDetailSections.value.find((section) => section.type === 'goal'),
-)
+// 슬라이더는 사용자가 직접 조작하는 로컬 상태라 ref가 필요하다 — goalDetail은 report 로딩 후에야
+// 값이 생기므로, 도착하는 시점에 실제 현재 저축액(selectedMonthlySaving)으로 한 번 맞춰준다.
 const goalMonthlySaving = ref(0)
-
 watch(
-  () => goalSection.value?.selectedMonthlySaving,
-  (selectedMonthlySaving) => {
-    if (typeof selectedMonthlySaving === 'number') {
-      goalMonthlySaving.value = selectedMonthlySaving
+  goalDetail,
+  (detail) => {
+    if (detail) {
+      goalMonthlySaving.value = detail.selectedMonthlySaving
     }
   },
+  { immediate: true },
 )
 
-const goalSavingRange = computed(() =>
-  Math.max(
-    (goalSection.value?.maxMonthlySaving ?? 0) - (goalSection.value?.minMonthlySaving ?? 0),
-    0,
-  ),
-)
+const goalSavingRange = computed(() => {
+  const detail = goalDetail.value
+  return detail ? detail.maxMonthlySaving - detail.minMonthlySaving : 0
+})
 
-const goalSavingRatio = computed(() =>
-  goalSavingRange.value === 0
-    ? 0
-    : (goalMonthlySaving.value - (goalSection.value?.minMonthlySaving ?? 0)) /
-      goalSavingRange.value,
-)
+const goalSavingRatio = computed(() => {
+  const detail = goalDetail.value
+  if (!detail || goalSavingRange.value === 0) {
+    return 0
+  }
+  return (goalMonthlySaving.value - detail.minMonthlySaving) / goalSavingRange.value
+})
+
+const goalSimulatedAchievement = computed(() => {
+  const detail = goalDetail.value
+  if (!detail) {
+    return 0
+  }
+  return Math.round(
+    detail.baseAchievement +
+      (detail.maxAchievement - detail.baseAchievement) * goalSavingRatio.value,
+  )
+})
+
+const goalSimulatedShortage = computed(() => {
+  const detail = goalDetail.value
+  if (!detail) {
+    return 0
+  }
+  return Math.round(
+    detail.baseShortage - (detail.baseShortage - detail.minShortage) * goalSavingRatio.value,
+  )
+})
 
 const goalSimulation = computed(() => {
   const section = goalSection.value
@@ -1251,28 +1276,33 @@ const toggleCard = (key) => {
             </div>
           </div>
 
-          <div class="rounded-card border border-line-card bg-white p-4">
+          <div class="relative rounded-card border border-line-card bg-white p-4">
             <div class="flex items-center gap-2.5">
               <span
                 class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[#fff5eb] text-[#9c5f27]"
               >
                 <HeartHandshake :size="19" :stroke-width="2" />
               </span>
-              <h3 class="text-[18px] font-bold text-ink">{{ aiComment.title }}</h3>
+              <h3 class="text-[18px] font-bold text-ink">
+                {{ report.scoreDetails.aiComment.title }}
+              </h3>
             </div>
-            <div class="mt-4 flex items-end gap-3">
-              <div class="min-w-0 flex-1">
-                <p class="text-[16px] font-extrabold text-warn">{{ aiComment.headline }}</p>
-                <p class="mt-2 text-[15px] leading-[1.65] text-ink-sub">
-                  {{ aiComment.body }}
-                </p>
-              </div>
-              <AnimatedCharacter
-                :src="characterExcited"
-                alt="AI 코멘트 캐릭터"
-                img-class="h-20 w-20 object-contain"
-              />
+            <div class="mt-4 pb-16">
+              <p class="text-[16px] font-extrabold text-warn">
+                {{ report.scoreDetails.aiComment.headline }}
+              </p>
+              <p class="mt-2 whitespace-pre-line text-[15px] leading-[1.65] text-ink-sub">
+                <template v-for="(segment, index) in aiCommentBodySegments" :key="index">
+                  <strong v-if="segment.bold" class="font-bold text-ink">{{ segment.text }}</strong>
+                  <template v-else>{{ segment.text }}</template>
+                </template>
+              </p>
             </div>
+            <AnimatedCharacter
+              :src="characterExcited"
+              alt="AI 코멘트 캐릭터"
+              img-class="absolute bottom-2 right-2 h-20 w-20 object-contain"
+            />
           </div>
         </div>
 

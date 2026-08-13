@@ -24,6 +24,8 @@ import com.financematch.match.domain.CompatibilityResult;
 import com.financematch.match.domain.MatchCoupleData;
 import com.financematch.match.domain.MatchMemberData;
 import com.financematch.match.mapper.MatchMapper;
+import com.financematch.overall_comment.OverallCommentInputBuilder;
+import com.financematch.overall_comment.OverallCommentService;
 import com.financematch.report.dto.reason.DebtRepaymentReasonInput;
 import com.financematch.report.dto.reason.FinancialValueReasonInput;
 import com.financematch.report.dto.reason.TaxStrategyReasonInput;
@@ -57,6 +59,12 @@ class MatchServiceTest {
     @Mock
     private TaxStrategyScoreService taxStrategyScoreService;
 
+    @Mock
+    private OverallCommentInputBuilder overallCommentInputBuilder;
+
+    @Mock
+    private OverallCommentService overallCommentService;
+
     private MatchService matchService;
 
     @BeforeEach
@@ -68,7 +76,9 @@ class MatchServiceTest {
                 assetStabilityScoreService,
                 debtRepaymentScoreService,
                 financialValueScoreService,
-                taxStrategyScoreService);
+                taxStrategyScoreService,
+                overallCommentInputBuilder,
+                overallCommentService);
     }
 
     @Test

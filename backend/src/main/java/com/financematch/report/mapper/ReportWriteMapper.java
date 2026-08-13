@@ -37,4 +37,8 @@ public interface ReportWriteMapper {
     /** {@code report} 행이 없으면 새로 만들고, 있으면 tax_strategy_reason 만 갱신한다. */
     void upsertTaxStrategyReason(
             @Param("compatibilityResultId") Long compatibilityResultId, @Param("reason") String reason);
+
+    /** {@code report} 행이 없으면 새로 만들고, 있으면 expert_comment(종합 코멘트) 만 갱신한다. */
+    void upsertExpertComment(
+            @Param("compatibilityResultId") Long compatibilityResultId, @Param("comment") String comment);
 }

@@ -96,7 +96,7 @@ const taxDetailSchema = z.object({
   rows: z.array(taxStatusRowSchema),
 })
 
-const aiCommentDetailSchema = z.object({
+const aiCommentSchema = z.object({
   title: z.string(),
   headline: z.string(),
   body: z.string(),
@@ -108,7 +108,7 @@ const reportDetailsSchema = z.object({
   debt: debtDetailSchema,
   goal: goalDetailSchema,
   tax: taxDetailSchema,
-  aiComment: aiCommentDetailSchema,
+  aiComment: aiCommentSchema,
 })
 
 const reportResponseSchema = z.object({
