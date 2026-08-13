@@ -1,25 +1,50 @@
 package com.financematch.asset.service;
 
-import com.financematch.asset.domain.AssetCategory;
-import com.financematch.asset.domain.MyDataAsset;
-import com.financematch.asset.domain.MyDataLoan;
-import com.financematch.asset.domain.MyDataPensionIsa;
 import com.financematch.asset.domain.MyDataSnapshot;
-import java.math.BigDecimal;
+import com.financematch.auth.domain.Member;
+import com.financematch.auth.mapper.MemberMapper;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
+import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * 목 서버 도입 전 사용하는 예비부부용 개인 마이데이터 시나리오.
+ * 목 서버 도입 전 사용하는 마이데이터 구현.
  *
- * <p>회원가입 직후에는 아직 커플 관계가 없으므로 회원 ID로 개인 시나리오를 결정한다. 홀수 회원은
- * 부채가 없는 A, 짝수 회원은 전세자금대출이 있는 B다. 목 서버 도입 후에는 이 임시 구분 없이 서버가
- * 회원별 데이터를 반환한다.
+ * <p>실제 마이데이터는 사람을 식별해 그 사람의 계좌를 돌려주므로, 목 구현도 회원마다 고정된 자산을
+ * 돌려줘야 한다. 식별 키는 <b>이메일</b>이다 — 회원 번호와 달리 가입할 때 직접 정할 수 있어서, 데모
+ * 계정을 시드로 미리 넣든 시연 중에 그 자리에서 가입하든 같은 자산이 붙는다.
+ *
+ * <p>매핑에 없는 이메일은 {@link MyDataScenario#DEFAULT}를 받는다. 등록되지 않은 계정이 자산 연동을
+ * 시도해도 실패하지 않는다.
+ *
+ * <p>목 서버가 준비되면 이 클래스와 {@link MyDataScenario}를 함께 지우고 HTTP 구현으로 교체한다.
+ * 매핑표는 그때 통째로 사라지며, {@link MyDataProvider}를 쓰는 쪽은 바뀌지 않는다.
  */
 @Component
+@RequiredArgsConstructor
 public class SimpleMyDataProvider implements MyDataProvider {
+
+    /**
+     * 이메일 → 시나리오 매핑.
+     *
+     * <p>{@code Map.of} 가 아니라 {@code Map.ofEntries} 를 쓴다 — {@code Map.of} 는 10쌍이
+     * 최대라 계정을 늘리다 보면 컴파일이 깨진다. 새 데모 계정은 여기에 한 줄만 추가하면 된다.
+     * 시나리오를 새로 만들지 않고 기존 것을 재사용해도 된다.
+     */
+    private static final Map<String, MyDataScenario> SCENARIO_BY_EMAIL =
+            Map.ofEntries(
+                    Map.entry("demo.a@chaltteok.dev", MyDataScenario.DEMO_INVITER),
+                    Map.entry("demo.b@chaltteok.dev", MyDataScenario.DEMO_INVITEE),
+                    Map.entry("demo.saver@chaltteok.dev", MyDataScenario.SAVER),
+                    Map.entry("demo.investor@chaltteok.dev", MyDataScenario.INVESTOR),
+                    Map.entry("demo.newlywed@chaltteok.dev", MyDataScenario.NEWLYWED),
+                    Map.entry("demo.renter@chaltteok.dev", MyDataScenario.RENTER),
+                    Map.entry("demo.rich@chaltteok.dev", MyDataScenario.RICH),
+                    Map.entry("demo.debt@chaltteok.dev", MyDataScenario.HIGH_RATE_DEBT));
+
+    private final MemberMapper memberMapper;
 
     @Override
     public MyDataSnapshot fetch(Long memberId) {
@@ -27,124 +52,16 @@ public class SimpleMyDataProvider implements MyDataProvider {
             throw new IllegalArgumentException("회원 ID가 필요합니다.");
         }
 
-        return memberId % 2 == 1
-                ? debtFreeSnapshot()
-                : housingLoanSnapshot();
+        return scenarioOf(memberId)
+                .build(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
     }
 
-    private MyDataSnapshot debtFreeSnapshot() {
-        List<MyDataAsset> assets =
-                List.of(
-                        asset(
-                                "KB국민은행",
-                                "KB국민ONE통장",
-                                AssetCategory.BANK_CHECKING,
-                                12_630_000L),
-                        asset(
-                                "KB국민은행",
-                                "KB Star 정기예금",
-                                AssetCategory.BANK_SAVINGS,
-                                50_520_000L),
-                        asset(
-                                "KB증권",
-                                "KB증권 종합위탁",
-                                AssetCategory.SECURITIES,
-                                9_050_000L),
-                        asset(
-                                "KB증권",
-                                "KB 연금저축펀드",
-                                AssetCategory.SECURITIES,
-                                6_000_000L),
-                        asset(
-                                "KB증권",
-                                "KB 중개형 ISA",
-                                AssetCategory.SECURITIES,
-                                6_000_000L));
+    private MyDataScenario scenarioOf(Long memberId) {
+        Member member = memberMapper.findById(memberId);
+        if (member == null || member.getEmail() == null) {
+            return MyDataScenario.DEFAULT;
+        }
 
-        MyDataPensionIsa pensionIsa =
-                new MyDataPensionIsa(
-                        true,
-                        false,
-                        false,
-                        true,
-                        BigDecimal.valueOf(6_000_000L),
-                        BigDecimal.ZERO,
-                        BigDecimal.valueOf(4_800_000L),
-                        BigDecimal.ZERO,
-                        BigDecimal.ZERO,
-                        BigDecimal.valueOf(6_000_000L),
-                        "ELIGIBLE",
-                        "ELIGIBLE");
-
-        return new MyDataSnapshot(
-                assets,
-                List.of(),
-                pensionIsa,
-                LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
-    }
-
-    private MyDataSnapshot housingLoanSnapshot() {
-        List<MyDataAsset> assets =
-                List.of(
-                        asset(
-                                "토스뱅크",
-                                "토스뱅크 통장",
-                                AssetCategory.BANK_CHECKING,
-                                8_400_000L),
-                        asset(
-                                "KB국민은행",
-                                "주택청약종합저축·정기예금",
-                                AssetCategory.BANK_SAVINGS,
-                                30_600_000L),
-                        asset(
-                                "KB증권",
-                                "인덱스펀드",
-                                AssetCategory.SECURITIES,
-                                20_000_000L),
-                        asset(
-                                "KB증권",
-                                "KB 개인형IRP",
-                                AssetCategory.SECURITIES,
-                                4_000_000L));
-
-        MyDataPensionIsa pensionIsa =
-                new MyDataPensionIsa(
-                        false,
-                        true,
-                        false,
-                        false,
-                        BigDecimal.ZERO,
-                        BigDecimal.valueOf(4_000_000L),
-                        BigDecimal.ZERO,
-                        BigDecimal.valueOf(3_000_000L),
-                        BigDecimal.ZERO,
-                        BigDecimal.ZERO,
-                        "ELIGIBLE",
-                        "ELIGIBLE");
-
-        return new MyDataSnapshot(
-                assets,
-                List.of(
-                        new MyDataLoan(
-                                "KB국민은행",
-                                "KB 전세금안심대출",
-                                BigDecimal.valueOf(35_000_000L),
-                                BigDecimal.valueOf(3_600_000L),
-                                new BigDecimal("4.15"),
-                                false)),
-                pensionIsa,
-                LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
-    }
-
-    private MyDataAsset asset(
-            String institutionName,
-            String productName,
-            AssetCategory category,
-            long balance) {
-        return new MyDataAsset(
-                institutionName,
-                productName,
-                category,
-                BigDecimal.valueOf(balance));
+        return SCENARIO_BY_EMAIL.getOrDefault(member.getEmail(), MyDataScenario.DEFAULT);
     }
 }
