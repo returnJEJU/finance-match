@@ -167,6 +167,9 @@ class CoupleServiceUnitTest {
         assertEquals(ErrorCode.COUPLE_NOT_CONNECTED, exception.getErrorCode());
         verify(coupleMapper, never()).deleteInvitationById(any());
         verify(coupleMapper, never()).deleteCommonSurveyById(any());
+        verify(coupleMapper, never()).deleteInvestmentExperiencesByMemberId(any());
+        verify(coupleMapper, never()).deletePersonalSurveyByMemberId(any());
+        verify(coupleMapper, never()).clearInvestmentType(any());
     }
 
     /** 커플 생성에 사용된 초대 코드 삭제에 실패하면 INTERNAL_ERROR가 발생하는지 검증한다. */
@@ -241,6 +244,15 @@ class CoupleServiceUnitTest {
         verify(coupleMapper).deletePersonalTaxSavingByCoupleMembers(INVITER_ID, MEMBER_ID);
         verify(coupleMapper).deletePersonalInvestmentByCoupleMembers(INVITER_ID, MEMBER_ID);
         verify(coupleMapper).deleteCoupleByIdAndMemberId(COUPLE_ID, MEMBER_ID);
+
+        verify(coupleMapper).deleteInvestmentExperiencesByMemberId(INVITER_ID);
+        verify(coupleMapper).deletePersonalSurveyByMemberId(INVITER_ID);
+        verify(coupleMapper).clearInvestmentType(INVITER_ID);
+
+        verify(coupleMapper).deleteInvestmentExperiencesByMemberId(MEMBER_ID);
+        verify(coupleMapper).deletePersonalSurveyByMemberId(MEMBER_ID);
+        verify(coupleMapper).clearInvestmentType(MEMBER_ID);
+
         verify(coupleMapper).deleteInvitationById(INVITATION_CODE_ID);
         verify(coupleMapper).deleteCommonSurveyById(COMMON_SURVEY_ID);
     }

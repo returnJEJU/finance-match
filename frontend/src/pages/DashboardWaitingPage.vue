@@ -1,11 +1,14 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { ArrowRight, CreditCard, Heart, LoaderCircle, LockKeyhole } from 'lucide-vue-next'
 
 import { getInvitation } from '@/api/invitation'
 import { getOnboardingStatus } from '@/api/onboarding'
 import BaseButton from '@/components/ui/BaseButton.vue'
+
+const router = useRouter()
 
 const POLLING_INTERVAL = 5000 // 폴링 간격 5초
 
@@ -49,6 +52,12 @@ watch(dataUpdatedAt, (updatedAt) => {
   lastHandledUpdateAt.value = updatedAt
 
   const currentCoupleConnected = status.value.coupleConnected
+
+  // 연결된 커플도, 진행 중인 초대도 없다면 커플 연동 시작 화면으로 이동
+  if (currentCoupleConnected === false && status.value.hasInvitation === false) {
+    router.replace({ name: 'couple-start' })
+    return
+  }
 
   // 첫 응답을 기준값으로 저장
   if (connectionBaseline.value === null) {

@@ -110,6 +110,10 @@ public class CoupleService {
             throw new ApiException(ErrorCode.COUPLE_NOT_CONNECTED);
         }
 
+        // 추후 새 공동 목표 기준으로 투자성향을 다시 계산하도록 양쪽 개인설문과 투자성향을 초기화한다.
+        resetPersonalSurveyData(target.getInviterId());
+        resetPersonalSurveyData(target.getInviteeId());
+
         // 재연결 시 새 공동설문과 초대코드를 만들 수 있도록 기존 연결 원천 데이터를 제거한다.
         int deletedInvitationRows =
                 coupleMapper.deleteInvitationById(target.getInvitationCodeId());
@@ -119,6 +123,12 @@ public class CoupleService {
         if (deletedInvitationRows != 1 || deletedCommonSurveyRows != 1) {
             throw new ApiException(ErrorCode.INTERNAL_ERROR);
         }
+    }
+
+    private void resetPersonalSurveyData(Long memberId) {
+        coupleMapper.deleteInvestmentExperiencesByMemberId(memberId);
+        coupleMapper.deletePersonalSurveyByMemberId(memberId);
+        coupleMapper.clearInvestmentType(memberId);
     }
 
     private CoupleProfile findCoupleProfile(Long memberId) {
@@ -171,9 +181,7 @@ public class CoupleService {
         // A의 정보 삭제
         coupleMapper.deleteInvitationByMemberId(memberId);
         coupleMapper.deleteCommonSurveyByMemberId(memberId);
-        coupleMapper.deleteInvestmentExperiencesByMemberId(memberId);
-        coupleMapper.deletePersonalSurveyByMemberId(memberId);
-        coupleMapper.clearInvestmentType(memberId);
+        resetPersonalSurveyData(memberId);
 
         // 커플 생성
         Long invitationCodeId = target.getInvitationCodeId();
