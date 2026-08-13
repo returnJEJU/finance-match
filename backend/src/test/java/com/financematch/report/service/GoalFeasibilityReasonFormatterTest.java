@@ -15,7 +15,7 @@ class GoalFeasibilityReasonFormatterTest {
                 formatter.format(new BigDecimal(80_000_000), new BigDecimal(100_000_000), 3);
 
         assertEquals(
-                "3개월 후 예상 자산은 약 8000만원이에요. 목표 금액 1억 대비 약 2000만원 모자라요.", reason);
+                "3개월 후 예상 자산은 약 8,000만원이에요. 목표 금액 1억원 대비 약 2,000만원 모자라요.", reason);
     }
 
     @Test
@@ -24,7 +24,7 @@ class GoalFeasibilityReasonFormatterTest {
         String reason = formatter.format(new BigDecimal(89_120_000), new BigDecimal(100_000_000), 3);
 
         assertEquals(
-                "3개월 후 예상 자산은 약 8912만원이에요. 목표 금액 1억 대비 약 1088만원 모자라요.", reason);
+                "3개월 후 예상 자산은 약 8,912만원이에요. 목표 금액 1억원 대비 약 1,088만원 모자라요.", reason);
     }
 
     @Test

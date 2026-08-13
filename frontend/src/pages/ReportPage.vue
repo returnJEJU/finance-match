@@ -479,27 +479,85 @@ const goalSimulatedShortage = computed(() => {
   )
 })
 
+const goalSimulation = computed(() => {
+  const section = goalSection.value
+  if (!section) {
+    return {
+      achievement: 0,
+      shortage: 0,
+    }
+  }
+
+  const selectedMonthlySaving = section.selectedMonthlySaving
+  const savingDifference = goalMonthlySaving.value - selectedMonthlySaving
+
+  if (savingDifference === 0) {
+    return {
+      achievement: section.baseAchievement,
+      shortage: section.baseShortage,
+    }
+  }
+
+  const isIncreasing = savingDifference > 0
+  const simulationRange = isIncreasing
+    ? section.maxMonthlySaving - selectedMonthlySaving
+    : selectedMonthlySaving - section.minMonthlySaving
+
+  if (simulationRange <= 0) {
+    return {
+      achievement: section.baseAchievement,
+      shortage: section.baseShortage,
+    }
+  }
+
+  const ratio = Math.min(Math.abs(savingDifference) / simulationRange, 1)
+  const achievementGap = section.maxAchievement - section.baseAchievement
+  const shortageGap = section.baseShortage - section.minShortage
+
+  if (isIncreasing) {
+    return {
+      achievement: section.baseAchievement + achievementGap * ratio,
+      shortage: section.baseShortage - shortageGap * ratio,
+    }
+  }
+
+  return {
+    achievement: Math.max(section.baseAchievement - achievementGap * ratio, 0),
+    shortage: section.baseShortage + shortageGap * ratio,
+  }
+})
+
+const goalSimulatedAchievement = computed(() => Math.round(goalSimulation.value.achievement))
+
+const goalSimulatedShortage = computed(() => Math.round(goalSimulation.value.shortage))
+
 const goalSliderPercent = computed(() => progressWidth(goalSavingRatio.value * 100))
 
 const goalSliderTrackStyle = computed(() => ({
   background: `linear-gradient(to right, #fff44f 0%, #fff44f ${goalSliderPercent.value}, #e6e6e6 ${goalSliderPercent.value}, #e6e6e6 100%)`,
 }))
 
-const formatManwon = (amount) => `${amount.toLocaleString('ko-KR')}만원`
-const formatNegativeManwon = (amount) => `-${formatManwon(amount)}`
-const formatNegativeEokManwon = (amount) => {
+const formatManwon = (amount) => {
   const rounded = Math.round(amount)
   const eok = Math.floor(rounded / 10000)
   const manwon = rounded % 10000
 
   if (eok === 0) {
-    return formatNegativeManwon(manwon)
+    return `${manwon.toLocaleString('ko-KR')}만원`
   }
-  return manwon === 0 ? `-${eok}억원` : `-${eok}억${manwon.toLocaleString('ko-KR')}만원`
+  return manwon === 0
+    ? `${eok.toLocaleString('ko-KR')}억원`
+    : `${eok.toLocaleString('ko-KR')}억 ${manwon.toLocaleString('ko-KR')}만원`
 }
+const formatNegativeManwon = (amount) => `-${formatManwon(amount)}`
 
-const animatedGoalShortage = (amount) =>
-  formatNegativeEokManwon(amount * goalAnimationProgress.value)
+const normalizeMoneyLabel = (label) =>
+  label.replace(/(\d[\d,]*)만원/g, (_, value) => {
+    const manwon = Number(value.replaceAll(',', ''))
+    return formatManwon(manwon)
+  })
+
+const animatedGoalShortage = (amount) => formatNegativeManwon(amount * goalAnimationProgress.value)
 
 const animatedGoalProgressWidth = (progress) =>
   progressWidth(progress * goalAnimationProgress.value)
@@ -510,11 +568,52 @@ const taxStatusClass = (status) => {
   if (status === '활용 중') {
     return 'text-[#22b85a]'
   }
-  if (status === '미개설') {
+  if (status === '미설계') {
     return 'text-[#ff4f73]'
   }
   return 'text-[#6f5bd5]'
 }
+
+const investmentDifferenceValue = (match) => {
+  const value = Number.parseInt(match, 10)
+  return Number.isNaN(value) ? 0 : value
+}
+
+const investmentDifferenceLevel = (match) => {
+  const value = investmentDifferenceValue(match)
+
+  if (match.includes('%p')) {
+    if (value <= 25) {
+      return 'low'
+    }
+    if (value <= 75) {
+      return 'medium'
+    }
+    return 'high'
+  }
+
+  if (value <= 1) {
+    return 'low'
+  }
+  if (value <= 3) {
+    return 'medium'
+  }
+  return 'high'
+}
+
+const investmentDifferenceClass = (match) => {
+  const level = investmentDifferenceLevel(match)
+
+  if (level === 'low') {
+    return 'text-[#22b85a]'
+  }
+  if (level === 'medium') {
+    return 'text-[#f28b22]'
+  }
+  return 'text-[#ff4b1f]'
+}
+
+const showInvestmentDifferenceAlert = (match) => investmentDifferenceLevel(match) !== 'low'
 
 const debtThresholdMarkerStyle = (threshold) => {
   const angle = 180 - threshold * 1.8
@@ -932,7 +1031,9 @@ const toggleCard = (key) => {
               </div>
 
               <div v-else-if="section.type === 'debt'">
-                <p class="text-[16px] font-bold text-[#4a4a4a]">{{ section.summary }}</p>
+                <p class="text-[16px] font-bold text-[#4a4a4a]">
+                  {{ normalizeMoneyLabel(section.summary) }}
+                </p>
                 <div class="mt-5 grid grid-cols-2 divide-x divide-line-soft">
                   <div
                     v-for="gauge in section.gauges"
@@ -986,7 +1087,10 @@ const toggleCard = (key) => {
                         <p class="text-[21px] font-extrabold text-ink">
                           {{ animatedDebtValue(gauge) }}
                         </p>
-                        <p class="mt-1 text-[18px] font-extrabold text-[#35a853]">
+                        <p
+                          class="mt-1 text-[18px] font-extrabold"
+                          :class="debtStatusClass(gauge.status)"
+                        >
                           {{ gauge.status }}
                         </p>
                       </div>
@@ -1001,7 +1105,9 @@ const toggleCard = (key) => {
 
                     <div class="mt-3 border-t border-line-soft pt-3 text-center">
                       <p class="text-[12px] font-semibold text-muted">{{ gauge.amountLabel }}</p>
-                      <p class="mt-1 text-[17px] font-extrabold text-ink">{{ gauge.amount }}</p>
+                      <p class="mt-1 text-[17px] font-extrabold text-ink">
+                        {{ normalizeMoneyLabel(gauge.amount) }}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1047,10 +1153,16 @@ const toggleCard = (key) => {
                       </span>
                     </div>
                     <div
-                      class="flex items-center justify-center gap-1.5 border-t border-line-soft py-4 text-center text-[17px] font-extrabold text-[#ff4b1f]"
+                      class="flex items-center justify-center gap-1.5 border-t border-line-soft py-4 text-center text-[17px] font-extrabold"
+                      :class="investmentDifferenceClass(row.match)"
                     >
+                      <TriangleAlert
+                        v-if="showInvestmentDifferenceAlert(row.match)"
+                        :size="13"
+                        :stroke-width="2.4"
+                        class="shrink-0"
+                      />
                       {{ row.match }}
-                      <TriangleAlert :size="13" :stroke-width="2.4" class="shrink-0" />
                     </div>
                   </template>
                 </div>
@@ -1058,28 +1170,28 @@ const toggleCard = (key) => {
 
               <div v-else-if="section.type === 'goal'">
                 <p class="text-[16px] font-bold text-warn">{{ section.shortageLabel }}</p>
-                <p class="mt-2 text-[33px] font-extrabold tracking-[-0.2px] text-warn">
-                  {{ animatedGoalShortage(section.shortageValue) }}
-                </p>
-                <div class="mt-6">
-                  <div class="flex justify-end text-[14px] font-extrabold text-muted">
-                    목표 금액 {{ section.targetAmount }}
+                <div class="mt-2 flex items-end justify-between gap-3">
+                  <p class="text-[33px] font-extrabold leading-none tracking-[-0.2px] text-warn">
+                    {{ animatedGoalShortage(section.shortageValue) }}
+                  </p>
+                  <div class="pb-[1px] text-right text-[14px] font-extrabold text-muted">
+                    목표 금액 {{ normalizeMoneyLabel(section.targetAmount) }}
                   </div>
-                  <div class="relative mt-2 h-8 overflow-hidden rounded-full bg-line-card">
-                    <div
-                      class="flex h-full items-center justify-center rounded-full bg-warn text-[14px] font-extrabold text-white"
-                      :style="{ width: animatedGoalProgressWidth(section.progress) }"
+                </div>
+                <div class="relative mt-2 h-8 overflow-hidden rounded-full bg-line-card">
+                  <div
+                    class="flex h-full items-center justify-center rounded-full bg-warn text-[14px] font-extrabold text-white"
+                    :style="{ width: animatedGoalProgressWidth(section.progress) }"
+                  >
+                    <span class="whitespace-nowrap"
+                      >예상 달성률 {{ animatedGoalRate(section.progress) }}%</span
                     >
-                      <span class="whitespace-nowrap"
-                        >달성률 {{ animatedGoalRate(section.progress) }}%</span
-                      >
-                    </div>
                   </div>
                 </div>
                 <div class="mt-5 flex items-baseline gap-2">
                   <span class="text-[15px] font-semibold text-muted">예상 가용자산</span>
                   <span class="text-[28px] font-extrabold text-ink">{{
-                    section.availableAsset
+                    normalizeMoneyLabel(section.availableAsset)
                   }}</span>
                 </div>
 
@@ -1100,25 +1212,25 @@ const toggleCard = (key) => {
                   <div class="mt-4 grid grid-cols-3 items-start text-[14px] text-muted">
                     <span
                       >최소 월 저축액<br /><b class="text-[17px] text-ink">{{
-                        section.monthlySaving
+                        normalizeMoneyLabel(section.monthlySaving)
                       }}</b></span
                     >
                     <span class="text-center"
-                      >월 저축액<br /><b class="text-[17px] text-ink"
-                        >{{ goalMonthlySaving }}만원</b
-                      ></span
+                      >월 저축액<br /><b class="text-[17px] text-ink">{{
+                        formatManwon(goalMonthlySaving)
+                      }}</b></span
                     >
                     <span class="text-right"
-                      >최대 월 저축액<br /><b class="text-[17px] text-ink"
-                        >{{ section.maxMonthlySaving }}만원</b
-                      ></span
+                      >최대 월 저축액<br /><b class="text-[17px] text-ink">{{
+                        formatManwon(section.maxMonthlySaving)
+                      }}</b></span
                     >
                   </div>
                 </div>
 
                 <div class="mt-6 space-y-0 border-t border-line-soft text-[15px]">
                   <div class="flex items-center justify-between">
-                    <span class="py-4 font-semibold text-muted">달성률</span>
+                    <span class="py-4 font-semibold text-muted">예상 달성률</span>
                     <span class="py-4 font-extrabold">
                       <span class="text-[#c9c9c9]">{{ section.baseAchievement }}%</span>
                       <span class="mx-1 text-[#c9c9c9]">→</span>
@@ -1132,7 +1244,7 @@ const toggleCard = (key) => {
                         formatNegativeManwon(section.baseShortage)
                       }}</span>
                       <span class="mx-1 text-[#c9c9c9]">→</span>
-                      <span class="text-[#2f9f89]">{{
+                      <span class="text-[#e05252]">{{
                         formatNegativeManwon(goalSimulatedShortage)
                       }}</span>
                     </span>
@@ -1141,7 +1253,7 @@ const toggleCard = (key) => {
               </div>
 
               <div v-else-if="section.type === 'tax'">
-                <div class="grid grid-cols-[1fr_1fr_1fr] gap-y-4 text-center text-[14px]">
+                <div class="grid grid-cols-[1fr_1fr_1fr] gap-y-4 text-center text-[15px]">
                   <span class="font-semibold text-muted">항목</span>
                   <span
                     v-for="column in section.columns"
@@ -1151,11 +1263,11 @@ const toggleCard = (key) => {
                     {{ column }}
                   </span>
                   <template v-for="row in section.rows" :key="row.label">
-                    <span class="text-[15px] font-extrabold text-ink">{{ row.label }}</span>
-                    <span class="text-[15px] font-extrabold" :class="taxStatusClass(row.me)">
+                    <span class="text-[19px] font-extrabold text-ink">{{ row.label }}</span>
+                    <span class="text-[16px] font-extrabold" :class="taxStatusClass(row.me)">
                       {{ row.me }}
                     </span>
-                    <span class="text-[15px] font-extrabold" :class="taxStatusClass(row.partner)">
+                    <span class="text-[16px] font-extrabold" :class="taxStatusClass(row.partner)">
                       {{ row.partner }}
                     </span>
                   </template>

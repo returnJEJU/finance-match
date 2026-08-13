@@ -13,6 +13,9 @@ import {
 import { getCompatibility } from '@/api/match'
 import { getReport } from '@/api/report'
 
+// 대시보드 캐릭터 이미지
+import dashboardCharacter from '@/assets/images/characters/character-dashboard.png'
+
 const router = useRouter()
 
 const result = ref(null)
@@ -198,18 +201,18 @@ const startScoreAnimation = () => {
     return
   }
 
-  const duration = 1400
+  /*
+   * 기존 1400ms에서 2200ms로 변경해 점수가 천천히 올라가도록 한다.
+   */
+  const duration = 2200
   const startTime = performance.now()
 
   const animate = (currentTime) => {
     const elapsed = currentTime - startTime
-
     const progress = Math.min(elapsed / duration, 1)
-
     const easedProgress = easeOutCubic(progress)
 
     animatedScore.value = Math.round(targetScore * easedProgress)
-
     animatedProgress.value = targetScore * easedProgress
 
     if (progress < 1) {
@@ -297,7 +300,6 @@ const handleOutsideHelpClick = (event) => {
   }
 
   const onTrigger = event.target.closest('[data-help-card]')
-
   const onTooltip = event.target.closest('[role="tooltip"]')
 
   if (!onTrigger && !onTooltip) {
@@ -365,7 +367,7 @@ onUnmounted(() => {
       <!-- 안내 문구 -->
       <div class="mt-4 shrink-0">
         <p
-          class="text-center text-[19px] leading-[1.35] font-extrabold tracking-[-0.7px] text-[#242424]"
+          class="text-center text-[21px] leading-[1.35] font-extrabold tracking-[-0.7px] text-[#242424]"
         >
           {{ compatibilityMessage.first }}
           <br />
@@ -380,7 +382,7 @@ onUnmounted(() => {
 
       <!-- 총점 원형 그래프 -->
       <div class="mt-4 flex shrink-0 justify-center">
-        <div class="score-ring relative h-[190px] w-[190px]">
+        <div class="score-ring relative h-[230px] w-[230px]">
           <svg
             class="h-full w-full overflow-visible"
             viewBox="0 0 200 200"
@@ -388,41 +390,91 @@ onUnmounted(() => {
             :aria-label="`금융 궁합 총점 ${totalScore}점`"
           >
             <defs>
+              <!-- 노란 진행 바 그라데이션 -->
               <linearGradient
                 id="scoreRingGradient"
-                x1="20"
-                y1="20"
-                x2="180"
-                y2="180"
+                x1="35"
+                y1="25"
+                x2="170"
+                y2="175"
                 gradientUnits="userSpaceOnUse"
               >
-                <stop offset="0%" stop-color="#fff700" />
-                <stop offset="55%" stop-color="#ffe51e" />
-                <stop offset="100%" stop-color="#fff45a" />
+                <stop offset="0%" stop-color="#fff943" />
+                <stop offset="48%" stop-color="#ffed22" />
+                <stop offset="100%" stop-color="#fff338" />
               </linearGradient>
 
-              <filter id="ringShadow" x="-30%" y="-30%" width="160%" height="160%">
+              <!-- 원형 바 전체 그림자 -->
+              <filter id="ringBaseShadow" x="-30%" y="-30%" width="160%" height="170%">
+                <feDropShadow
+                  dx="0"
+                  dy="4"
+                  stdDeviation="5"
+                  flood-color="#8f7c38"
+                  flood-opacity="0.14"
+                />
+              </filter>
+
+              <!-- 노란색 바 그림자 -->
+              <filter id="yellowRingShadow" x="-30%" y="-30%" width="160%" height="170%">
                 <feDropShadow
                   dx="0"
                   dy="3"
-                  stdDeviation="3"
-                  flood-color="#d3c600"
-                  flood-opacity="0.24"
+                  stdDeviation="2"
+                  flood-color="#d49b00"
+                  flood-opacity="0.38"
                 />
               </filter>
             </defs>
 
-            <!-- 원형 그래프 배경 -->
+            <!-- 전체 원형 바 그림자 -->
             <circle
               cx="100"
               cy="100"
               :r="CIRCLE_RADIUS"
               fill="none"
-              stroke="#f0f1ed"
+              stroke="#e4e1d9"
+              stroke-width="20"
+              opacity="0.42"
+              filter="url(#ringBaseShadow)"
+            />
+
+            <!-- 채워지지 않은 아이보리색 바 -->
+            <circle
+              cx="100"
+              cy="100"
+              :r="CIRCLE_RADIUS"
+              fill="none"
+              stroke="#f0efea"
+              stroke-width="18"
+            />
+
+            <!-- 아이보리색 바의 안쪽 밝은 선 -->
+            <circle
+              cx="100"
+              cy="100"
+              :r="CIRCLE_RADIUS"
+              fill="none"
+              stroke="#faf9f6"
               stroke-width="13"
             />
 
-            <!-- 애니메이션 진행 원 -->
+            <!-- 연한 노란색 테두리 -->
+            <circle
+              class="score-progress-circle"
+              cx="100"
+              cy="100"
+              :r="CIRCLE_RADIUS"
+              fill="none"
+              stroke="#f4d65c"
+              stroke-width="19"
+              stroke-linecap="round"
+              :stroke-dasharray="CIRCLE_CIRCUMFERENCE"
+              :stroke-dashoffset="circleDashOffset"
+              filter="url(#yellowRingShadow)"
+            />
+
+            <!-- 메인 노란색 진행 바 -->
             <circle
               class="score-progress-circle"
               cx="100"
@@ -430,37 +482,43 @@ onUnmounted(() => {
               :r="CIRCLE_RADIUS"
               fill="none"
               stroke="url(#scoreRingGradient)"
-              stroke-width="13"
+              stroke-width="17"
               stroke-linecap="round"
               :stroke-dasharray="CIRCLE_CIRCUMFERENCE"
               :stroke-dashoffset="circleDashOffset"
-              filter="url(#ringShadow)"
+            />
+
+            <!-- 노란색 바 안쪽의 흰색 하이라이트 -->
+            <circle
+              class="score-progress-circle score-progress-highlight"
+              cx="100"
+              cy="100"
+              :r="CIRCLE_RADIUS"
+              fill="none"
+              stroke="rgba(255, 255, 255, 0.65)"
+              stroke-width="2"
+              stroke-linecap="round"
+              :stroke-dasharray="CIRCLE_CIRCUMFERENCE"
+              :stroke-dashoffset="circleDashOffset"
             />
           </svg>
 
           <!-- 중앙 점수 -->
           <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
             <span
-              class="score-number text-[68px] leading-none font-extrabold tracking-[-4px] text-[#19513c]"
+              class="score-number text-[78px] leading-none font-black tracking-[-5px] text-[#005538]"
             >
               {{ animatedScore }}
             </span>
           </div>
 
-          <!-- 레몬 장식 -->
+          <!-- 원형 바 시작점의 잎 장식 -->
           <div
             aria-hidden="true"
-            class="lemon-decoration absolute -top-[9px] left-1/2 z-10 -translate-x-1/2"
+            class="leaf-decoration pointer-events-none absolute top-[-2px] left-1/2 z-20"
           >
-            <span class="lemon-leaf"> ● </span>
-
-            <span class="lemon-fruit"> ● </span>
-
-            <span class="lemon-spark lemon-spark-one"> · </span>
-
-            <span class="lemon-spark lemon-spark-two"> · </span>
-
-            <span class="lemon-spark lemon-spark-three"> · </span>
+            <span class="leaf leaf-left" />
+            <span class="leaf leaf-right" />
           </div>
         </div>
       </div>
@@ -470,69 +528,83 @@ onUnmounted(() => {
         <article
           v-for="card in scoreCards"
           :key="card.key"
-          class="score-card relative min-h-[86px] rounded-[11px] border border-[#f1f1ed] bg-white px-[13px] py-[11px] shadow-[0_3px_10px_rgba(0,0,0,0.035)]"
-          :class="{
-            'col-span-2': card.layout === 'full',
-          }"
+          class="score-card relative rounded-[11px] border border-[#f1f1ed] bg-white px-[14px] py-[13px] shadow-[0_3px_10px_rgba(0,0,0,0.035)]"
+          :class="[card.layout === 'full' ? 'col-span-2 min-h-[104px]' : 'min-h-[94px]']"
         >
-          <!-- 카드 상단 -->
-          <div class="flex items-start justify-between">
-            <!-- 카드 아이콘 -->
-            <div
-              class="flex h-[23px] w-[23px] items-center justify-center rounded-[7px]"
-              :class="card.iconClass"
-            >
-              <component :is="card.icon" :size="14" :stroke-width="2" />
+          <!-- 카드 상단: 아이콘과 제목을 같은 줄에 배치 -->
+          <div class="relative z-20 flex items-center justify-between gap-2">
+            <div class="flex min-w-0 items-center gap-2">
+              <!-- 카드 아이콘 -->
+              <div
+                class="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[7px]"
+                :class="card.iconClass"
+              >
+                <component :is="card.icon" :size="16" :stroke-width="2" />
+              </div>
+
+              <!-- 카드 제목 -->
+              <p
+                class="truncate text-[13px] leading-[1.2] font-semibold tracking-[-0.3px] text-[#575757]"
+              >
+                {{ card.title }}
+              </p>
             </div>
 
             <!-- 도움말 버튼 -->
             <button
               type="button"
-              class="text-[#c8c3ad] transition hover:text-[#8d876c]"
+              class="relative z-30 shrink-0 text-[#c8c3ad] transition hover:text-[#8d876c]"
               :aria-label="`${card.title} 도움말`"
               :aria-expanded="openedHelpKey === card.key"
               :data-help-card="card.key"
               @click.stop="toggleHelp(card.key)"
             >
-              <CircleHelp :size="13" :stroke-width="1.8" />
+              <CircleHelp :size="15" :stroke-width="1.8" />
             </button>
           </div>
-
-          <!-- 카드 제목 -->
-          <p
-            class="mt-[7px] text-[11px] leading-none font-medium tracking-[-0.25px] text-[#575757]"
-          >
-            {{ card.title }}
-          </p>
 
           <!-- 점수 -->
           <p
             v-if="card.key !== 'tax' || card.calculated"
-            class="mt-[6px] text-[15px] leading-none font-extrabold tracking-[-0.45px] text-[#242424]"
+            class="relative z-20 mt-[12px] text-[17px] leading-none font-extrabold tracking-[-0.45px] text-[#242424]"
           >
             {{ card.score }}점
 
-            <span class="font-semibold"> / {{ card.maxScore }}점 </span>
+            <span class="font-semibold text-[#747474]"> / {{ card.maxScore }}점 </span>
           </p>
 
           <!-- 절세 평가 제외 -->
-          <p v-else class="mt-[6px] text-[14px] leading-none font-bold text-[#888]">평가 제외</p>
+          <p v-else class="relative z-20 mt-[12px] text-[15px] leading-none font-bold text-[#888]">
+            평가 제외
+          </p>
+
+          <!-- 목표 달성률 카드에만 캐릭터 표시 -->
+          <img
+            v-if="card.key === 'goal'"
+            :src="dashboardCharacter"
+            alt=""
+            aria-hidden="true"
+            class="pointer-events-none absolute right-[45px] bottom-[-18px] z-10 w-[140px]"
+          />
 
           <!-- 점수 산출 이유 도움말 -->
           <div
             v-if="openedHelpKey === card.key"
             role="tooltip"
-            class="absolute top-8 right-2 left-2 z-50 rounded-[9px] bg-[#d8f7e8] px-3 py-2 text-[11px] leading-[1.45] font-medium text-[#26372f] shadow-[0_5px_15px_rgba(0,0,0,0.12)]"
+            class="absolute top-10 right-2 left-2 z-50 rounded-[9px] bg-[#d8f7e8] px-3 py-2 text-[12px] leading-[1.45] font-medium text-[#26372f] shadow-[0_5px_15px_rgba(0,0,0,0.12)]"
           >
             {{ reasonsByAxisKey[AXIS_KEY_BY_CARD[card.key]] || card.description }}
           </div>
         </article>
       </div>
 
+      <!-- 버튼이 첫 화면 바로 아래에서 보이도록 만드는 스크롤 여백 -->
+      <div aria-hidden="true" class="min-h-[4vh] shrink-0" />
+
       <!-- 상세 리포트 버튼 -->
       <button
         type="button"
-        class="mt-[14px] flex h-[48px] w-full shrink-0 items-center justify-center gap-2 rounded-full bg-[#ffef3d] text-[14px] font-extrabold text-[#202020] shadow-[0_6px_16px_rgba(236,215,16,0.18)] transition duration-150 hover:bg-[#ffe926] active:scale-[0.98]"
+        class="flex h-[52px] w-full shrink-0 items-center justify-center gap-2 rounded-full bg-[#ffef3d] text-[16px] font-extrabold text-[#202020] shadow-[0_6px_16px_rgba(236,215,16,0.18)] transition duration-150 hover:bg-[#ffe926] active:scale-[0.98]"
         @click="moveToReport"
       >
         상세 리포트 보러가기
@@ -544,10 +616,36 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.dashboard-page {
-  position: relative;
-  background: linear-gradient(180deg, #ffffff 0%, #ffffff 70%, #fffef6 100%);
-  isolation: isolate;
+.leaf-decoration {
+  position: absolute;
+  width: 56px;
+  height: 30px;
+
+  /* 가운데 정렬하면서 위아래 반전 */
+  transform: translateX(-50%) scaleY(-1);
+}
+
+.leaf {
+  position: absolute;
+  bottom: 0;
+  display: block;
+  width: 29px;
+  height: 19px;
+  box-shadow: 0 2px 3px rgba(0, 75, 46, 0.12);
+}
+
+/* 왼쪽 위를 향하는 진한 잎 */
+.leaf-left {
+  left: 1px;
+  border-radius: 100% 0 100% 0;
+  background: linear-gradient(135deg, #00633d 0%, #00894f 55%, #006b40 100%);
+}
+
+/* 오른쪽 위를 향하는 연한 잎 */
+.leaf-right {
+  right: 1px;
+  border-radius: 0 100% 0 100%;
+  background: linear-gradient(135deg, #80ca58 0%, #50b448 55%, #288e41 100%);
 }
 
 .dashboard-decoration {
@@ -585,7 +683,7 @@ onUnmounted(() => {
 .score-progress-circle {
   transform: rotate(-90deg);
   transform-origin: 100px 100px;
-  will-change: stroke-dashoffset;
+  will-change: 0.75;
 }
 
 .score-number {
@@ -593,58 +691,6 @@ onUnmounted(() => {
   text-shadow:
     0 2px 0 rgba(255, 255, 255, 0.9),
     0 3px 5px rgba(20, 73, 53, 0.08);
-}
-
-.lemon-decoration {
-  width: 42px;
-  height: 42px;
-}
-
-.lemon-fruit {
-  position: absolute;
-  top: 11px;
-  left: 11px;
-  color: #ffef00;
-  font-size: 29px;
-  line-height: 1;
-  transform: scaleX(0.7) rotate(17deg);
-  text-shadow:
-    0 1px 0 #e2cc00,
-    0 2px 3px rgba(205, 186, 0, 0.18);
-}
-
-.lemon-leaf {
-  position: absolute;
-  top: 1px;
-  left: 19px;
-  z-index: 2;
-  color: #75ce3b;
-  font-size: 16px;
-  line-height: 1;
-  transform: scaleX(1.7) rotate(-26deg);
-}
-
-.lemon-spark {
-  position: absolute;
-  color: #d8c900;
-  font-size: 25px;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.lemon-spark-one {
-  top: 5px;
-  right: 1px;
-}
-
-.lemon-spark-two {
-  top: 13px;
-  right: -4px;
-}
-
-.lemon-spark-three {
-  top: 21px;
-  right: 1px;
 }
 
 .score-card {

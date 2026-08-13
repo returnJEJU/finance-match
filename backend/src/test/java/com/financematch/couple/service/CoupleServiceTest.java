@@ -67,7 +67,20 @@ class CoupleServiceTest {
     }
 
     @Test
-    void 커플_연결을_끊으면_연결_결과와_추천_리포트가_삭제된다() {
+    void 커플_연결을_끊으면_연결_데이터와_양쪽_개인설문이_삭제된다() {
+
+        // given
+        assertEquals(
+                2,
+                count(
+                        "SELECT COUNT(*) FROM personal_survey "
+                                + "WHERE member_id IN (1, 2)"));
+        assertEquals(
+                2,
+                count(
+                        "SELECT COUNT(*) FROM member "
+                                + "WHERE id IN (1, 2) "
+                                + "AND investment_type IS NOT NULL"));
 
         // when
         coupleService.disconnectCouple(1L);
@@ -89,6 +102,23 @@ class CoupleServiceTest {
                                 + "WHERE member_id IN (1, 2)"));
         assertEquals(0, count("SELECT COUNT(*) FROM invitation_code WHERE id = 1"));
         assertEquals(0, count("SELECT COUNT(*) FROM common_survey WHERE id = 1"));
+
+        assertEquals(
+                0,
+                count(
+                        "SELECT COUNT(*) FROM personal_survey "
+                                + "WHERE member_id IN (1, 2)"));
+        assertEquals(
+                0,
+                count(
+                        "SELECT COUNT(*) FROM personal_survey_investment_experience "
+                                + "WHERE personal_survey_id IN (1, 2)"));
+        assertEquals(
+                0,
+                count(
+                        "SELECT COUNT(*) FROM member "
+                                + "WHERE id IN (1, 2) "
+                                + "AND investment_type IS NOT NULL"));
     }
 
     @Test
