@@ -570,7 +570,7 @@ onUnmounted(() => {
           >
             {{ card.score }}점
 
-            <span class="font-semibold"> / {{ card.maxScore }}점 </span>
+            <span class="font-semibold text-[#747474]"> / {{ card.maxScore }}점 </span>
           </p>
 
           <!-- 절세 평가 제외 -->
