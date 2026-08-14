@@ -365,6 +365,13 @@ function submitSurvey() {
               아니요
             </button>
           </div>
+          <p
+            v-if="hasLoanWithinOneMonth === true"
+            role="status"
+            class="mt-3 text-center text-[14px] leading-[1.5] font-semibold text-warn"
+          >
+            두 분의 재정 안정성을 위해 이번 추천에서는 투자상품을 제외해요.
+          </p>
         </fieldset>
 
         <div class="pt-1">
