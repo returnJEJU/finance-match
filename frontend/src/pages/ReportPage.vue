@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import {
+  ArrowRight,
   ChevronDown,
   ChevronUp,
   BadgeDollarSign,
@@ -594,10 +595,10 @@ const animatedGoalProgressClipPath = (progress) => ({
 const animatedGoalRate = (progress) => Math.round(progress * goalAnimationProgress.value)
 
 const taxStatusClass = (status) => {
-  if (status === '활용 중') {
+  if (status === '활용') {
     return 'text-[#22b85a]'
   }
-  if (status === '미설계') {
+  if (status === '미개설') {
     return 'text-[#ff4f73]'
   }
   return 'text-[#6f5bd5]'
@@ -1370,7 +1371,10 @@ const toggleCard = (key) => {
           </div>
         </div>
 
-        <BaseButton class="mt-5 w-full" to="/recommend">추천 상품 보러가기</BaseButton>
+        <BaseButton class="mt-5 w-full" to="/recommend">
+          추천 상품 보러가기
+          <ArrowRight :size="20" :stroke-width="2.5" />
+        </BaseButton>
       </div>
     </template>
   </section>

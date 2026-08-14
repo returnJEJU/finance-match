@@ -12,6 +12,7 @@ import {
 
 import { getCompatibility } from '@/api/match'
 import { getReport } from '@/api/report'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 // 대시보드 캐릭터 이미지
 import dashboardCharacter from '@/assets/images/characters/character-dashboard.png'
@@ -307,13 +308,6 @@ const handleOutsideHelpClick = (event) => {
   }
 }
 
-/*
- * 상세 리포트로 이동
- */
-const moveToReport = () => {
-  router.push('/report')
-}
-
 onMounted(() => {
   document.addEventListener('click', handleOutsideHelpClick)
 
@@ -602,15 +596,10 @@ onUnmounted(() => {
       <div aria-hidden="true" class="min-h-[4vh] shrink-0" />
 
       <!-- 상세 리포트 버튼 -->
-      <button
-        type="button"
-        class="flex h-[52px] w-full shrink-0 items-center justify-center gap-2 rounded-full bg-[#ffef3d] text-[16px] font-extrabold text-[#202020] shadow-[0_6px_16px_rgba(236,215,16,0.18)] transition duration-150 hover:bg-[#ffe926] active:scale-[0.98]"
-        @click="moveToReport"
-      >
+      <BaseButton class="w-full shrink-0" to="/report">
         상세 리포트 보러가기
-
         <ArrowRight :size="20" :stroke-width="2.5" />
-      </button>
+      </BaseButton>
     </div>
   </section>
 </template>
