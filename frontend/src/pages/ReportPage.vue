@@ -96,13 +96,9 @@ const scoreDetailKeys = [
   'TAX_STRATEGY',
 ]
 
-const assetAxisTicks = [
-  { label: '0', position: 0 },
-  { label: '0.5억', position: 25 },
-  { label: '1억', position: 50 },
-  { label: '1.5억', position: 75 },
-  { label: '2억', position: 100 },
-]
+const ASSET_AXIS_MIN_MAX = 1
+const ASSET_AXIS_TICK_COUNT = 5
+const ASSET_LABEL_INSIDE_MIN_PROGRESS = 70
 
 const queryClient = useQueryClient()
 
@@ -416,8 +412,46 @@ const aiCommentBodySegments = computed(() =>
 
 const progressWidth = (value) => `${Math.min(Math.max(value, 0), 100)}%`
 
-const animatedAssetProgressWidth = (progress) =>
-  progressWidth(progress * assetAnimationProgress.value)
+const assetAxisMax = (section) => {
+  const maxValue = Math.max(section.referenceValue ?? 0, section.currentValue ?? 0)
+  return Math.max(ASSET_AXIS_MIN_MAX, Math.ceil(maxValue))
+}
+
+const assetValueProgress = (section, value) => ((value ?? 0) / assetAxisMax(section)) * 100
+
+const animatedAssetProgressWidth = (section, value) =>
+  progressWidth(assetValueProgress(section, value) * assetAnimationProgress.value)
+
+const isAssetLabelInside = (section, value) =>
+  assetValueProgress(section, value) > ASSET_LABEL_INSIDE_MIN_PROGRESS
+
+const formatAssetAxisLabel = (value) => {
+  if (value === 0) {
+    return '0'
+  }
+  return `${Number(value.toFixed(2)).toLocaleString('ko-KR')}억`
+}
+
+const assetAxisTicks = (section) => {
+  const max = assetAxisMax(section)
+  return Array.from({ length: ASSET_AXIS_TICK_COUNT }, (_, index) => {
+    const value = (max / (ASSET_AXIS_TICK_COUNT - 1)) * index
+    return {
+      label: formatAssetAxisLabel(value),
+      position: (value / max) * 100,
+    }
+  })
+}
+
+const assetTickLabelClass = (position) => {
+  if (position === 0) {
+    return 'translate-x-0'
+  }
+  if (position === 100) {
+    return '-translate-x-full'
+  }
+  return '-translate-x-1/2'
+}
 
 const debtStatusClass = (status) => {
   if (status === '안정') {
@@ -548,8 +582,14 @@ const normalizeMoneyLabel = (label) =>
 
 const animatedGoalShortage = (amount) => formatNegativeManwon(amount * goalAnimationProgress.value)
 
-const animatedGoalProgressWidth = (progress) =>
-  progressWidth(progress * goalAnimationProgress.value)
+const animatedGoalProgress = (progress) =>
+  Math.min(Math.max(progress * goalAnimationProgress.value, 0), 100)
+
+const animatedGoalProgressWidth = (progress) => progressWidth(animatedGoalProgress(progress))
+
+const animatedGoalProgressClipPath = (progress) => ({
+  clipPath: `inset(0 ${100 - animatedGoalProgress(progress)}% 0 0)`,
+})
 
 const animatedGoalRate = (progress) => Math.round(progress * goalAnimationProgress.value)
 
@@ -969,12 +1009,24 @@ const toggleCard = (key) => {
 
                       <div class="absolute left-0 right-0 top-[8px] h-6">
                         <div
-                          class="h-full rounded-[4px] bg-[#f8f6da]"
-                          :style="{ width: animatedAssetProgressWidth(section.referenceProgress) }"
-                        />
+                          class="flex h-full items-center justify-end overflow-hidden rounded-[4px] bg-[#f8f6da] pr-2"
+                          :style="{
+                            width: animatedAssetProgressWidth(section, section.referenceValue),
+                          }"
+                        >
+                          <span
+                            v-if="isAssetLabelInside(section, section.referenceValue)"
+                            class="min-w-0 truncate whitespace-nowrap text-right text-[15px] font-extrabold text-ink-sub"
+                          >
+                            {{ animatedAssetValue(section.referenceValue) }}
+                          </span>
+                        </div>
                         <span
+                          v-if="!isAssetLabelInside(section, section.referenceValue)"
                           class="absolute top-1/2 ml-2 -translate-y-1/2 whitespace-nowrap text-[15px] font-extrabold text-ink-sub"
-                          :style="{ left: animatedAssetProgressWidth(section.referenceProgress) }"
+                          :style="{
+                            left: animatedAssetProgressWidth(section, section.referenceValue),
+                          }"
                         >
                           {{ animatedAssetValue(section.referenceValue) }}
                         </span>
@@ -982,28 +1034,41 @@ const toggleCard = (key) => {
 
                       <div class="absolute left-0 right-0 top-[47px] h-6">
                         <div
-                          class="h-full rounded-[4px] bg-[#7fbd72]"
-                          :style="{ width: animatedAssetProgressWidth(section.progress) }"
-                        />
+                          class="flex h-full items-center justify-end overflow-hidden rounded-[4px] bg-[#7fbd72] pr-2"
+                          :style="{
+                            width: animatedAssetProgressWidth(section, section.currentValue),
+                          }"
+                        >
+                          <span
+                            v-if="isAssetLabelInside(section, section.currentValue)"
+                            class="min-w-0 truncate whitespace-nowrap text-right text-[15px] font-extrabold text-ink"
+                          >
+                            {{ animatedAssetValue(section.currentValue) }}
+                          </span>
+                        </div>
                         <span
+                          v-if="!isAssetLabelInside(section, section.currentValue)"
                           class="absolute top-1/2 ml-2 -translate-y-1/2 whitespace-nowrap text-[15px] font-extrabold text-ink"
-                          :style="{ left: animatedAssetProgressWidth(section.progress) }"
+                          :style="{
+                            left: animatedAssetProgressWidth(section, section.currentValue),
+                          }"
                         >
                           {{ animatedAssetValue(section.currentValue) }}
                         </span>
                       </div>
 
                       <span
-                        v-for="tick in assetAxisTicks"
+                        v-for="tick in assetAxisTicks(section)"
                         :key="tick.label"
                         class="absolute top-[72px] h-2 border-l border-[#c9cfd8]"
                         :style="{ left: progressWidth(tick.position) }"
                         aria-hidden="true"
                       />
                       <span
-                        v-for="tick in assetAxisTicks"
+                        v-for="tick in assetAxisTicks(section)"
                         :key="`${tick.label}-label`"
-                        class="absolute top-[82px] -translate-x-1/2 whitespace-nowrap text-[14px] font-medium text-[#969daa]"
+                        class="absolute top-[82px] whitespace-nowrap text-[14px] font-medium text-[#969daa]"
+                        :class="assetTickLabelClass(tick.position)"
                         :style="{ left: progressWidth(tick.position) }"
                       >
                         {{ tick.label }}
@@ -1159,23 +1224,33 @@ const toggleCard = (key) => {
 
               <div v-else-if="section.type === 'goal'">
                 <p class="text-[16px] font-bold text-warn">{{ section.shortageLabel }}</p>
-                <div class="mt-2 flex items-end justify-between gap-3">
-                  <p class="text-[33px] font-extrabold leading-none tracking-[-0.2px] text-warn">
+                <div class="mt-2">
+                  <p
+                    class="break-keep text-[31px] font-extrabold leading-tight tracking-normal text-warn"
+                  >
                     {{ animatedGoalShortage(section.shortageValue) }}
                   </p>
-                  <div class="pb-[1px] text-right text-[14px] font-extrabold text-muted">
+                  <div class="mt-1 text-right text-[14px] font-extrabold leading-snug text-muted">
                     목표 금액 {{ normalizeMoneyLabel(section.targetAmount) }}
                   </div>
                 </div>
-                <div class="relative mt-2 h-8 overflow-hidden rounded-full bg-line-card">
+                <div
+                  class="relative mt-2 h-8 overflow-hidden rounded-full bg-line-card text-[14px] font-extrabold"
+                >
                   <div
-                    class="flex h-full items-center justify-center rounded-full bg-warn text-[14px] font-extrabold text-white"
+                    class="absolute inset-y-0 left-0 rounded-full bg-warn"
                     :style="{ width: animatedGoalProgressWidth(section.progress) }"
+                    aria-hidden="true"
+                  />
+                  <span class="absolute inset-0 flex items-center justify-center text-ink">
+                    예상 달성률 {{ animatedGoalRate(section.progress) }}%
+                  </span>
+                  <span
+                    class="absolute inset-0 flex items-center justify-center text-white"
+                    :style="animatedGoalProgressClipPath(section.progress)"
                   >
-                    <span class="whitespace-nowrap"
-                      >예상 달성률 {{ animatedGoalRate(section.progress) }}%</span
-                    >
-                  </div>
+                    예상 달성률 {{ animatedGoalRate(section.progress) }}%
+                  </span>
                 </div>
                 <div class="mt-5 flex items-baseline gap-2">
                   <span class="text-[15px] font-semibold text-muted">예상 가용자산</span>
