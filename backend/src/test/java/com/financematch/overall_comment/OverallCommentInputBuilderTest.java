@@ -64,7 +64,7 @@ class OverallCommentInputBuilderTest {
         // 개수를 3/2로 고정하지 않고, 각 축이 자기 ratio로만 판정된다 — ratio 내림차순 순서도 함께 확인.
         assertEquals(
                 List.of("절세 활용", "금융 자산", "투자 가치관"), namesOf(promptInput.getStrongAxes()));
-        assertEquals(List.of("목표 달성 가능성", "부채 상환"), namesOf(promptInput.getWeakAxes()));
+        assertEquals(List.of("부채 상환", "목표 달성 가능성"), namesOf(promptInput.getWeakAxes()));
         // 경계값(70%)은 "이상"이라 strongAxes에 포함된다.
         assertEquals(0.7, promptInput.getStrongAxes().get(2).getRatio());
         // 가장 약한 축(부채, 65%)이 firstStep 대상이 된다.
@@ -166,7 +166,7 @@ class OverallCommentInputBuilderTest {
                 builder.build(input, result, "김철수", "이영희", "HOUSING", NO_TAX_ROOM, NO_TAX_ROOM);
 
         assertEquals(2, promptInput.getStrongAxes().size());
-        assertEquals(List.of("부채 상환", "목표 달성 가능성"), namesOf(promptInput.getWeakAxes()));
+        assertEquals(List.of("목표 달성 가능성", "부채 상환"), namesOf(promptInput.getWeakAxes()));
         assertEquals("목표 달성 가능성", promptInput.getFirstStep().getReason());
         // 절세 축 관련 facts(계좌 문구)가 전혀 섞여 들어가면 안 된다.
         assertTrue(
