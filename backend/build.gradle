@@ -147,8 +147,10 @@ test {
 
 // -------------------------------------------------------------------
 //  JaCoCo 커버리지
-//    ./gradlew test          → 실행 후 리포트까지 자동 생성
+//    ./gradlew test          → 실행 후 리포트까지 자동 생성 (테스트가 실패해도 생성된다)
 //    리포트 위치: build/reports/jacoco/test/html/index.html
+//  진입점은 항상 test 다. jacocoTestReport 만 단독 실행하면 테스트를 새로 돌리지 않고
+//  직전 실행 결과(build/jacoco/test.exec)로 리포트를 다시 만든다.
 //  toolVersion 을 고정해 팀원·CI 간 수치가 갈리지 않게 한다.
 // -------------------------------------------------------------------
 jacoco {
@@ -156,7 +158,10 @@ jacoco {
 }
 
 jacocoTestReport {
-    dependsOn test
+    // dependsOn test 를 걸지 않는다. 걸면 test 가 실패했을 때 Gradle 이 "의존 태스크 실패" 로 판단해
+    // 이 태스크를 건너뛴다 — 위 finalizedBy 의 의도(실패해도 리포트는 남긴다)와 정반대로 동작한다.
+    // 순서는 finalizedBy 가 이미 보장하므로 의존 선언은 필요 없다.
+    mustRunAfter test
 
     reports {
         html.required = true   // 사람이 보는 용도
