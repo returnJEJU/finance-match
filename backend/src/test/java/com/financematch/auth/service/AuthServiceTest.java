@@ -2,11 +2,14 @@ package com.financematch.auth.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -16,6 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.financematch.auth.domain.Member;
 import com.financematch.auth.domain.MemberAgreement;
+import com.financematch.auth.dto.LoginRequest;
+import com.financematch.auth.dto.LoginResponse;
 import com.financematch.auth.dto.SignupRequest;
 import com.financematch.auth.dto.SignupResponse;
 import com.financematch.auth.jwt.JwtProvider;
@@ -23,6 +28,7 @@ import com.financematch.auth.mapper.MemberMapper;
 import com.financematch.common.ErrorCode;
 import com.financematch.exception.ApiException;
 import com.financematch.onboarding.service.OnboardingService;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -38,6 +44,8 @@ class AuthServiceTest {
     private static final String RAW_PASSWORD = "Pw123456!";
     private static final String ENCODED_PASSWORD = "$2a$10$encoded-hash-value";
     private static final String ACCESS_TOKEN = "issued.access.token";
+    private static final String EMAIL = "hong@kb.com";
+    private static final String WRONG_PASSWORD = "WrongPw999!";
 
     /** 필수 4종에 모두 동의한 정상 요청. */
     private static final String VALID_SIGNUP_JSON =
@@ -178,6 +186,87 @@ class AuthServiceTest {
         verifyNoInteractions(onboardingService);
     }
 
+    // ===== 로그인 =====
+
+    @Test
+    void 가입되지_않은_이메일이면_로그인할_수_없다() throws Exception {
+        when(memberMapper.findByEmail(EMAIL)).thenReturn(null);
+
+        ApiException e =
+                assertThrows(
+                        ApiException.class,
+                        () -> authService.login(loginRequest(EMAIL, RAW_PASSWORD)));
+
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, e.getErrorCode());
+    }
+
+    @Test
+    void 비밀번호가_틀리면_로그인할_수_없다() throws Exception {
+        Member member = mock(Member.class);
+        when(member.getPassword()).thenReturn(ENCODED_PASSWORD);
+        when(memberMapper.findByEmail(EMAIL)).thenReturn(member);
+        when(passwordEncoder.matches(WRONG_PASSWORD, ENCODED_PASSWORD)).thenReturn(false);
+
+        ApiException e =
+                assertThrows(
+                        ApiException.class,
+                        () -> authService.login(loginRequest(EMAIL, WRONG_PASSWORD)));
+
+        // 이메일 없음과 같은 에러 코드다 — 어느 쪽이 틀렸는지 알려주면 가입 여부가 노출된다.
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, e.getErrorCode());
+    }
+
+    @Test
+    void 없는_이메일이면_비밀번호_대조까지_가지_않는다() throws Exception {
+        when(memberMapper.findByEmail(EMAIL)).thenReturn(null);
+
+        assertThrows(ApiException.class, () -> authService.login(loginRequest(EMAIL, RAW_PASSWORD)));
+
+        // member 가 null 인데 matches 를 부르면 NullPointerException 이 난다. 단축 평가에 기대는 구조다.
+        verify(passwordEncoder, never()).matches(anyString(), anyString());
+    }
+
+    @Test
+    void 로그인에_실패하면_마지막_로그인_시각을_갱신하지_않는다() throws Exception {
+        when(memberMapper.findByEmail(EMAIL)).thenReturn(null);
+
+        assertThrows(ApiException.class, () -> authService.login(loginRequest(EMAIL, RAW_PASSWORD)));
+
+        verify(memberMapper, never()).updateLastLoginAt(any());
+        verify(jwtProvider, never()).createAccessToken(any());
+    }
+
+    @Test
+    void 처음_로그인하는_회원은_isFirstLogin_이_참이다() throws Exception {
+        // lastLoginAt 을 지정하지 않는다 — 아직 한 번도 로그인하지 않은 회원이다.
+        givenLoginSucceeds(mock(Member.class));
+
+        LoginResponse response = authService.login(loginRequest(EMAIL, RAW_PASSWORD));
+
+        assertTrue(response.isFirstLogin());
+        assertEquals(ACCESS_TOKEN, response.getAccessToken());
+    }
+
+    @Test
+    void 로그인한_적이_있는_회원은_isFirstLogin_이_거짓이다() throws Exception {
+        Member member = mock(Member.class);
+        when(member.getLastLoginAt()).thenReturn(LocalDateTime.of(2026, 8, 1, 9, 0));
+        givenLoginSucceeds(member);
+
+        LoginResponse response = authService.login(loginRequest(EMAIL, RAW_PASSWORD));
+
+        assertFalse(response.isFirstLogin());
+    }
+
+    @Test
+    void 로그인에_성공하면_마지막_로그인_시각을_갱신한다() throws Exception {
+        givenLoginSucceeds(mock(Member.class));
+
+        authService.login(loginRequest(EMAIL, RAW_PASSWORD));
+
+        verify(memberMapper).updateLastLoginAt(GENERATED_ID);
+    }
+
     // ===== 로그아웃 =====
 
     /**
@@ -214,7 +303,25 @@ class AuthServiceTest {
                 .insert(any(Member.class));
     }
 
+    /** 회원 조회 · 비밀번호 일치 · 토큰 발급까지 로그인 정상 흐름을 준비한다. */
+    private void givenLoginSucceeds(Member member) {
+        when(member.getId()).thenReturn(GENERATED_ID);
+        when(member.getPassword()).thenReturn(ENCODED_PASSWORD);
+        when(memberMapper.findByEmail(EMAIL)).thenReturn(member);
+        when(passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
+        when(jwtProvider.createAccessToken(GENERATED_ID)).thenReturn(ACCESS_TOKEN);
+    }
+
     private SignupRequest request(String json) throws Exception {
         return objectMapper.readValue(json, SignupRequest.class);
+    }
+
+    private LoginRequest loginRequest(String email, String password) throws Exception {
+        return objectMapper.readValue(
+                """
+                { "email": "%s", "password": "%s" }
+                """
+                        .formatted(email, password),
+                LoginRequest.class);
     }
 }
