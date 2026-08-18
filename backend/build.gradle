@@ -176,6 +176,12 @@ jacocoTestReport {
 // -Pprod 는 데모 시드(dev-seed)를 제외한다.
 def isProd = project.hasProperty('prod')
 
+// -Pdemo 는 운영 빌드에 데모 시드를 다시 넣는다 (-Pprod 와 함께 쓴다).
+//   포트폴리오로 공개하는 서버용이다. 방문자가 회원가입·커플연동·설문을 다 거쳐야만
+//   리포트를 볼 수 있으면 아무도 끝까지 가지 않는다. 데모 계정으로 바로 완성 화면을 보여준다.
+//   진짜 서비스로 전환할 때는 이 옵션만 빼면 된다.
+def isDemo = project.hasProperty('demo')
+
 def localDbProps = new Properties()
 def localPropsFile = file('src/main/resources/application-local.properties')
 if (localPropsFile.exists()) {
@@ -187,7 +193,7 @@ flyway {
     user     = System.getenv('DB_USERNAME') ?: localDbProps['jdbc.username']
     password = System.getenv('DB_PASSWORD') ?: localDbProps['jdbc.password']
 
-    locations = isProd
+    locations = (isProd && !isDemo)
             ? ['filesystem:src/main/resources/db/migration']
             : ['filesystem:src/main/resources/db/migration',
                'filesystem:src/main/resources/db/dev-seed']
@@ -197,10 +203,12 @@ flyway {
     validateOnMigrate = true   // 이미 적용된 마이그레이션 변조 감지
 }
 
-// 운영 WAR 에는 데모 시드를 물리적으로 포함시키지 않는다.
+// 운영 WAR 에는 데모 시드를 물리적으로 포함시키지 않는다 (-Pdemo 를 주면 포함).
 processResources {
     if (isProd) {
-        exclude 'db/dev-seed/**'
+        if (!isDemo) {
+            exclude 'db/dev-seed/**'
+        }
 
         // 개인 개발용 비밀 설정(OpenAI 키 등)을 운영 WAR 에 담지 않는다.
         // 이 파일이 있는 상태로 빌드하면 키가 WAR 안에 박혀 서버까지 따라가고,
