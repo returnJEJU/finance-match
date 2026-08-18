@@ -10,7 +10,17 @@
 #
 # 【빌드는 여기서, 서버는 실행만】
 #   서버(t3.small · 2GB)에서 Gradle 빌드를 돌리면 메모리가 부족해 멈출 수 있다.
-#   GitHub 러너에서 빌드해 결과물(WAR · dist)만 보낸다. 수동 배포와 같은 방식이다.
+#   GitHub 러너에서 빌드해 결과물(WAR · dist)만 보낸다.
+#
+# 【속도 — 측정하고 고쳤다】
+#   최초 구현은 2분 20초가 걸렸다. 단계별로 재보니 병목은 빌드(25초)가 아니라
+#   산출물 전송(70초, 전체의 50%)이었다. 원인은 두 가지다.
+#     · dist 가 86개 파일이라 scp 가 파일마다 왕복한다 (러너가 해외라 왕복 200ms)
+#     · 한쪽만 바뀌어도 항상 양쪽을 다 빌드하고 다 보낸다
+#   그래서 아래 두 가지를 넣었다.
+#     · 산출물은 rsync 로 보낸다 — Vite 가 파일명에 내용 해시를 붙이므로 내용이 그대로면
+#       이름도 그대로다. 86개 중 실제로 바뀐 몇 개만 전송된다.
+#     · 서버에 배포된 커밋을 기록해 두고, 그 이후 바뀐 범위만 빌드·전송한다.
 #
 # 【필요한 Secrets】 (Settings → Secrets and variables → Actions)
 #   EC2_HOST     서버 공인 IP
@@ -31,7 +41,7 @@ on:
       - '**/*.md'
       - 'backend/src/test/**'
       - '.github/ISSUE_TEMPLATE/**'
-  # 필요할 때 손으로도 돌린다 (서버만 재시작하고 싶을 때 등).
+  # 필요할 때 손으로도 돌린다. 이때는 변경 범위를 따지지 않고 전부 다시 빌드한다.
   workflow_dispatch:
 
 permissions:
@@ -48,39 +58,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # fetch-depth: 0 — 서버에 배포된 커밋과 지금 커밋을 비교해야 해서 전체 이력이 필요하다.
+      # 기본값(1)이면 그 커밋이 없어 비교할 수 없다.
       - name: 코드 체크아웃
         uses: actions/checkout@v4
-
-      # ── 빌드 ──────────────────────────────────────────────
-      - name: JDK 17 설치
-        uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: '17'
-          cache: gradle
-
-      # -Pprod : 개인 비밀 설정을 WAR 에 담지 않는다 (운영 키는 서버 .env 에서 온다)
-      # -Pdemo : 데모 계정을 포함한다 (포트폴리오 방문자가 바로 완성 화면을 볼 수 있게)
-      - name: 백엔드 빌드
-        run: ./gradlew war -Pprod -Pdemo --no-daemon
-        working-directory: backend
-
-      - name: Node 22 설치
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: 프론트 의존성 설치
-        run: npm ci
-        working-directory: frontend
-
-      - name: 프론트 빌드
-        run: npm run build
-        working-directory: frontend
+          fetch-depth: 0
 
       # ── 서버 접속 준비 ────────────────────────────────────
+      #  변경 범위를 서버에 물어봐야 하므로 빌드보다 먼저 한다.
       - name: SSH 키 준비
         env:
           SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
@@ -92,38 +78,129 @@ jobs:
           # 서버 지문을 미리 등록한다. 없으면 접속할 때마다 확인을 물어 실패한다.
           ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
+      # ── 변경 범위 판단 ────────────────────────────────────
+      #  "직전 커밋과 비교" 가 아니라 "서버에 실제로 올라가 있는 커밋과 비교" 한다.
+      #  전자는 배포가 한 번 실패하면 그때 빠진 변경이 영영 올라가지 않는다.
+      #  기록은 배포가 성공한 뒤에만 갱신하므로, 실패하면 다음 배포가 다시 가져간다.
+      - name: 서버에 배포된 커밋 확인
+        id: deployed
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          SHA=$(ssh -i ~/.ssh/deploy_key "ubuntu@$HOST" \
+            'cat ~/finance-match/.deployed_sha 2>/dev/null || true')
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "서버에 배포된 커밋: ${SHA:-(기록 없음)}"
+
+      - name: 변경 범위 판단
+        id: scope
+        env:
+          PREV: ${{ steps.deployed.outputs.sha }}
+        run: |
+          # 기록이 없거나(첫 배포), 그 커밋을 못 찾거나(강제 푸시 등), 수동 실행이면
+          # 안전하게 전부 빌드한다.
+          if [ -z "$PREV" ] || ! git cat-file -e "${PREV}^{commit}" 2>/dev/null \
+             || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "전체 빌드 (기록 없음 · 확인 불가 · 수동 실행)"
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CHANGED=$(git diff --name-only "$PREV" "$GITHUB_SHA")
+          echo "── 배포 이후 바뀐 파일 ──"
+          echo "$CHANGED"
+
+          BE=false
+          FE=false
+          echo "$CHANGED" | grep -q '^backend/'  && BE=true
+          echo "$CHANGED" | grep -q '^frontend/' && FE=true
+
+          echo "backend=$BE"  >> "$GITHUB_OUTPUT"
+          echo "frontend=$FE" >> "$GITHUB_OUTPUT"
+          echo "── 빌드 대상 — 백엔드:$BE  프론트:$FE ──"
+
+      # ── 백엔드 빌드 (바뀐 경우만) ─────────────────────────
+      - name: JDK 17 설치
+        if: steps.scope.outputs.backend == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      # -Pprod : 개인 비밀 설정을 WAR 에 담지 않는다 (운영 키는 서버 .env 에서 온다)
+      # -Pdemo : 데모 계정을 포함한다 (포트폴리오 방문자가 바로 완성 화면을 볼 수 있게)
+      - name: 백엔드 빌드
+        if: steps.scope.outputs.backend == 'true'
+        run: ./gradlew war -Pprod -Pdemo --no-daemon
+        working-directory: backend
+
+      # ── 프론트 빌드 (바뀐 경우만) ─────────────────────────
+      - name: Node 22 설치
+        if: steps.scope.outputs.frontend == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 프론트 의존성 설치
+        if: steps.scope.outputs.frontend == 'true'
+        run: npm ci --prefer-offline --no-audit --fund=false
+        working-directory: frontend
+
+      - name: 프론트 빌드
+        if: steps.scope.outputs.frontend == 'true'
+        run: npm run build
+        working-directory: frontend
+
       # ── 전송 ──────────────────────────────────────────────
-      - name: 산출물 전송
+      #  설정 파일은 항상 보낸다. 크기가 작고, 빠뜨리면 "고쳤는데 반영이 안 되는" 상태가 된다
+      #  (컨테이너는 서버에 있는 파일로 다시 만들어진다).
+      #  비밀값(.env)은 목록에 없다 — 서버에만 두고 덮어쓰지 않는다.
+      - name: 설정 파일 전송
         env:
           HOST: ${{ secrets.EC2_HOST }}
         run: |
           ssh -i ~/.ssh/deploy_key "ubuntu@$HOST" \
             'mkdir -p ~/finance-match/backend/build/libs ~/finance-match/frontend/dist'
 
-          # 설정 파일도 함께 보낸다.
-          #   빌드 산출물만 보내면 서버에는 첫 배포 때 올린 옛 설정이 남아, nginx.conf 나
-          #   compose 를 고쳐도 반영되지 않는다. 컨테이너는 서버에 있는 파일로 다시 만들어지므로
-          #   "고쳤는데 그대로인" 상태가 되고, 원인을 찾기도 어렵다.
-          #   비밀값(.env)은 서버에만 있고 여기 목록에 없다 — 덮어쓰지 않는다.
-          scp -i ~/.ssh/deploy_key docker-compose.prod.yml .env.prod.example \
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
+            docker-compose.prod.yml .env.prod.example \
             "ubuntu@$HOST:~/finance-match/"
 
-          scp -i ~/.ssh/deploy_key backend/Dockerfile \
-            "ubuntu@$HOST:~/finance-match/backend/"
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
+            backend/Dockerfile "ubuntu@$HOST:~/finance-match/backend/"
 
-          scp -i ~/.ssh/deploy_key frontend/Dockerfile frontend/nginx.conf \
-            "ubuntu@$HOST:~/finance-match/frontend/"
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
+            frontend/Dockerfile frontend/nginx.conf "ubuntu@$HOST:~/finance-match/frontend/"
 
-          scp -i ~/.ssh/deploy_key backend/build/libs/*.war \
-            "ubuntu@$HOST:~/finance-match/backend/build/libs/"
+      - name: WAR 전송
+        if: steps.scope.outputs.backend == 'true'
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          rsync -az --stats -e "ssh -i ~/.ssh/deploy_key" \
+            backend/build/libs/*.war \
+            "ubuntu@$HOST:~/finance-match/backend/build/libs/" | tail -4
 
-          # dist/. 로 내용만 보낸다. dist 를 통째로 보내면 서버에 이미 폴더가 있을 때
-          # 안에 또 dist 가 생길 수 있다.
-          scp -i ~/.ssh/deploy_key -r frontend/dist/. \
-            "ubuntu@$HOST:~/finance-match/frontend/dist/"
+      # dist 는 86개 파일이라 scp 로 보내면 파일마다 왕복해 20초 넘게 걸린다.
+      # rsync 는 이름과 내용이 같은 파일을 건너뛴다 — Vite 가 파일명에 내용 해시를 붙이므로
+      # 실제로 바뀐 몇 개만 전송된다.
+      #
+      # --delete 는 쓰지 않는다. 옛 파일을 지우면, 배포 순간 화면을 열어둔 사용자가
+      # 아직 안 받은 조각을 요청할 때 404 가 난다. 남는 파일은 몇 MB 수준이라 그냥 둔다.
+      - name: 화면 파일 전송
+        if: steps.scope.outputs.frontend == 'true'
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          rsync -az --stats -e "ssh -i ~/.ssh/deploy_key" \
+            frontend/dist/ \
+            "ubuntu@$HOST:~/finance-match/frontend/dist/" | tail -6
 
       # ── 재시작 ────────────────────────────────────────────
-      #  .env(비밀값)는 서버에만 있고 여기서 건드리지 않는다.
       - name: 컨테이너 재시작
         env:
           HOST: ${{ secrets.EC2_HOST }}
@@ -132,20 +209,19 @@ jobs:
             'cd ~/finance-match && docker compose -f docker-compose.prod.yml up -d --build'
 
       # ── 확인 ──────────────────────────────────────────────
-      #  여기까지 성공해야 배포가 끝난 것이다. 컨테이너가 떠도 앱 기동이 실패할 수 있으므로
-      #  (설정 누락·DB 연결 실패 등) 실제 응답을 확인한다.
+      #  컨테이너가 떠도 앱 기동이 실패할 수 있으므로(설정 누락·DB 연결 실패 등)
+      #  실제 응답을 확인한다. 백엔드가 15초쯤에 뜨므로 2초 간격으로 본다.
       - name: 기동 확인
         env:
           HOST: ${{ secrets.EC2_HOST }}
         run: |
-          for i in $(seq 1 30); do
+          for i in $(seq 1 60); do
             code=$(curl -s -m 5 -o /dev/null -w '%{http_code}' "http://$HOST/api/health" || true)
             if [ "$code" = "200" ]; then
               echo "배포 완료 — http://$HOST"
               exit 0
             fi
-            echo "기동 대기 중... ($i/30)"
-            sleep 5
+            sleep 2
           done
 
           echo "::error::헬스체크 실패. 서버 로그를 확인할 것"
@@ -153,14 +229,21 @@ jobs:
             'docker logs fm-backend 2>&1 | tail -40'
           exit 1
 
+      # ── 기록 ──────────────────────────────────────────────
+      #  성공한 뒤에만 남긴다. 실패한 배포의 변경은 다음 배포가 다시 가져가야 하기 때문이다.
+      - name: 배포 커밋 기록
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "ubuntu@$HOST" \
+            "echo '$GITHUB_SHA' > ~/finance-match/.deployed_sha"
+
       # ── 정리 ──────────────────────────────────────────────
       #  배포할 때마다 이미지를 새로 만들어서, 교체된 예전 이미지(수백 MB)와 빌드 캐시가
       #  서버에 계속 쌓인다. 디스크가 20GB 뿐이라 자주 배포하면 언젠가 찬다.
       #
       #  · image prune  : 쓰이지 않는(교체된) 이미지만 지운다. 실행 중인 것은 건드리지 않는다
       #  · builder prune: 빌드 캐시를 1GB 까지만 남긴다. 다 지우면 다음 빌드가 느려진다
-      #
-      #  배포가 성공한 뒤에만 돌린다 — 실패했을 때는 원인을 찾을 재료를 남겨둔다.
       - name: 서버 디스크 정리
         env:
           HOST: ${{ secrets.EC2_HOST }}
