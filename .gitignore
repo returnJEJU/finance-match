@@ -5,6 +5,7 @@
 .env
 .env.*
 !.env.example
+!.env.prod.example
 
 # 개인 비밀 설정 (로컬 더미값 담은 application-local.properties 는 커밋함)
 **/application-secret.properties
