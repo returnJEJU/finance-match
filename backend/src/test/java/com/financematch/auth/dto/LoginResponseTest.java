@@ -32,11 +32,14 @@ class LoginResponseTest {
     }
 
     @Test
-    void 명세가_정한_네_필드가_모두_담긴다() throws Exception {
+    void 명세가_정한_다섯_필드가_모두_담긴다() throws Exception {
         ObjectNode json = serialize(false);
 
-        assertEquals(4, json.size());
+        assertEquals(5, json.size());
         assertTrue(json.has("accessToken"));
+        // access 토큰이 만료됐을 때 재발급에 쓴다. 로그인 응답에서만 받을 수 있으므로 빠지면
+        // 프론트가 1시간 뒤 로그인 화면으로 튕긴다.
+        assertTrue(json.has("refreshToken"));
         assertTrue(json.has("member"));
         assertTrue(json.has("isFirstLogin"));
         assertTrue(json.has("progress"));
@@ -59,7 +62,11 @@ class LoginResponseTest {
 
         LoginResponse response =
                 LoginResponse.of(
-                        member, "eyJ.test.token", isFirstLogin, new OnboardingStatusResponse());
+                        member,
+                        "eyJ.test.token",
+                        "eyJ.test.refresh",
+                        isFirstLogin,
+                        new OnboardingStatusResponse());
 
         return (ObjectNode) objectMapper.readTree(objectMapper.writeValueAsString(response));
     }

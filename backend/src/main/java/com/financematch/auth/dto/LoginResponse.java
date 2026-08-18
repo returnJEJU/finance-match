@@ -10,6 +10,7 @@ import lombok.Getter;
  *
  * <pre>
  * { "accessToken": "eyJ...",
+ *   "refreshToken": "eyJ...",
  *   "member": { "id": 1, "name": "홍길동" },
  *   "isFirstLogin": true,
  *   "progress": { "coupleConnected": false, "surveyCompleted": false } }
@@ -26,6 +27,13 @@ import lombok.Getter;
 public class LoginResponse {
 
     private final String accessToken;
+
+    /**
+     * access 토큰이 만료됐을 때 새로 받아오는 데 쓴다. 프론트가 보관해 두었다가
+     * {@code POST /v1/auth/refresh} 에 실어 보낸다.
+     */
+    private final String refreshToken;
+
     private final LoginMemberResponse member;
 
     /**
@@ -42,10 +50,12 @@ public class LoginResponse {
 
     private LoginResponse(
             String accessToken,
+            String refreshToken,
             LoginMemberResponse member,
             boolean isFirstLogin,
             OnboardingStatusResponse progress) {
         this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
         this.member = member;
         this.firstLogin = isFirstLogin;
         this.progress = progress;
@@ -54,10 +64,15 @@ public class LoginResponse {
     public static LoginResponse of(
             Member member,
             String accessToken,
+            String refreshToken,
             boolean isFirstLogin,
             OnboardingStatusResponse progress) {
 
         return new LoginResponse(
-                accessToken, LoginMemberResponse.from(member), isFirstLogin, progress);
+                accessToken,
+                refreshToken,
+                LoginMemberResponse.from(member),
+                isFirstLogin,
+                progress);
     }
 }

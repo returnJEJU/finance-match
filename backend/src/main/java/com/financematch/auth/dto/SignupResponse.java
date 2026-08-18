@@ -11,7 +11,8 @@ import lombok.Getter;
  *
  * <pre>
  * { "member": { "id": 1, "email": "hong@kb.com", "name": "홍길동" },
- *   "accessToken": "eyJ..." }
+ *   "accessToken": "eyJ...",
+ *   "refreshToken": "eyJ..." }
  * </pre>
  */
 @Getter
@@ -20,12 +21,18 @@ public class SignupResponse {
     private final SignupMemberResponse member;
     private final String accessToken;
 
-    private SignupResponse(SignupMemberResponse member, String accessToken) {
+    /** 가입 직후에도 토큰이 만료될 수 있으므로 로그인과 같은 한 쌍을 준다. */
+    private final String refreshToken;
+
+    private SignupResponse(
+            SignupMemberResponse member, String accessToken, String refreshToken) {
         this.member = member;
         this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
     }
 
-    public static SignupResponse of(Member member, String accessToken) {
-        return new SignupResponse(SignupMemberResponse.from(member), accessToken);
+    public static SignupResponse of(Member member, String accessToken, String refreshToken) {
+        return new SignupResponse(
+                SignupMemberResponse.from(member), accessToken, refreshToken);
     }
 }

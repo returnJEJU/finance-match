@@ -1,5 +1,6 @@
 package com.financematch.auth.jwt;
 
+import com.financematch.common.ErrorCode;
 import com.financematch.exception.ApiException;
 import java.io.IOException;
 import java.util.Collections;
@@ -26,6 +27,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * 뿐이다. 차단 여부는 {@code SecurityConfig} 의 경로 규칙이 결정한다 — 검증(이 필터)과 인가(설정)를 분리하면
  * 인증이 필요한 경로를 늘리거나 줄일 때 필터를 건드리지 않아도 된다.
  *
+ * <p>로그아웃한 토큰은 서명이 유효해도 거절한다({@link TokenBlacklist}). JWT 는 발급 후 취소가 안 되므로
+ * 폐기 목록을 매 요청 확인하는 수밖에 없다.
+ *
  * <p>실패 사유는 {@link #AUTH_ERROR} 속성으로만 남긴다. 필터에서 던진 예외는 {@code
  * GlobalExceptionHandler}({@code @RestControllerAdvice})가 잡지 못하기 때문이다 — 예외 처리기는
  * DispatcherServlet 안쪽에서만 동작한다. 이 속성은 {@link JwtAuthenticationEntryPoint} 가 읽어 401 응답의
@@ -42,6 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtProvider jwtProvider;
+    private final TokenBlacklist tokenBlacklist;
 
     @Override
     protected void doFilterInternal(
@@ -53,6 +58,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null) {
             try {
                 Long memberId = jwtProvider.getMemberId(token);
+
+                // 로그아웃한 토큰인지 확인한다. 서명·만료가 멀쩡해도 폐기됐으면 통과시키지 않는다.
+                // 검증 뒤에 조회하는 순서가 중요하다 — 위조 토큰까지 Redis 를 찔러볼 이유가 없다.
+                if (tokenBlacklist.contains(jwtProvider.getJti(token))) {
+                    throw new ApiException(ErrorCode.INVALID_TOKEN);
+                }
+
                 authenticate(request, memberId);
 
                 // JwtProvider 가 만료·위조를 ApiException(EXPIRED_TOKEN·INVALID_TOKEN)으로 바꿔 던진다.

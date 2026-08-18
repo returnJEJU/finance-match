@@ -18,6 +18,7 @@ import com.financematch.auth.dto.WithdrawRequest;
 import com.financematch.auth.dto.WithdrawResponse;
 import com.financematch.auth.mapper.MemberMapper;
 import com.financematch.common.ErrorCode;
+import com.financematch.auth.jwt.RefreshTokenStore;
 import com.financematch.couple.service.CoupleService;
 import com.financematch.exception.ApiException;
 import java.time.LocalDateTime;
@@ -47,6 +48,8 @@ class MemberServiceTest {
     @Mock private PasswordEncoder passwordEncoder;
 
     @Mock private CoupleService coupleService;
+
+    @Mock private RefreshTokenStore refreshTokenStore;
 
     @InjectMocks private MemberService memberService;
 
@@ -82,6 +85,21 @@ class MemberServiceTest {
         assertEquals(MemberStatus.WITHDRAWN, response.getStatus());
         verify(coupleService).disconnectCoupleIfConnected(MEMBER_ID);
         verify(memberMapper).withdraw(eq(MEMBER_ID), any(LocalDateTime.class));
+    }
+
+    /**
+     * 탈퇴하면 저장된 refresh 토큰도 지운다.
+     *
+     * <p>안 지우면 탈퇴한 회원이 그 토큰으로 최대 2주간 새 access 토큰을 계속 받아갈 수 있다 —
+     * 재발급은 회원 상태를 보지 않고 저장된 토큰만 대조하기 때문이다.
+     */
+    @Test
+    void 탈퇴하면_저장된_refresh_토큰도_지운다() throws Exception {
+        given성공();
+
+        memberService.withdraw(MEMBER_ID, request(CONFIRMATION_TEXT));
+
+        verify(refreshTokenStore).delete(MEMBER_ID);
     }
 
     /**

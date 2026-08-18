@@ -89,15 +89,33 @@ class AuthControllerTest {
     // ===== 로그아웃 =====
 
     @Test
-    void 로그아웃은_인증된_회원_ID_를_서비스에_넘긴다() {
-        authController.logout(1L);
+    void 로그아웃은_회원_ID_와_토큰_문자열을_서비스에_넘긴다() {
+        authController.logout(1L, "Bearer abc.def.ghi");
 
-        verify(authService).logout(1L);
+        verify(authService).logout(1L, "abc.def.ghi");
+    }
+
+    /**
+     * 서비스는 HTTP 를 몰라야 하므로 {@code Bearer } 를 떼는 일은 컨트롤러가 한다. 헤더가 없거나
+     * 형식이 다르면 {@code null} 을 넘긴다 — 폐기할 토큰을 모를 뿐이라 로그아웃 자체는 진행된다.
+     */
+    @Test
+    void 로그아웃은_Authorization_헤더가_없으면_null_을_넘긴다() {
+        authController.logout(1L, null);
+
+        verify(authService).logout(1L, null);
+    }
+
+    @Test
+    void 로그아웃은_Bearer_형식이_아니면_null_을_넘긴다() {
+        authController.logout(1L, "abc.def.ghi");
+
+        verify(authService).logout(1L, null);
     }
 
     @Test
     void 로그아웃_성공_응답에는_데이터가_없다() {
-        ApiResponse<Void> response = authController.logout(1L);
+        ApiResponse<Void> response = authController.logout(1L, "Bearer abc.def.ghi");
 
         assertTrue(response.isSuccess());
         assertNull(response.getData());
@@ -110,7 +128,7 @@ class AuthControllerTest {
      */
     @Test
     void 로그아웃_성공_응답에는_message_를_담지_않는다() {
-        ApiResponse<Void> response = authController.logout(1L);
+        ApiResponse<Void> response = authController.logout(1L, "Bearer abc.def.ghi");
 
         assertNull(response.getMessage());
     }

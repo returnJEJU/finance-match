@@ -3,6 +3,8 @@ package com.financematch.auth.jwt;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.financematch.common.ErrorCode;
 import org.junit.jupiter.api.AfterEach;
@@ -34,11 +36,18 @@ class JwtAuthenticationFilterTest {
             "another-secret-key-that-does-not-match-0123456789";
     private static final long ONE_HOUR_MS = 3_600_000L;
     private static final long ALREADY_EXPIRED_MS = -1_000L;
+    private static final long REFRESH_VALIDITY_MS = 1_209_600_000L;
 
     private static final Long MEMBER_ID = 42L;
 
     private JwtProvider jwtProvider;
     private JwtAuthenticationFilter filter;
+
+    /**
+     * 블랙리스트는 Redis 를 쓰므로 목으로 둔다. 기본값(빈 목록)에서는 {@code contains} 가 false 라
+     * 기존 케이스들은 그대로 동작하고, 폐기 케이스에서만 true 를 돌려주게 한다.
+     */
+    private TokenBlacklist tokenBlacklist;
 
     private MockHttpServletRequest request;
     private MockHttpServletResponse response;
@@ -46,8 +55,9 @@ class JwtAuthenticationFilterTest {
 
     @BeforeEach
     void setUp() {
-        jwtProvider = new JwtProvider(SECRET, ONE_HOUR_MS);
-        filter = new JwtAuthenticationFilter(jwtProvider);
+        jwtProvider = new JwtProvider(SECRET, ONE_HOUR_MS, REFRESH_VALIDITY_MS);
+        tokenBlacklist = mock(TokenBlacklist.class);
+        filter = new JwtAuthenticationFilter(jwtProvider, tokenBlacklist);
 
         request = new MockHttpServletRequest();
         response = new MockHttpServletResponse();
@@ -78,6 +88,41 @@ class JwtAuthenticationFilterTest {
         // 접두사가 없으면 토큰 자체를 꺼내지 않으므로 검증도, 실패 기록도 일어나지 않는다.
         assertNull(SecurityContextHolder.getContext().getAuthentication());
         assertNull(request.getAttribute(JwtAuthenticationFilter.AUTH_ERROR));
+        assertRequestPassedThrough();
+    }
+
+    /**
+     * 로그아웃한 토큰은 서명·만료가 멀쩡해도 통과시키지 않는다. JWT 는 발급 후 취소할 수 없으므로,
+     * 폐기 목록을 매 요청 확인하는 것이 유일한 차단 수단이다.
+     */
+    @Test
+    void 폐기된_토큰은_유효해도_인증하지_않는다() throws Exception {
+        String token = jwtProvider.createAccessToken(MEMBER_ID);
+        when(tokenBlacklist.contains(jwtProvider.getJti(token))).thenReturn(true);
+
+        request.addHeader("Authorization", "Bearer " + token);
+
+        filter.doFilter(request, response, filterChain);
+
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        assertEquals(
+                ErrorCode.INVALID_TOKEN, request.getAttribute(JwtAuthenticationFilter.AUTH_ERROR));
+        assertRequestPassedThrough();
+    }
+
+    /**
+     * refresh 토큰을 access 자리에 쓰면 거절한다. 막지 않으면 2주짜리 토큰이 통행증이 되어 access 를
+     * 짧게 유지하는 의미가 사라진다.
+     */
+    @Test
+    void refresh_토큰으로는_인증되지_않는다() throws Exception {
+        request.addHeader("Authorization", "Bearer " + jwtProvider.createRefreshToken(MEMBER_ID));
+
+        filter.doFilter(request, response, filterChain);
+
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        assertEquals(
+                ErrorCode.INVALID_TOKEN, request.getAttribute(JwtAuthenticationFilter.AUTH_ERROR));
         assertRequestPassedThrough();
     }
 
@@ -118,7 +163,7 @@ class JwtAuthenticationFilterTest {
     @Test
     void 만료된_토큰이면_EXPIRED_TOKEN_을_남기고_요청은_통과시킨다() throws Exception {
         String expiredToken =
-                new JwtProvider(SECRET, ALREADY_EXPIRED_MS).createAccessToken(MEMBER_ID);
+                new JwtProvider(SECRET, ALREADY_EXPIRED_MS, REFRESH_VALIDITY_MS).createAccessToken(MEMBER_ID);
         request.addHeader("Authorization", "Bearer " + expiredToken);
 
         filter.doFilter(request, response, filterChain);
@@ -133,7 +178,7 @@ class JwtAuthenticationFilterTest {
     @Test
     void 위조된_토큰이면_INVALID_TOKEN_을_남기고_요청은_통과시킨다() throws Exception {
         String forgedToken =
-                new JwtProvider(OTHER_SECRET, ONE_HOUR_MS).createAccessToken(MEMBER_ID);
+                new JwtProvider(OTHER_SECRET, ONE_HOUR_MS, REFRESH_VALIDITY_MS).createAccessToken(MEMBER_ID);
         request.addHeader("Authorization", "Bearer " + forgedToken);
 
         filter.doFilter(request, response, filterChain);
@@ -156,7 +201,7 @@ class JwtAuthenticationFilterTest {
     @Test
     void 검증에_실패하면_앞서_남아있던_인증정보를_지운다() throws Exception {
         // 같은 스레드에서 이전 요청의 인증이 남아 있는 상황을 만든다.
-        JwtAuthenticationFilter first = new JwtAuthenticationFilter(jwtProvider);
+        JwtAuthenticationFilter first = new JwtAuthenticationFilter(jwtProvider, tokenBlacklist);
         MockHttpServletRequest authenticated = new MockHttpServletRequest();
         authenticated.addHeader("Authorization", "Bearer " + jwtProvider.createAccessToken(MEMBER_ID));
         first.doFilter(authenticated, new MockHttpServletResponse(), new MockFilterChain());
