@@ -6,7 +6,7 @@ import {
   logout as requestLogout,
   withdraw as requestWithdraw,
 } from '@/api/auth'
-import { clearAccessToken, getAccessToken, setAccessToken } from '@/api/client'
+import { clearTokens, getAccessToken, setAccessToken, setRefreshToken } from '@/api/client'
 import { useAssetLinkStore } from '@/stores/assetLink'
 
 /**
@@ -35,7 +35,7 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * localStorage 의 실제 값과 다시 맞춘다.
    *
-   * client.js 의 응답 인터셉터는 401 을 받으면 스토어를 거치지 않고 토큰을 지운다(토큰 만료).
+   * client.js 의 응답 인터셉터는 되살릴 수 없는 401 을 받으면 스토어를 거치지 않고 토큰을 지운다.
    * 그러면 이 스토어만 "아직 로그인 중"이라고 착각하므로, 라우터 가드처럼 판단이 필요한 지점에서
    * 먼저 이걸 부른다.
    */
@@ -57,7 +57,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(credentials) {
     const result = await requestLogin(credentials)
 
-    applySession(result.accessToken, result.member)
+    applySession(result.accessToken, result.refreshToken, result.member)
 
     return { isFirstLogin: result.isFirstLogin, progress: result.progress }
   }
@@ -68,8 +68,8 @@ export const useAuthStore = defineStore('auth', () => {
    * 회원가입도 accessToken 을 돌려준다(다음 단계인 자산연동을 인증하기 위한 것). 가입 직후
    * 다시 로그인하지 않아도 되도록 여기서 같은 세션으로 취급한다.
    */
-  function applySignup({ accessToken: token, member: signedUpMember }) {
-    applySession(token, signedUpMember)
+  function applySignup({ accessToken: token, refreshToken, member: signedUpMember }) {
+    applySession(token, refreshToken, signedUpMember)
   }
 
   /**
@@ -116,14 +116,15 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function applySession(token, sessionMember) {
+  function applySession(token, refreshToken, sessionMember) {
     setAccessToken(token)
+    setRefreshToken(refreshToken)
     accessToken.value = token
     member.value = sessionMember
   }
 
   function clearSession() {
-    clearAccessToken()
+    clearTokens()
     accessToken.value = null
     member.value = null
     useAssetLinkStore().reset()

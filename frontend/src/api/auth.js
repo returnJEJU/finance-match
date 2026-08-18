@@ -21,10 +21,13 @@ const signupResponseSchema = z.object({
   }),
   // 다음 단계인 자산연동을 인증하기 위한 토큰. 로그인과 별개로 회원가입 직후 발급된다.
   accessToken: z.string(),
+  // accessToken 이 만료됐을 때 새로 받아오는 데 쓴다.
+  refreshToken: z.string(),
 })
 
 const loginResponseSchema = z.object({
   accessToken: z.string(),
+  refreshToken: z.string(),
   // 로그인 응답의 member 에는 email 이 없다(화면에서 쓰지 않는다).
   member: z.object({
     id: z.number(),

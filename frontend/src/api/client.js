@@ -29,6 +29,7 @@ export class ApiError extends Error {
 // axios 가 authStore 에 직접 의존하지 않도록 헬퍼로 분리한다(순환 의존 회피).
 // 인증 도메인(로그인/로그아웃)이 setAccessToken / clearAccessToken 을 호출한다.
 const ACCESS_TOKEN_KEY = 'fm.accessToken'
+const REFRESH_TOKEN_KEY = 'fm.refreshToken'
 
 export function getAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_KEY)
@@ -40,6 +41,25 @@ export function setAccessToken(token) {
 
 export function clearAccessToken() {
   localStorage.removeItem(ACCESS_TOKEN_KEY)
+}
+
+export function getRefreshToken() {
+  return localStorage.getItem(REFRESH_TOKEN_KEY)
+}
+
+export function setRefreshToken(token) {
+  localStorage.setItem(REFRESH_TOKEN_KEY, token)
+}
+
+/**
+ * 두 토큰을 함께 지운다.
+ *
+ * 하나만 남으면 상태가 어긋난다 — access 만 지우면 만료도 아닌데 재발급을 시도하고, refresh 만
+ * 지우면 만료됐을 때 되살릴 방법이 없다. 세션을 끝낼 때는 항상 둘 다 지운다.
+ */
+export function clearTokens() {
+  localStorage.removeItem(ACCESS_TOKEN_KEY)
+  localStorage.removeItem(REFRESH_TOKEN_KEY)
 }
 
 const instance = axios.create({
@@ -74,13 +94,48 @@ instance.interceptors.response.use(
 
     return body.data // 래퍼를 벗겨 data 만 반환
   },
-  (error) => {
+  async (error) => {
     const body = error.response?.data
     const status = error.response?.status ?? null
+    const code = body?.code ?? null
+    const original = error.config
 
-    // 인증 만료 등 401 → 저장된 토큰 정리 (로그인 리다이렉트는 라우터 가드에서)
+    // access 토큰이 만료됐을 뿐이면 재발급받아 원래 요청을 한 번 다시 보낸다.
+    // 사용자는 아무것도 못 느끼고, 화면은 그대로 이어진다.
+    //
+    // 조건이 여럿인 이유:
+    //   · EXPIRED_TOKEN 일 때만  — 위조·폐기 토큰은 재발급해도 소용없다
+    //   · refresh 토큰이 있을 때 — 없으면 되살릴 방법이 없다
+    //   · _skipRefresh 아님      — 재발급 요청 자신이 401 이면 다시 재발급하려 들면 안 된다
+    //   · _retried 아님          — 재시도는 한 번뿐. 무한 루프를 막는다
+    if (
+      status === 401 &&
+      code === 'EXPIRED_TOKEN' &&
+      getRefreshToken() &&
+      original &&
+      !original._skipRefresh &&
+      !original._retried
+    ) {
+      original._retried = true
+
+      try {
+        await refreshTokens()
+        return await instance(original)
+      } catch {
+        // 재발급도 실패했다면 되살릴 수 없다. 세션을 정리하고 로그인 화면으로 보낸다
+        // (이동은 라우터 가드가 한다).
+        clearTokens()
+        throw new ApiError(
+          '로그인이 만료되었습니다. 다시 로그인해 주세요.',
+          'INVALID_REFRESH_TOKEN',
+          401,
+        )
+      }
+    }
+
+    // 그 밖의 401 → 저장된 토큰 정리 (로그인 리다이렉트는 라우터 가드에서)
     if (status === 401) {
-      clearAccessToken()
+      clearTokens()
     }
 
     throw new ApiError(
@@ -90,6 +145,34 @@ instance.interceptors.response.use(
     )
   },
 )
+
+/**
+ * 진행 중인 재발급 요청. 여러 요청이 동시에 만료를 만나도 재발급은 한 번만 한다.
+ *
+ * 이게 없으면 화면 하나에서 API 를 3개 부를 때 재발급도 3번 나간다. 서버는 재발급할 때마다
+ * refresh 토큰을 새것으로 바꾸므로(회전), 두 번째부터는 이미 무효가 된 토큰을 들고 가 실패하고
+ * 결국 로그인이 풀린다.
+ */
+let refreshPromise = null
+
+function refreshTokens() {
+  if (!refreshPromise) {
+    refreshPromise = instance
+      // _skipRefresh: 이 요청이 401 이 나도 재발급을 시도하지 않게 하는 표시.
+      .post('/v1/auth/refresh', { refreshToken: getRefreshToken() }, { _skipRefresh: true })
+      .then((data) => {
+        // 서버가 refresh 토큰도 새로 준다. 둘 다 갈아끼워야 다음 재발급이 성공한다.
+        setAccessToken(data.accessToken)
+        setRefreshToken(data.refreshToken)
+        return data.accessToken
+      })
+      .finally(() => {
+        refreshPromise = null
+      })
+  }
+
+  return refreshPromise
+}
 
 /**
  * 래퍼가 벗겨진 data 를 반환하는 API 헬퍼.
