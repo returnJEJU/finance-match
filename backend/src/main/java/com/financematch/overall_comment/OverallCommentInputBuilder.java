@@ -17,6 +17,7 @@ import com.financematch.report.service.WonAmountFormatter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -36,9 +37,9 @@ import org.springframework.stereotype.Component;
  * <p>강/약 축 선정(팀 미확정, 잠정 규칙): 5축(절세 미해당이면 4축)을 만점 대비 %로 환산해, ratio가
  * {@value #STRONG_RATIO_THRESHOLD} 이상이면 strongAxes, 미만이면 weakAxes로 나눈다 — 개수을 3·2로
  * 고정하지 않고 축 자체 점수로 판정한다(5축이 전부 좋아도 억지로 일부를 약점으로 만들지 않고, 전부
- * 나빠도 억지로 강점을 만들지 않는다). 두 리스트 모두 내부적으로는 ratio 내림차순을 유지한다(정렬된
- * 리스트를 그대로 나눠 담기 때문). 퍼센트가 같으면 축을 추가한 순서(자산→부채→가치관→목표→절세)가
- * 앞선 쪽이 먼저 온다.
+ * 나빠도 억지로 강점을 만들지 않는다). strongAxes는 ratio 내림차순(강점부터), weakAxes는 ratio
+ * 오름차순(가장 약한 축부터)이다 — 정렬된 리스트를 그대로 나눠 담은 뒤 weakAxes만 뒤집는다. 퍼센트가
+ * 같으면 축을 추가한 순서(자산→부채→가치관→목표→절세)의 역순(약한 쪽 기준이라)이 앞선 쪽이 먼저 온다.
  *
  * <p>금융 자산 축만 예외다(팀 확정): 원점수가 {@value #ASSET_STRONG_SCORE_THRESHOLD}/25 초과면
  * ratio와 무관하게 strongAxes로 판정한다 — 다른 4축은 여전히 {@value #STRONG_RATIO_THRESHOLD}
@@ -105,6 +106,9 @@ public class OverallCommentInputBuilder {
                 weakAxes.add(fact);
             }
         }
+        // ranked는 percent 내림차순이라 weakAxes도 그대로 담으면 내림차순이 된다 — ratio가
+        // 가장 낮은 축이 먼저 오도록(오름차순) 뒤집는다.
+        Collections.reverse(weakAxes);
 
         String shortfall = goalProgress.isAchieved() ? null : goalProgress.getBarLabel();
         GoalInfo goal =
@@ -168,7 +172,7 @@ public class OverallCommentInputBuilder {
         List<String> facts =
                 List.of(
                         "두 분 합산 금융자산 " + combinedAssetLabel,
-                        "또래 중앙값 대비 " + ratioLabel);
+                        "또래 커플 대비 " + ratioLabel);
 
         // 예외: 금융 자산 축은 ratio가 아니라 원점수(25점 만점)가 13점을 초과하는지로 강/약을 정한다.
         boolean strong = calculationResult.getAssetStabilityScore().compareTo(ASSET_STRONG_SCORE_THRESHOLD) > 0;
