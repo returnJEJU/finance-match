@@ -1,0 +1,18 @@
+# 이미지에 필요한 건 build/libs/*.war 하나뿐이다.
+# 나머지를 빌드 컨텍스트로 보내면 이미지 빌드가 느려진다.
+#
+# ("*" 로 전부 제외하고 war 만 되살리는 방식은 도커 버전에 따라 동작이 갈려서,
+#  제외할 것을 명시적으로 적는다.)
+.gradle
+gradle
+gradlew
+gradlew.bat
+src
+*.md
+build/classes
+build/generated
+build/jacoco
+build/reports
+build/resources
+build/test-results
+build/tmp
