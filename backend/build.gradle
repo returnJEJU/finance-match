@@ -201,5 +201,10 @@ flyway {
 processResources {
     if (isProd) {
         exclude 'db/dev-seed/**'
+
+        // 개인 개발용 비밀 설정(OpenAI 키 등)을 운영 WAR 에 담지 않는다.
+        // 이 파일이 있는 상태로 빌드하면 키가 WAR 안에 박혀 서버까지 따라가고,
+        // WAR 가 유출되면 키도 함께 나간다. 운영 키는 서버의 .env 로만 주입한다.
+        exclude 'application-secret.properties'
     }
 }
