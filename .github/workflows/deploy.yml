@@ -159,22 +159,22 @@ jobs:
       #  설정 파일은 항상 보낸다. 크기가 작고, 빠뜨리면 "고쳤는데 반영이 안 되는" 상태가 된다
       #  (컨테이너는 서버에 있는 파일로 다시 만들어진다).
       #  비밀값(.env)은 목록에 없다 — 서버에만 두고 덮어쓰지 않는다.
+      #  파일은 몇 KB 뿐인데도 10초가 걸렸다. 크기가 아니라 접속 횟수 때문이다 —
+      #  ssh 1번 + rsync 3번, 총 4번 접속했고 러너가 해외라 한 번에 2초 넘게 든다.
+      #  한 번으로 묶는다.
+      #    -R            : 경로를 그대로 살려 보낸다 (backend/Dockerfile → 서버의 backend/ 아래로)
+      #    --rsync-path  : 접속한 김에 필요한 폴더도 함께 만든다. mkdir 만을 위한 접속을 없앤다
       - name: 설정 파일 전송
         env:
           HOST: ${{ secrets.EC2_HOST }}
         run: |
-          ssh -i ~/.ssh/deploy_key "ubuntu@$HOST" \
-            'mkdir -p ~/finance-match/backend/build/libs ~/finance-match/frontend/dist'
-
-          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
+          rsync -azR \
+            --rsync-path="mkdir -p ~/finance-match/backend/build/libs ~/finance-match/frontend/dist && rsync" \
+            -e "ssh -i ~/.ssh/deploy_key" \
             docker-compose.prod.yml .env.prod.example \
+            backend/Dockerfile \
+            frontend/Dockerfile frontend/nginx.conf \
             "ubuntu@$HOST:~/finance-match/"
-
-          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
-            backend/Dockerfile "ubuntu@$HOST:~/finance-match/backend/"
-
-          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
-            frontend/Dockerfile frontend/nginx.conf "ubuntu@$HOST:~/finance-match/frontend/"
 
       - name: WAR 전송
         if: steps.scope.outputs.backend == 'true'
