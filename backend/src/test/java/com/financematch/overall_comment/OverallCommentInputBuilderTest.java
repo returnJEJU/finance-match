@@ -198,8 +198,8 @@ class OverallCommentInputBuilderTest {
         OverallCommentPromptInput debtInput =
                 builder.build(oneHasDebt, result, "김철수", "이영희", "HOUSING", NO_TAX_ROOM, NO_TAX_ROOM);
         AxisFact debtAxis = axisNamed(debtInput, "부채 상환");
-        assertEquals(List.of("철수 1000만원"), debtAxis.getFacts());
-        assertTrue(debtInput.getAllowedNumbers().contains("1000만원"));
+        assertEquals(List.of("철수 1,000만원"), debtAxis.getFacts());
+        assertTrue(debtInput.getAllowedNumbers().contains("1,000만원"));
     }
 
     @Test
@@ -224,10 +224,10 @@ class OverallCommentInputBuilderTest {
 
         AxisFact taxAxis = axisNamed(promptInput, "절세 활용");
         assertTrue(taxAxis.getFacts().contains("철수 연금저축 미개설"));
-        assertTrue(taxAxis.getFacts().contains("철수 ISA 한도까지 1000만원 남음"));
-        assertTrue(taxAxis.getFacts().contains("철수 IRP 연 2000만원 한도를 채움"));
-        assertTrue(promptInput.getAllowedNumbers().contains("1000만원"));
-        assertTrue(promptInput.getAllowedNumbers().contains("2000만원"));
+        assertTrue(taxAxis.getFacts().contains("철수 ISA 한도까지 1,000만원 남음"));
+        assertTrue(taxAxis.getFacts().contains("철수 IRP 연 2,000만원 한도를 채움"));
+        assertTrue(promptInput.getAllowedNumbers().contains("1,000만원"));
+        assertTrue(promptInput.getAllowedNumbers().contains("2,000만원"));
     }
 
     @Test
@@ -247,9 +247,9 @@ class OverallCommentInputBuilderTest {
                 builder.build(input, result, "김철수", "이영희", "HOUSING", NO_TAX_ROOM, NO_TAX_ROOM);
 
         assertEquals("부동산 자금 마련", promptInput.getGoal().getPurpose());
-        assertEquals("1억", promptInput.getGoal().getTargetAmount());
+        assertEquals("1억원", promptInput.getGoal().getTargetAmount());
         assertEquals("5년", promptInput.getGoal().getMonthsLabel());
-        assertEquals("1억 2000만원", promptInput.getGoal().getExpectedAsset());
+        assertEquals("1억 2,000만원", promptInput.getGoal().getExpectedAsset());
         assertEquals("120%", promptInput.getGoal().getAchievementRate());
         assertNull(promptInput.getGoal().getShortfall()); // 초과 달성이라 부족액 없음
     }
