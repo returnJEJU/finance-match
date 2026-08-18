@@ -1,0 +1,146 @@
+# 배포 자동화 (CD).
+#
+# develop 에 머지되면 EC2 에 자동으로 올린다. 사람이 서버에 접속할 일이 없어진다.
+#
+# 【왜 자동화하나】
+#   수동 배포는 매번 세 단계(빌드 → 전송 → 재시작)를 손으로 밟아야 하고, 그 과정에서
+#   실수가 끼어든다 — 작업 중인 브랜치에서 빌드하거나, -Pdemo 를 빠뜨리거나,
+#   전송이 끝나기 전에 재시작하거나. 여기 적어두면 매번 똑같이 실행된다.
+#   서버 접속 키를 팀원에게 나눠주지 않아도 되는 것도 이유다.
+#
+# 【빌드는 여기서, 서버는 실행만】
+#   서버(t3.small · 2GB)에서 Gradle 빌드를 돌리면 메모리가 부족해 멈출 수 있다.
+#   GitHub 러너에서 빌드해 결과물(WAR · dist)만 보낸다. 수동 배포와 같은 방식이다.
+#
+# 【필요한 Secrets】 (Settings → Secrets and variables → Actions)
+#   EC2_HOST     서버 공인 IP
+#   EC2_SSH_KEY  접속용 .pem 파일 내용 전체 (-----BEGIN ... END----- 포함)
+
+name: deploy
+
+on:
+  # develop 에 머지된 직후 자동 배포.
+  push:
+    branches: [develop]
+  # 필요할 때 손으로도 돌린다 (서버만 재시작하고 싶을 때 등).
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 배포가 겹치면 전송이 끝나기 전에 재시작이 걸려 반쪽짜리 파일로 뜰 수 있다.
+# 앞선 배포를 취소하지 않고 순서대로 기다리게 한다.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      # ── 빌드 ──────────────────────────────────────────────
+      - name: JDK 17 설치
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      # -Pprod : 개인 비밀 설정을 WAR 에 담지 않는다 (운영 키는 서버 .env 에서 온다)
+      # -Pdemo : 데모 계정을 포함한다 (포트폴리오 방문자가 바로 완성 화면을 볼 수 있게)
+      - name: 백엔드 빌드
+        run: ./gradlew war -Pprod -Pdemo --no-daemon
+        working-directory: backend
+
+      - name: Node 22 설치
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 프론트 의존성 설치
+        run: npm ci
+        working-directory: frontend
+
+      - name: 프론트 빌드
+        run: npm run build
+        working-directory: frontend
+
+      # ── 서버 접속 준비 ────────────────────────────────────
+      - name: SSH 키 준비
+        env:
+          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # 서버 지문을 미리 등록한다. 없으면 접속할 때마다 확인을 물어 실패한다.
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      # ── 전송 ──────────────────────────────────────────────
+      - name: 산출물 전송
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "ubuntu@$HOST" \
+            'mkdir -p ~/finance-match/backend/build/libs ~/finance-match/frontend/dist'
+
+          scp -i ~/.ssh/deploy_key backend/build/libs/*.war \
+            "ubuntu@$HOST:~/finance-match/backend/build/libs/"
+
+          # dist/. 로 내용만 보낸다. dist 를 통째로 보내면 서버에 이미 폴더가 있을 때
+          # 안에 또 dist 가 생길 수 있다.
+          scp -i ~/.ssh/deploy_key -r frontend/dist/. \
+            "ubuntu@$HOST:~/finance-match/frontend/dist/"
+
+      # ── 재시작 ────────────────────────────────────────────
+      #  .env(비밀값)는 서버에만 있고 여기서 건드리지 않는다.
+      - name: 컨테이너 재시작
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "ubuntu@$HOST" \
+            'cd ~/finance-match && docker compose -f docker-compose.prod.yml up -d --build'
+
+      # ── 확인 ──────────────────────────────────────────────
+      #  여기까지 성공해야 배포가 끝난 것이다. 컨테이너가 떠도 앱 기동이 실패할 수 있으므로
+      #  (설정 누락·DB 연결 실패 등) 실제 응답을 확인한다.
+      - name: 기동 확인
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -m 5 -o /dev/null -w '%{http_code}' "http://$HOST/api/health" || true)
+            if [ "$code" = "200" ]; then
+              echo "배포 완료 — http://$HOST"
+              exit 0
+            fi
+            echo "기동 대기 중... ($i/30)"
+            sleep 5
+          done
+
+          echo "::error::헬스체크 실패. 서버 로그를 확인할 것"
+          ssh -i ~/.ssh/deploy_key "ubuntu@$HOST" \
+            'docker logs fm-backend 2>&1 | tail -40'
+          exit 1
+
+      # ── 정리 ──────────────────────────────────────────────
+      #  배포할 때마다 이미지를 새로 만들어서, 교체된 예전 이미지(수백 MB)와 빌드 캐시가
+      #  서버에 계속 쌓인다. 디스크가 20GB 뿐이라 자주 배포하면 언젠가 찬다.
+      #
+      #  · image prune  : 쓰이지 않는(교체된) 이미지만 지운다. 실행 중인 것은 건드리지 않는다
+      #  · builder prune: 빌드 캐시를 1GB 까지만 남긴다. 다 지우면 다음 빌드가 느려진다
+      #
+      #  배포가 성공한 뒤에만 돌린다 — 실패했을 때는 원인을 찾을 재료를 남겨둔다.
+      - name: 서버 디스크 정리
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "ubuntu@$HOST" \
+            'docker image prune -f > /dev/null && docker builder prune -f --keep-storage 1GB > /dev/null && echo "정리 후:" && df -h / | tail -1'
