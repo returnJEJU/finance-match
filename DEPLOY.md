@@ -31,7 +31,7 @@ AWS EC2 한 대에 도커 상자 4개(nginx · 톰캣 · MySQL · Redis)를 띄�
 ## 1. 노트북에서 빌드
 
 ```bash
-cd backend && ./gradlew clean war -Pprod
+cd backend && ./gradlew clean war -Pprod -Pdemo
 ```
 
 ```bash
@@ -43,7 +43,10 @@ cd frontend && npm run build
 - `backend/build/libs/backend-0.0.1-SNAPSHOT.war`
 - `frontend/dist/`
 
-> `-Pprod` 는 데모용 시드 데이터를 WAR 에서 빼기 위한 것이다.
+ > `-Pprod` 는 개인 비밀 설정(`application-secret.properties`)을 WAR 에서 빼고,
+> `-Pdemo` 는 데모 계정 시드를 다시 넣는다. 포트폴리오로 공개하는 서버라 데모 계정이 필요하다
+> (방문자가 가입·연동·설문을 다 거치지 않아도 완성된 리포트를 볼 수 있다).
+> 실제 서비스로 전환할 때는 `-Pdemo` 만 빼면 된다.
 >
 > `build` 가 아니라 `war` 를 쓴다. `build` 는 테스트까지 돌리는데, DB 연동 테스트가 있어
 > 로컬 MySQL 이 떠 있지 않으면 실패한다. 배포용 산출물을 만드는 데는 `war` 면 충분하다.
@@ -200,24 +203,53 @@ docker compose -f docker-compose.prod.yml ps
 
 ---
 
-## 8. 다시 배포할 때
+## 8. 다시 배포할 때 — 자동
 
-코드를 고친 뒤에는 이 세 줄이면 된다.
+**`develop` 에 머지하면 자동으로 배포된다.** 손으로 할 일이 없다.
+진행 상황은 GitHub 저장소의 **Actions** 탭에서 `deploy` 워크플로로 볼 수 있다.
+
+수동으로 돌리고 싶으면 Actions → `deploy` → **Run workflow**.
+
+### 최초 1회 — Secrets 등록
+
+자동 배포가 서버에 접속하려면 두 값이 필요하다.
+저장소 **Settings → Secrets and variables → Actions → New repository secret**.
+
+| 이름 | 값 |
+| --- | --- |
+| `EC2_HOST` | 서버 공인 IP |
+| `EC2_SSH_KEY` | `.pem` 파일 **내용 전체** (`-----BEGIN` ~ `END-----` 포함) |
+
+> Secrets 는 등록 후 다시 볼 수 없고 로그에도 찍히지 않는다. `.pem` 파일 자체는 저장소에
+> 절대 커밋하지 않는다.
+
+### 배포가 하는 일
+
+빌드(`-Pprod -Pdemo`) → 산출물 전송 → 컨테이너 재시작 → 헬스체크.
+헬스체크까지 통과해야 성공으로 표시된다. 실패하면 서버 로그 40줄이 함께 출력된다.
+
+`.env`(비밀값)는 서버에만 있고 배포가 건드리지 않는다. 값을 바꿨다면 재시작만 하면 된다.
+
+> DB 스키마가 바뀐 경우에도 별도 작업은 없다. 백엔드가 뜰 때 Flyway 가 자동으로 적용한다
+> (`FLYWAY_ENABLED=true`).
+
+---
+
+## 8-1. 수동 배포 (자동이 막혔을 때)
 
 ```bash
-cd backend && ./gradlew war -Pprod && cd ../frontend && npm run build && cd ..
+cd backend && ./gradlew war -Pprod -Pdemo && cd ../frontend && npm run build && cd ..
 ```
 
 ```bash
-scp -i ~/Downloads/내키.pem backend/build/libs/*.war ubuntu@서버IP:~/finance-match/backend/build/libs/ && scp -i ~/Downloads/내키.pem -r frontend/dist ubuntu@서버IP:~/finance-match/frontend/
+scp -i ~/Downloads/내키.pem backend/build/libs/*.war ubuntu@서버IP:~/finance-match/backend/build/libs/ && scp -i ~/Downloads/내키.pem -r frontend/dist/. ubuntu@서버IP:~/finance-match/frontend/dist/
 ```
 
 ```bash
 ssh -i ~/Downloads/내키.pem ubuntu@서버IP 'cd ~/finance-match && docker compose -f docker-compose.prod.yml up -d --build'
 ```
 
-> DB 스키마가 바뀐 경우에도 별도 작업은 없다. 백엔드가 뜰 때 Flyway 가 자동으로 적용한다
-> (`FLYWAY_ENABLED=true`).
+> **`-Pdemo` 를 빠뜨리지 말 것.** 데모 계정이 WAR 에서 빠진다.
 
 ---
 
@@ -296,9 +328,22 @@ AWS 콘솔 → EC2 → 인스턴스 선택 → **인스턴스 상태** → **중
 
 ---
 
+## 데모 계정
+
+운영 DB 에 데모 회원 8명·커플 4쌍·리포트 4건이 들어 있다. 비밀번호는 모두 `Test1234!`.
+시나리오별 계정 목록은 [`backend/src/main/java/com/financematch/asset/README.md`](./backend/src/main/java/com/financematch/asset/README.md) 참고.
+
+들어가려면 **두 가지가 모두** 맞아야 한다. 하나라도 빠지면 데모 계정이 생성되지 않는다.
+
+1. WAR 를 `-Pprod -Pdemo` 로 빌드 (자동 배포는 이미 그렇게 한다)
+2. 서버 `.env` 에 `FLYWAY_LOCATIONS=classpath:db/migration,classpath:db/dev-seed`
+
+> 데모 시드는 회원 테이블을 비우고 다시 채운다. 다만 **시드 파일이 바뀔 때만 재실행**되므로,
+> 평소 배포에서는 그 사이 가입한 회원이 지워지지 않는다. 시드를 수정하는 날에는 지워진다.
+
+---
+
 ## 아직 안 한 것
 
 - **HTTPS** — 지금은 `http` 라 브라우저에 "안전하지 않음" 이 뜬다. 도메인을 붙이고 Let's Encrypt 인증서를 받으면 해결된다.
-- **데모 데이터** — 운영 DB 에는 상품 데이터만 들어간다. 둘러보기용 커플 계정이 필요하면 별도 시드를 만들어야 한다.
 - **AI 종합 코멘트** — `OPENAI_API_KEY` 를 비워두면 리포트의 AI 코멘트만 생성되지 않는다(나머지는 정상). 키를 넣으면 호출할 때마다 비용이 발생한다.
-- **자동 배포** — 지금은 수동(빌드 → scp → 재시작)이다. GitHub Actions 로 자동화할 수 있다.
