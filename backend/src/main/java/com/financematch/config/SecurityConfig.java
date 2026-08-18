@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.financematch.auth.jwt.JwtAuthenticationEntryPoint;
 import com.financematch.auth.jwt.JwtAuthenticationFilter;
 import com.financematch.auth.jwt.JwtProvider;
+import com.financematch.auth.jwt.TokenBlacklist;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
@@ -45,8 +46,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtProvider jwtProvider) {
-        return new JwtAuthenticationFilter(jwtProvider);
+    public JwtAuthenticationFilter jwtAuthenticationFilter(
+            JwtProvider jwtProvider, TokenBlacklist tokenBlacklist) {
+        return new JwtAuthenticationFilter(jwtProvider, tokenBlacklist);
     }
 
     /**

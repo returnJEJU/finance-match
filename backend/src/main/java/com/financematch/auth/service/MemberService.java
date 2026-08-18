@@ -4,6 +4,7 @@ import com.financematch.auth.domain.Member;
 import com.financematch.auth.dto.MemberProfileResponse;
 import com.financematch.auth.dto.WithdrawRequest;
 import com.financematch.auth.dto.WithdrawResponse;
+import com.financematch.auth.jwt.RefreshTokenStore;
 import com.financematch.auth.mapper.MemberMapper;
 import com.financematch.common.ErrorCode;
 import com.financematch.couple.service.CoupleService;
@@ -30,6 +31,7 @@ public class MemberService {
     private final MemberMapper memberMapper;
     private final PasswordEncoder passwordEncoder;
     private final CoupleService coupleService;
+    private final RefreshTokenStore refreshTokenStore;
 
     @Transactional(readOnly = true)
     public MemberProfileResponse getProfile(Long memberId) {
@@ -82,6 +84,10 @@ public class MemberService {
         if (memberMapper.withdraw(memberId, withdrawnAt) != 1) {
             throw new ApiException(ErrorCode.MEMBER_ALREADY_WITHDRAWN);
         }
+
+        // 저장된 refresh 토큰을 지운다. 안 지우면 탈퇴한 회원이 그 토큰으로 최대 2주간 새 access
+        // 토큰을 계속 받아갈 수 있다 — 재발급은 회원 상태를 보지 않고 저장된 토큰만 대조하기 때문이다.
+        refreshTokenStore.delete(memberId);
 
         log.info("회원탈퇴 — memberId={}", memberId);
 

@@ -23,7 +23,10 @@ import com.financematch.auth.dto.LoginRequest;
 import com.financematch.auth.dto.LoginResponse;
 import com.financematch.auth.dto.SignupRequest;
 import com.financematch.auth.dto.SignupResponse;
+import com.financematch.auth.dto.TokenResponse;
 import com.financematch.auth.jwt.JwtProvider;
+import com.financematch.auth.jwt.RefreshTokenStore;
+import com.financematch.auth.jwt.TokenBlacklist;
 import com.financematch.auth.mapper.MemberMapper;
 import com.financematch.common.ErrorCode;
 import com.financematch.exception.ApiException;
@@ -44,6 +47,7 @@ class AuthServiceTest {
     private static final String RAW_PASSWORD = "Pw123456!";
     private static final String ENCODED_PASSWORD = "$2a$10$encoded-hash-value";
     private static final String ACCESS_TOKEN = "issued.access.token";
+    private static final String REFRESH_TOKEN = "issued.refresh.token";
     private static final String EMAIL = "hong@kb.com";
     private static final String WRONG_PASSWORD = "WrongPw999!";
 
@@ -90,6 +94,10 @@ class AuthServiceTest {
     @Mock private JwtProvider jwtProvider;
 
     @Mock private OnboardingService onboardingService;
+
+    @Mock private RefreshTokenStore refreshTokenStore;
+
+    @Mock private TokenBlacklist tokenBlacklist;
 
     @InjectMocks private AuthService authService;
 
@@ -270,19 +278,84 @@ class AuthServiceTest {
     // ===== 로그아웃 =====
 
     /**
-     * JWT 는 서버가 로그인 상태를 들고 있지 않아 로그아웃 시 지울 것이 없다. 회원 정보를 바꾸거나 토큰을 다시
-     * 발급하는 동작이 끼어들면 안 된다 — Redis 블랙리스트를 얹기 전까지 이 메서드는 기록만 남긴다.
+     * 로그아웃은 두 가지를 함께 해야 한다. refresh 만 지우면 남은 access 토큰(최대 1시간)이 계속
+     * 통하고, access 만 막으면 refresh 로 새 access 를 받아버린다.
      */
     @Test
-    void 로그아웃은_회원_데이터를_건드리지_않는다() {
-        authService.logout(1L);
+    void 로그아웃은_refresh_를_지우고_access_를_폐기한다() {
+        when(jwtProvider.getJti(ACCESS_TOKEN)).thenReturn("jti-1");
+        when(jwtProvider.getRemainingMs(ACCESS_TOKEN)).thenReturn(60_000L);
 
-        verifyNoInteractions(memberMapper, passwordEncoder, jwtProvider, onboardingService);
+        authService.logout(1L, ACCESS_TOKEN);
+
+        verify(refreshTokenStore).delete(1L);
+        verify(tokenBlacklist).add("jti-1", 60_000L);
     }
 
+    /** 회원 데이터는 건드리지 않는다. 로그아웃이 프로필을 바꾸거나 토큰을 재발급하면 안 된다. */
     @Test
-    void 로그아웃은_회원_ID_만으로_끝난다() {
-        assertDoesNotThrow(() -> authService.logout(1L));
+    void 로그아웃은_회원_데이터를_건드리지_않는다() {
+        authService.logout(1L, null);
+
+        verifyNoInteractions(memberMapper, passwordEncoder, onboardingService);
+    }
+
+    /**
+     * 헤더가 없거나 형식이 맞지 않으면 컨트롤러가 {@code null} 을 넘긴다. 폐기할 대상을 모를 뿐이므로
+     * refresh 삭제는 그대로 수행하고 실패시키지 않는다.
+     */
+    @Test
+    void 로그아웃은_access_토큰이_없어도_refresh_를_지운다() {
+        assertDoesNotThrow(() -> authService.logout(1L, null));
+
+        verify(refreshTokenStore).delete(1L);
+        verifyNoInteractions(tokenBlacklist);
+    }
+
+    // ===== 토큰 재발급 =====
+
+    @Test
+    void 재발급은_새_access_와_새_refresh_를_함께_돌려준다() {
+        when(jwtProvider.getMemberIdFromRefreshToken(REFRESH_TOKEN)).thenReturn(7L);
+        when(refreshTokenStore.matches(7L, REFRESH_TOKEN)).thenReturn(true);
+        when(jwtProvider.createAccessToken(7L)).thenReturn("new.access");
+        when(jwtProvider.createRefreshToken(7L)).thenReturn("new.refresh");
+
+        TokenResponse response = authService.reissue(REFRESH_TOKEN);
+
+        assertEquals("new.access", response.getAccessToken());
+        assertEquals("new.refresh", response.getRefreshToken());
+    }
+
+    /**
+     * 쓴 refresh 토큰은 즉시 새것으로 바뀐다(회전). 저장소에 회원당 하나만 두므로, 새로 저장하는 순간
+     * 방금 쓴 토큰은 무효가 된다.
+     */
+    @Test
+    void 재발급하면_새_refresh_토큰이_저장된다() {
+        when(jwtProvider.getMemberIdFromRefreshToken(REFRESH_TOKEN)).thenReturn(7L);
+        when(refreshTokenStore.matches(7L, REFRESH_TOKEN)).thenReturn(true);
+        when(jwtProvider.createRefreshToken(7L)).thenReturn("new.refresh");
+        when(jwtProvider.getRefreshTokenValidityMs()).thenReturn(1_209_600_000L);
+
+        authService.reissue(REFRESH_TOKEN);
+
+        verify(refreshTokenStore).save(7L, "new.refresh", 1_209_600_000L);
+    }
+
+    /**
+     * 서명이 유효해도 서버가 보관 중인 값과 다르면 거절한다. 로그아웃했거나 이미 한 번 재발급에 쓴
+     * 토큰이 여기에 걸린다.
+     */
+    @Test
+    void 저장된_것과_다른_refresh_토큰은_거절한다() {
+        when(jwtProvider.getMemberIdFromRefreshToken(REFRESH_TOKEN)).thenReturn(7L);
+        when(refreshTokenStore.matches(7L, REFRESH_TOKEN)).thenReturn(false);
+
+        ApiException e = assertThrows(ApiException.class, () -> authService.reissue(REFRESH_TOKEN));
+
+        assertEquals(ErrorCode.INVALID_REFRESH_TOKEN, e.getErrorCode());
+        verify(jwtProvider, never()).createAccessToken(any());
     }
 
     // ===== 도우미 =====

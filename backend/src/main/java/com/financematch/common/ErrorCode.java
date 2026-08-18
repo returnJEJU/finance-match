@@ -24,6 +24,10 @@ public enum ErrorCode {
     // ===== 인증 토큰 (JWT — 공통 인프라) =====
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 토큰입니다."),
+    // refresh 토큰이 위조·만료됐거나, 로그아웃 등으로 서버에 저장된 것과 다를 때.
+    // access 토큰 만료(EXPIRED_TOKEN)와 구분한다 — 프론트는 전자면 재발급을 시도하고,
+    // 이 코드면 재발급이 불가능하므로 곧장 로그인 화면으로 보낸다.
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "다시 로그인해 주세요."),
 
     // ===================================================================
     //  ⚠️ 도메인별 에러 코드는 여기에 추가한다 — 【API 명세 확정 후】
