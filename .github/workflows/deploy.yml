@@ -100,6 +100,20 @@ jobs:
           ssh -i ~/.ssh/deploy_key "ubuntu@$HOST" \
             'mkdir -p ~/finance-match/backend/build/libs ~/finance-match/frontend/dist'
 
+          # 설정 파일도 함께 보낸다.
+          #   빌드 산출물만 보내면 서버에는 첫 배포 때 올린 옛 설정이 남아, nginx.conf 나
+          #   compose 를 고쳐도 반영되지 않는다. 컨테이너는 서버에 있는 파일로 다시 만들어지므로
+          #   "고쳤는데 그대로인" 상태가 되고, 원인을 찾기도 어렵다.
+          #   비밀값(.env)은 서버에만 있고 여기 목록에 없다 — 덮어쓰지 않는다.
+          scp -i ~/.ssh/deploy_key docker-compose.prod.yml .env.prod.example \
+            "ubuntu@$HOST:~/finance-match/"
+
+          scp -i ~/.ssh/deploy_key backend/Dockerfile \
+            "ubuntu@$HOST:~/finance-match/backend/"
+
+          scp -i ~/.ssh/deploy_key frontend/Dockerfile frontend/nginx.conf \
+            "ubuntu@$HOST:~/finance-match/frontend/"
+
           scp -i ~/.ssh/deploy_key backend/build/libs/*.war \
             "ubuntu@$HOST:~/finance-match/backend/build/libs/"
 
