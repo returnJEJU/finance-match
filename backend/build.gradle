@@ -74,7 +74,7 @@ dependencies {
     // ===== Redis (refresh 토큰 · 로그아웃 블랙리스트 · 캐시) =====
     //  Spring Data Redis 2.7.x + Lettuce. Jedis 4.x 는 spring-data-redis 2.7 과 호환되지 않아
     //  Spring 기본 클라이언트인 Lettuce 를 사용한다.
-    implementation 'org.springframework.data:spring-data-redis:2.7.18'
+    implementation 'org.springframework.data:spring-data-redis:4.1.0'
     implementation 'io.lettuce:lettuce-core:6.2.7.RELEASE'
 
     // ===== JSON 직렬화 =====
