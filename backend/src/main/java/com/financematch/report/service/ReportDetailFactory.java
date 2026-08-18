@@ -342,8 +342,8 @@ public class ReportDetailFactory {
 
     private String taxStatus(boolean hasAccount, BigDecimal annualPayment) {
         if (!hasAccount) {
-            return "미설계";
+            return "미개설";
         }
-        return won(annualPayment).compareTo(ZERO) > 0 ? "활용 중" : "미활용";
+        return won(annualPayment).compareTo(ZERO) > 0 ? "활용" : "미활용";
     }
 }
