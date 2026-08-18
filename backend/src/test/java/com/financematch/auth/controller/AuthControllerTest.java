@@ -1,16 +1,27 @@
 package com.financematch.auth.controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import com.financematch.auth.dto.LoginRequest;
+import com.financematch.auth.dto.LoginResponse;
+import com.financematch.auth.dto.SignupRequest;
+import com.financematch.auth.dto.SignupResponse;
 import com.financematch.auth.service.AuthService;
 import com.financematch.common.ApiResponse;
+import java.net.URI;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 @ExtendWith(MockitoExtension.class)
 class AuthControllerTest {
@@ -18,6 +29,64 @@ class AuthControllerTest {
     @Mock private AuthService authService;
 
     @InjectMocks private AuthController authController;
+
+    // ===== 회원가입 =====
+
+    /**
+     * 가입은 회원이라는 리소스를 새로 만드는 요청이므로 200 이 아니라 201 이다. 생성된 리소스의 위치도
+     * 함께 알려준다 — 회원 식별자를 경로에 노출하지 않는 규칙에 따라 {@code /api/v1/members/me} 다.
+     */
+    @Test
+    void 회원가입_성공_응답은_201_과_Location_을_함께_돌려준다() {
+        SignupRequest request = mock(SignupRequest.class);
+        when(authService.signup(request)).thenReturn(mock(SignupResponse.class));
+
+        ResponseEntity<ApiResponse<SignupResponse>> response = authController.signup(request);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(URI.create("/api/v1/members/me"), response.getHeaders().getLocation());
+    }
+
+    @Test
+    void 회원가입_응답은_서비스_결과를_그대로_감싼다() {
+        SignupRequest request = mock(SignupRequest.class);
+        SignupResponse serviceResult = mock(SignupResponse.class);
+        when(authService.signup(request)).thenReturn(serviceResult);
+
+        ResponseEntity<ApiResponse<SignupResponse>> response = authController.signup(request);
+
+        assertTrue(response.getBody().isSuccess());
+        // 컨트롤러가 응답을 재가공하지 않는지 — 조립은 서비스가 끝낸다.
+        assertSame(serviceResult, response.getBody().getData());
+    }
+
+    // ===== 로그인 =====
+
+    /** 로그인은 새 리소스를 만들지 않으므로 201·Location 이 아니라 평범한 200 이다. */
+    @Test
+    void 로그인_응답은_서비스_결과를_그대로_감싼다() {
+        LoginRequest request = mock(LoginRequest.class);
+        LoginResponse serviceResult = mock(LoginResponse.class);
+        when(authService.login(request)).thenReturn(serviceResult);
+
+        ApiResponse<LoginResponse> response = authController.login(request);
+
+        assertTrue(response.isSuccess());
+        assertSame(serviceResult, response.getData());
+        assertNull(response.getCode());
+    }
+
+    @Test
+    void 로그인은_요청을_그대로_서비스에_넘긴다() {
+        LoginRequest request = mock(LoginRequest.class);
+        when(authService.login(request)).thenReturn(mock(LoginResponse.class));
+
+        authController.login(request);
+
+        verify(authService).login(request);
+    }
+
+    // ===== 로그아웃 =====
 
     @Test
     void 로그아웃은_인증된_회원_ID_를_서비스에_넘긴다() {
