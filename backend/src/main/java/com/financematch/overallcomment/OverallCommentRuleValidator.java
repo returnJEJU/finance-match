@@ -1,4 +1,4 @@
-package com.financematch.overall_comment;
+package com.financematch.overallcomment;
 
 import java.util.ArrayList;
 import java.util.List;

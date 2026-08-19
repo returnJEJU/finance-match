@@ -12,9 +12,9 @@ import com.financematch.match.domain.MatchCoupleData;
 import com.financematch.match.domain.MatchMemberData;
 import com.financematch.match.mapper.MatchMapper;
 
-import com.financematch.overall_comment.OverallCommentInputBuilder;
-import com.financematch.overall_comment.OverallCommentService;
-import com.financematch.overall_comment.dto.OverallCommentPromptInput;
+import com.financematch.overallcomment.OverallCommentInputBuilder;
+import com.financematch.overallcomment.OverallCommentService;
+import com.financematch.overallcomment.dto.OverallCommentPromptInput;
 import com.financematch.report.dto.reason.DebtRepaymentReasonInput;
 import com.financematch.report.dto.reason.FinancialValueReasonInput;
 import com.financematch.report.dto.reason.TaxAccountInput;

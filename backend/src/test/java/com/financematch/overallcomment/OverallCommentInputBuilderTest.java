@@ -1,4 +1,4 @@
-package com.financematch.overall_comment;
+package com.financematch.overallcomment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.financematch.match.calculator.MatchCalculationInput;
 import com.financematch.match.calculator.MatchCalculationResult;
 import com.financematch.match.calculator.MemberCalculationInput;
-import com.financematch.overall_comment.dto.AxisFact;
-import com.financematch.overall_comment.dto.OverallCommentPromptInput;
+import com.financematch.overallcomment.dto.AxisFact;
+import com.financematch.overallcomment.dto.OverallCommentPromptInput;
 import com.financematch.report.dto.reason.TaxAccountInput;
 import com.financematch.report.dto.reason.TaxSavingProfile;
 import com.financematch.report.service.GoalProgressFormatter;

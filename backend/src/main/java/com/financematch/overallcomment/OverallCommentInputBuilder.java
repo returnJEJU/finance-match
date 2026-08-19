@@ -1,13 +1,13 @@
-package com.financematch.overall_comment;
+package com.financematch.overallcomment;
 
 import com.financematch.match.calculator.MatchCalculationInput;
 import com.financematch.match.calculator.MatchCalculationResult;
 import com.financematch.match.calculator.MemberCalculationInput;
-import com.financematch.overall_comment.dto.AxisFact;
-import com.financematch.overall_comment.dto.FirstStepInfo;
-import com.financematch.overall_comment.dto.GoalInfo;
-import com.financematch.overall_comment.dto.NamesInfo;
-import com.financematch.overall_comment.dto.OverallCommentPromptInput;
+import com.financematch.overallcomment.dto.AxisFact;
+import com.financematch.overallcomment.dto.FirstStepInfo;
+import com.financematch.overallcomment.dto.GoalInfo;
+import com.financematch.overallcomment.dto.NamesInfo;
+import com.financematch.overallcomment.dto.OverallCommentPromptInput;
 import com.financematch.report.dto.GoalProgress;
 import com.financematch.report.dto.reason.TaxAccountInput;
 import com.financematch.report.dto.reason.TaxSavingProfile;

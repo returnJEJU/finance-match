@@ -1,8 +1,8 @@
-package com.financematch.overall_comment;
+package com.financematch.overallcomment;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.financematch.overall_comment.dto.OverallCommentPromptInput;
+import com.financematch.overallcomment.dto.OverallCommentPromptInput;
 import com.financematch.report.mapper.ReportWriteMapper;
 import java.util.ArrayList;
 import java.util.List;

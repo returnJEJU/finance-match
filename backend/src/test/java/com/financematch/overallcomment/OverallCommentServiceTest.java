@@ -1,4 +1,4 @@
-package com.financematch.overall_comment;
+package com.financematch.overallcomment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -11,7 +11,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.financematch.overall_comment.dto.OverallCommentPromptInput;
+import com.financematch.overallcomment.dto.OverallCommentPromptInput;
 import com.financematch.report.mapper.ReportWriteMapper;
 import java.util.List;
 import java.util.Optional;

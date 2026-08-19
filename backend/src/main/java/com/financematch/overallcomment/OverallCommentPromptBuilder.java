@@ -1,8 +1,8 @@
-package com.financematch.overall_comment;
+package com.financematch.overallcomment;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.financematch.overall_comment.dto.AxisFact;
-import com.financematch.overall_comment.dto.OverallCommentPromptInput;
+import com.financematch.overallcomment.dto.AxisFact;
+import com.financematch.overallcomment.dto.OverallCommentPromptInput;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
