@@ -29,7 +29,7 @@ const routes = [
       {
         path: '',
         name: 'onboarding',
-        component: () => import('@/pages/OnboardingPage.vue'),
+        component: () => import('@/pages/onboarding/OnboardingPage.vue'),
         meta: { public: true },
       },
       {
@@ -88,48 +88,48 @@ const routes = [
       {
         path: 'service-introduction',
         name: 'service-introduction',
-        component: () => import('@/pages/ServiceIntroductionPage.vue'),
+        component: () => import('@/pages/onboarding/ServiceIntroductionPage.vue'),
       },
       {
         // 커플 연동 방법을 선택하는 시작 화면.
         path: 'couple',
         name: 'couple-start',
-        component: () => import('@/pages/CoupleStartPage.vue'),
+        component: () => import('@/pages/couple/CoupleStartPage.vue'),
       },
       {
         path: 'couple/invite',
         name: 'couple-invite',
-        component: () => import('@/pages/InviteCodePage.vue'),
+        component: () => import('@/pages/couple/InviteCodePage.vue'),
       },
       {
         path: 'couple/invite/created',
         name: 'couple-invite-created',
-        component: () => import('@/pages/InviteCreatedPage.vue'),
+        component: () => import('@/pages/couple/InviteCreatedPage.vue'),
       },
       {
         path: 'couple/connected',
         name: 'couple-connected',
-        component: () => import('@/pages/CoupleConnectedPage.vue'),
+        component: () => import('@/pages/couple/CoupleConnectedPage.vue'),
       },
       {
         path: 'survey/couple',
         name: 'survey-couple',
-        component: () => import('@/pages/CoupleSurveyPage.vue'),
+        component: () => import('@/pages/survey/CoupleSurveyPage.vue'),
       },
       {
         path: 'survey/personal',
         name: 'survey-personal',
-        component: () => import('@/pages/PersonalSurveyPage.vue'),
+        component: () => import('@/pages/survey/PersonalSurveyPage.vue'),
       },
       {
         path: 'survey/result',
         name: 'survey-result',
-        component: () => import('@/pages/SurveyResultPage.vue'),
+        component: () => import('@/pages/survey/SurveyResultPage.vue'),
       },
       {
         path: 'match/calculating',
         name: 'match-calculating',
-        component: () => import('@/pages/MatchCalculatingPage.vue'),
+        component: () => import('@/pages/match/MatchCalculatingPage.vue'),
       },
     ],
   },
@@ -142,12 +142,12 @@ const routes = [
       {
         path: 'dashboard',
         name: 'dashboard',
-        component: () => import('@/pages/DashboardPage.vue'),
+        component: () => import('@/pages/dashboard/DashboardPage.vue'),
       },
       {
         path: 'dashboard/waiting',
         name: 'dashboard-waiting',
-        component: () => import('@/pages/DashboardWaitingPage.vue'),
+        component: () => import('@/pages/dashboard/DashboardWaitingPage.vue'),
         meta: {
           activeTab: 'dashboard',
         },
@@ -155,25 +155,25 @@ const routes = [
       {
         path: 'report',
         name: 'report',
-        component: () => import('@/pages/ReportPage.vue'),
+        component: () => import('@/pages/report/ReportPage.vue'),
         meta: { title: '리포트' },
       },
       {
         path: 'recommend',
         name: 'recommend',
-        component: () => import('@/pages/RecommendPage.vue'),
+        component: () => import('@/pages/recommendation/RecommendPage.vue'),
         meta: { title: '상품 추천' },
       },
       {
         path: 'recommend/products',
         name: 'recommend-products',
-        component: () => import('@/pages/ProductListPage.vue'),
+        component: () => import('@/pages/recommendation/ProductListPage.vue'),
         meta: { title: '상품 목록', showBack: true },
       },
       {
         path: 'my',
         name: 'my',
-        component: () => import('@/pages/MyPage.vue'),
+        component: () => import('@/pages/member/MyPage.vue'),
         meta: { title: '마이페이지' },
       },
     ],
