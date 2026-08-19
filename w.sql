@@ -1,1 +1,0 @@
-DELETE FROM compatibility_result WHERE id = 108;
