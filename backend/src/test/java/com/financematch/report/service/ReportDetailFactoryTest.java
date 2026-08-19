@@ -239,17 +239,21 @@ class ReportDetailFactoryTest {
     }
 
     // ===== 절세 =====
+    //
+    //  여기 문자열은 화면에 그대로 출력되는 동시에 프론트의 색 분기 기준이다
+    //  (ReportPage.vue 의 taxStatusClass — '활용' 초록 · '미개설' 빨강 · 그 외 보라).
+    //  값을 바꾸려면 프론트도 함께 고쳐야 한다. 백엔드만 바꾸면 색이 조용히 어긋난다.
 
     @Test
-    void 계좌_미개설이면_미설계로_표시한다() {
+    void 계좌_미개설이면_미개설로_표시한다() {
         ReportMemberDetailSource me = defaultMember("철수");
         ReportMemberDetailSource partner = defaultMember("영희");
 
         ReportDetails details = factory.create(1L, defaultCouple(), me, partner, BigDecimal.ZERO);
 
         for (TaxStatusRow row : details.getTax().getRows()) {
-            assertEquals("미설계", row.getMe());
-            assertEquals("미설계", row.getPartner());
+            assertEquals("미개설", row.getMe());
+            assertEquals("미개설", row.getPartner());
         }
     }
 
@@ -266,7 +270,7 @@ class ReportDetailFactoryTest {
     }
 
     @Test
-    void 계좌에_납입중이면_활용중으로_표시한다() {
+    void 계좌에_납입중이면_활용으로_표시한다() {
         ReportMemberDetailSource me = defaultMember("철수");
         ReportMemberDetailSource partner = defaultMember("영희");
         set(me, "hasIrp", true);
@@ -277,8 +281,8 @@ class ReportDetailFactoryTest {
 
         ReportDetails details = factory.create(1L, defaultCouple(), me, partner, BigDecimal.ZERO);
 
-        assertEquals("활용 중", details.getTax().getRows().get(1).getMe());
-        assertEquals("활용 중", details.getTax().getRows().get(2).getMe());
+        assertEquals("활용", details.getTax().getRows().get(1).getMe());
+        assertEquals("활용", details.getTax().getRows().get(2).getMe());
     }
 
     // ===== AI 코멘트 =====
