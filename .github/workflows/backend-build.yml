@@ -11,6 +11,13 @@
 #
 #   접속 정보는 application-local.properties 와 맞춘다(단일 출처).
 #   스키마는 앱이 뜰 때 Flyway 가 적용한다 — 별도 준비 단계가 필요 없다.
+#
+# 【시간대를 반드시 맞춘다】
+#   운영·로컬 모두 Asia/Seoul 로 돌린다(docker-compose 의 TZ, 운영 톰캣의 -Duser.timezone).
+#   CI 만 UTC 로 두면 추천 최신성 판정이 9시간 어긋나 테스트가 무더기로 깨진다 —
+#   JDBC(serverTimezone=Asia/Seoul)로 쓴 값은 KST 벽시계, DB 기본값(CURRENT_TIMESTAMP)으로
+#   쓴 값은 UTC 가 되어, 입력이 추천보다 최신인 것처럼 보이기 때문이다.
+#   실제로 이 설정을 빠뜨려 RecommendationServiceTest 4건이 CI 에서만 실패했다.
 
 name: backend build
 
@@ -26,6 +33,10 @@ on:
 # 코드를 읽는 권한만 준다.
 permissions:
   contents: read
+
+# 러너 JVM 의 기본 시간대. DB 컨테이너와 같은 값으로 맞춘다.
+env:
+  TZ: Asia/Seoul
 
 # PR 은 연달아 push 하면 앞선 실행을 취소해 실행 시간을 아낀다.
 # develop push 는 취소하지 않는다 — 취소된 실행도 커밋 옆에 빨간 X 로 표시되어
@@ -52,6 +63,7 @@ jobs:
           MYSQL_USER: fmatch
           MYSQL_PASSWORD: fmatch
           MYSQL_ROOT_PASSWORD: root
+          TZ: Asia/Seoul
         ports:
           - 3306:3306
         # 준비되기 전에 테스트가 시작되면 커넥션 실패로 엉뚱하게 깨진다.
