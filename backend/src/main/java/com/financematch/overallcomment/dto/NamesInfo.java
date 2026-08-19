@@ -1,4 +1,4 @@
-package com.financematch.overall_comment.dto;
+package com.financematch.overallcomment.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,15 +1,15 @@
-package com.financematch.overall_comment;
+package com.financematch.overallcomment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.financematch.overall_comment.dto.AxisFact;
-import com.financematch.overall_comment.dto.FirstStepInfo;
-import com.financematch.overall_comment.dto.GoalInfo;
-import com.financematch.overall_comment.dto.NamesInfo;
-import com.financematch.overall_comment.dto.OverallCommentPromptInput;
+import com.financematch.overallcomment.dto.AxisFact;
+import com.financematch.overallcomment.dto.FirstStepInfo;
+import com.financematch.overallcomment.dto.GoalInfo;
+import com.financematch.overallcomment.dto.NamesInfo;
+import com.financematch.overallcomment.dto.OverallCommentPromptInput;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

@@ -1,4 +1,4 @@
-package com.financematch.overall_comment;
+package com.financematch.overallcomment;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

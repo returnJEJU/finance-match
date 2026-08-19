@@ -1,4 +1,4 @@
-package com.financematch.overall_comment;
+package com.financematch.overallcomment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
