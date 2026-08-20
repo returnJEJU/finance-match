@@ -55,7 +55,6 @@ import org.springframework.stereotype.Component;
 public class OverallCommentInputBuilder {
 
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
-    private static final List<String> ACCOUNT_NAMES = List.of("ISA", "IRP", "연금저축");
 
     // 이 값 이상이면 strongAxes, 미만이면 weakAxes(팀 미확정, 잠정 기준).
     private static final double STRONG_RATIO_THRESHOLD = 0.7;
@@ -230,11 +229,10 @@ public class OverallCommentInputBuilder {
             TaxSavingProfile memberBTax,
             Set<String> allowedNumbers) {
         List<String> facts = new ArrayList<>();
+        // accountFacts 는 계좌 3종에 대해 항상 문구를 하나씩 만든다(미개설·한도미달·한도채움 중 하나).
+        // 따라서 두 사람 몫을 합치면 비어 있을 수 없어, 빈 목록을 대비하는 분기를 두지 않는다.
         facts.addAll(accountFacts(names.getMe(), memberATax, allowedNumbers));
         facts.addAll(accountFacts(names.getPartner(), memberBTax, allowedNumbers));
-        if (facts.isEmpty()) {
-            facts.add("두 분 모두 " + String.join("·", ACCOUNT_NAMES) + " 한도를 다 채웠어요.");
-        }
         int percent = percentOf(calculationResult.getTaxStrategyScore(), 10);
         return new RankedAxis("절세 활용", percent, facts, isStrongByRatio(percent));
     }

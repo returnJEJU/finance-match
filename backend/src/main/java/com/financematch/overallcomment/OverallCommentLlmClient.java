@@ -58,8 +58,19 @@ public class OverallCommentLlmClient {
             @Value("${openai.api.key}") String apiKey, @Value("${openai.model}") String model) {
         this.apiKey = apiKey;
         this.model = model;
+        this.formatSchema = parseSchema(PARAGRAPHS_SCHEMA);
+    }
+
+    /**
+     * 응답 스키마 JSON 을 파싱한다.
+     *
+     * <p>인자로 받는 이유는 하나다 — 파싱 실패 처리를 검증할 수 있게 하기 위함이다. 실제 인자는
+     * 상수({@code PARAGRAPHS_SCHEMA})라 운영에서는 실패할 수 없지만, {@code readTree} 가 검사 예외를
+     * 던져 처리를 생략할 수 없다. 생성자 안에 두면 그 처리가 영원히 실행되지 않는 채로 남는다.
+     */
+    JsonNode parseSchema(String schemaJson) {
         try {
-            this.formatSchema = mapper.readTree(PARAGRAPHS_SCHEMA);
+            return mapper.readTree(schemaJson);
         } catch (IOException e) {
             throw new IllegalStateException("응답 스키마 파싱 실패", e);
         }
