@@ -1,8 +1,35 @@
 /* Tailwind CSS v4 엔트리. 이 한 줄이 Tailwind 전체를 불러온다. */
 @import 'tailwindcss';
 
-/* Pretendard (가변 폰트). 빌드에 포함되어 오프라인·배포 환경에서도 안정적. */
-@import 'pretendard/dist/web/variable/pretendardvariable.css';
+/* 국민연금체 Regular */
+@font-face {
+  font-family: 'NationalPension';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2310@1.0/NPSfontRegular.woff2')
+    format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 국민연금체 Bold */
+@font-face {
+  font-family: 'NationalPension';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2310@1.0/NPSfontBold.woff2')
+    format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 국민연금체 ExtraBold */
+@font-face {
+  font-family: 'NationalPension';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2310@1.0/NPSfontExtraBold.woff2')
+    format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
 
 /*
  * 여기 선언한 값은 Tailwind v4 가 자동으로 유틸 클래스로 만들어 준다.
@@ -13,7 +40,7 @@
  */
 @theme {
   /* 기본 sans 폰트를 Pretendard 로 지정 (font-sans 유틸/기본값에 반영) */
-  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'NationalPension', sans-serif;
 
   /* ===== 브랜드 (옐로 3단계) ===== */
   --color-brand: #fff44f; /* 기본 버튼, 선택된 칩 */
@@ -59,6 +86,7 @@
    글자색을 비워 두면 브라우저 기본값 #000 이 적용돼 제목이 미묘하게 더 진해진다. */
 body {
   font-family: var(--font-sans);
+  font-weight: 400;
   background-color: var(--color-canvas);
   color: var(--color-ink);
 }

@@ -45,7 +45,7 @@ const steps = [
           >
             <div
               class="flex h-9 w-9 items-center justify-center rounded-full"
-              :class="step.completed ? 'bg-[#9ceee6]' : 'bg-[#e7e7e7]'"
+              :class="step.completed ? 'bg-mint' : 'bg-[#e7e7e7]'"
             >
               <Check
                 v-if="step.completed"

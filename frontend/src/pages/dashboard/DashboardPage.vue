@@ -346,7 +346,7 @@ onUnmounted(() => {
 
       <button
         type="button"
-        class="mt-5 rounded-full bg-[#ffef3d] px-7 py-3 text-[15px] font-bold text-[#242424]"
+        class="mt-5 rounded-full bg-brand px-7 py-3 text-ink font-bold text-[#242424]"
         @click="loadDashboard"
       >
         다시 시도하기
@@ -393,9 +393,9 @@ onUnmounted(() => {
                 y2="175"
                 gradientUnits="userSpaceOnUse"
               >
-                <stop offset="0%" stop-color="#fff943" />
-                <stop offset="48%" stop-color="#ffed22" />
-                <stop offset="100%" stop-color="#fff338" />
+                <stop offset="0%" stop-color="var(--color-brand)" />
+                <stop offset="48%" stop-color="var(--color-brand-deep)" />
+                <stop offset="100%" stop-color="var(--color-brand)" />
               </linearGradient>
 
               <!-- 원형 바 전체 그림자 -->
