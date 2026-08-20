@@ -21,6 +21,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -145,5 +147,57 @@ class ReportServiceTest {
 
         assertTrue(status.isReady());
         assertEquals(5, status.getCompletedAxes());
+    }
+
+    /**
+     * 축 하나가 비면 그 축만 빠지고 나머지는 그대로 세어야 한다. 다섯 축을 각각 비워 확인한다 —
+     * 한 축만 대표로 확인하면 나머지 네 개는 세는 코드가 한 번도 판정되지 않는다.
+     */
+    @ParameterizedTest(name = "{0} 축이 비면 4/5")
+    @ValueSource(
+            strings = {
+                "assetStabilityReason",
+                "debtRepaymentReason",
+                "financialValueReason",
+                "goalFeasibilityReason",
+                "taxStrategyReason"
+            })
+    void 축이_하나_비면_나머지만_센다(String emptyAxis) {
+        ReportRow row = fullRow();
+        ReflectionTestUtils.setField(row, emptyAxis, null);
+        when(reportMapper.findReportRowByMemberId(1L)).thenReturn(row);
+
+        ReportStatusResponse status = reportService.getReportStatus(1L);
+
+        assertFalse(status.isReady());
+        assertEquals(4, status.getCompletedAxes());
+    }
+
+    /**
+     * {@code expected_asset} 은 컬럼이 추가되기 전에 만들어진 행에는 없을 수 있다. 목표 진행도를
+     * 계산할 수 없으면 그 항목만 비우고 리포트는 정상 응답한다 — 여기서 터지면 예전 리포트가 전부
+     * 열리지 않는다.
+     */
+    @Test
+    void 예상_자산이_없으면_목표_진행도만_비운다() {
+        ReportRow row = fullRow();
+        ReflectionTestUtils.setField(row, "expectedAsset", null);
+        when(reportMapper.findReportRowByMemberId(1L)).thenReturn(row);
+
+        ReportResponse response = reportService.getReport(1L);
+
+        assertNull(response.getGoalProgress());
+        assertEquals("철수", response.getName());
+    }
+
+    @Test
+    void 목표_금액이_없으면_목표_진행도만_비운다() {
+        ReportRow row = fullRow();
+        ReflectionTestUtils.setField(row, "targetAmount", null);
+        when(reportMapper.findReportRowByMemberId(1L)).thenReturn(row);
+
+        ReportResponse response = reportService.getReport(1L);
+
+        assertNull(response.getGoalProgress());
     }
 }
