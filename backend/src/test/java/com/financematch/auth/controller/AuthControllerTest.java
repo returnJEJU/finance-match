@@ -12,6 +12,8 @@ import com.financematch.auth.dto.LoginRequest;
 import com.financematch.auth.dto.LoginResponse;
 import com.financematch.auth.dto.SignupRequest;
 import com.financematch.auth.dto.SignupResponse;
+import com.financematch.auth.dto.TokenReissueRequest;
+import com.financematch.auth.dto.TokenResponse;
 import com.financematch.auth.service.AuthService;
 import com.financematch.common.ApiResponse;
 import java.net.URI;
@@ -84,6 +86,38 @@ class AuthControllerTest {
         authController.login(request);
 
         verify(authService).login(request);
+    }
+
+    // ===== 재발급 =====
+
+    /**
+     * 재발급은 access 토큰이 만료된 상황에서 호출되므로 인증을 걸 수 없다. 신원 확인은 요청 본문의
+     * refresh 토큰이 대신하고, 컨트롤러는 그 값을 서비스로 넘기기만 한다.
+     */
+    @Test
+    void 재발급은_본문의_refresh_토큰을_서비스에_넘긴다() {
+        TokenReissueRequest request = mock(TokenReissueRequest.class);
+        when(request.getRefreshToken()).thenReturn("saved.refresh.token");
+        when(authService.reissue("saved.refresh.token")).thenReturn(mock(TokenResponse.class));
+
+        authController.reissue(request);
+
+        verify(authService).reissue("saved.refresh.token");
+    }
+
+    /** 새 리소스를 만드는 것이 아니라 토큰을 바꿔주는 요청이라 201 이 아닌 200 이다. */
+    @Test
+    void 재발급_응답은_서비스_결과를_그대로_감싼다() {
+        TokenReissueRequest request = mock(TokenReissueRequest.class);
+        TokenResponse serviceResult = mock(TokenResponse.class);
+        when(request.getRefreshToken()).thenReturn("saved.refresh.token");
+        when(authService.reissue("saved.refresh.token")).thenReturn(serviceResult);
+
+        ApiResponse<TokenResponse> response = authController.reissue(request);
+
+        assertTrue(response.isSuccess());
+        assertSame(serviceResult, response.getData());
+        assertNull(response.getCode());
     }
 
     // ===== 로그아웃 =====
