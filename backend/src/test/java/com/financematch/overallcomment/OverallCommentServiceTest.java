@@ -125,6 +125,21 @@ class OverallCommentServiceTest {
     }
 
     @Test
+    void paragraphs가_배열이_아니면_파싱_실패로_취급한다() {
+        when(llmClient.generateComment("프롬프트"))
+                .thenReturn("{\"paragraphs\": \"배열이 아님\"}")
+                .thenReturn("{\"paragraphs\": [\"문단1\"]}");
+        when(ruleValidator.validate(anyString(), anyInt())).thenReturn(validRule());
+        when(overallCommentValidator.validate(anyString(), org.mockito.ArgumentMatchers.eq(input)))
+                .thenReturn(validAxis());
+
+        Optional<String> result = service.generate(input);
+
+        assertTrue(result.isPresent());
+        verify(llmClient, times(2)).generateComment("프롬프트");
+    }
+
+    @Test
     void 깨진_JSON이면_파싱_실패로_취급하고_결국_모두_실패하면_빈값을_반환한다() {
         when(llmClient.generateComment("프롬프트")).thenReturn("이건 JSON이 아님");
 

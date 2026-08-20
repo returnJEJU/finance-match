@@ -50,6 +50,17 @@ class OverallCommentValidatorTest {
     }
 
     @Test
+    void 축_이름이_언급되지_않으면_잡아낸다() {
+        OverallCommentPromptInput input = input(List.of("6억 8004만원"));
+        String comment = "**여러 항목을 잘 챙기고 있어요**. 6억 8004만원까지 예상돼요.";
+
+        OverallCommentValidator.ValidationResult result = validator.validate(comment, input);
+
+        assertFalse(result.valid());
+        assertTrue(result.violations().stream().anyMatch(v -> v.contains("언급 누락")));
+    }
+
+    @Test
     void weakAxes가_있는데_문단이_분리되지_않으면_잡아낸다() {
         // 실제로 관찰된 버그: 프롬프트가 강점/약점 문단을 나누라고 지시해도 모델이 가끔 "\n\n" 없이
         // 전부 한 문단으로 붙여 써서 강점·약점 구분이 안 됨.

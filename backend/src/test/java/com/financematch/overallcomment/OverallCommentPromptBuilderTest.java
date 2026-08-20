@@ -1,7 +1,11 @@
 package com.financematch.overallcomment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -88,6 +92,30 @@ class OverallCommentPromptBuilderTest {
         List<String> actualKeys = new java.util.ArrayList<>();
         root.fieldNames().forEachRemaining(actualKeys::add);
         assertEquals(topLevelKeys, actualKeys);
+    }
+
+    @Test
+    void weakAxes가_비어있으면_강약_문단_분리_체크리스트_문구가_빠진다() {
+        OverallCommentPromptInput input =
+                new OverallCommentPromptInput(
+                        new NamesInfo("민준님", "서연님"),
+                        new GoalInfo("내 집 마련", "6억원", "5년", "2억 7,000만원", null, "45%"),
+                        List.of(new AxisFact("절세 활용", 0.75, List.of("한도를 채움"))),
+                        List.of(),
+                        new FirstStepInfo("절세 활용", List.of("한도를 채움")),
+                        List.of("6억원"));
+
+        String prompt = builder.build(input);
+
+        assertFalse(prompt.contains("weakAxes가 있으므로"));
+    }
+
+    @Test
+    void 입력값_직렬화에_실패하면_IllegalStateException으로_감싼다() {
+        OverallCommentPromptInput input = mock(OverallCommentPromptInput.class);
+        when(input.getNames()).thenThrow(new RuntimeException("직렬화 대상에서 발생한 오류"));
+
+        assertThrows(IllegalStateException.class, () -> builder.build(input));
     }
 
     // 프롬프트 문자열의 "[입력 데이터]" 섹션에서 JSON 블록만 중괄호 짝을 맞춰 추출한다.

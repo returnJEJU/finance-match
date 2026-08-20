@@ -59,4 +59,43 @@ class OverallCommentRuleValidatorTest {
 
         assertTrue(result.valid());
     }
+
+    @Test
+    void 뷰어_종속_표현을_쓰면_위반으로_잡는다() {
+        String comment = "**금융 자산이 탄탄해요**. 배우자님과 함께 준비하면 좋아요.";
+
+        OverallCommentRuleValidator.ValidationResult result = validator.validate(comment, 550);
+
+        assertFalse(result.valid());
+        assertTrue(result.violations().stream().anyMatch(v -> v.contains("뷰어 종속 표현")));
+    }
+
+    @Test
+    void 단정적_표현을_쓰면_위반으로_잡는다() {
+        String comment = "**금융 자산이 탄탄해요**. 반드시 목표를 달성할 거예요.";
+
+        OverallCommentRuleValidator.ValidationResult result = validator.validate(comment, 550);
+
+        assertFalse(result.valid());
+        assertTrue(result.violations().stream().anyMatch(v -> v.contains("단정적 표현")));
+    }
+
+    @Test
+    void 최대_길이를_넘으면_위반으로_잡는다() {
+        String comment = "금융 자산이 탄탄해요.".repeat(30);
+
+        OverallCommentRuleValidator.ValidationResult result = validator.validate(comment, 10);
+
+        assertFalse(result.valid());
+        assertTrue(result.violations().stream().anyMatch(v -> v.contains("길이 초과")));
+    }
+
+    @Test
+    void 마침표가_연속으로_나와_빈_문장이_생기면_건너뛴다() {
+        String comment = "**금융 자산이 탄탄해요**.. 여력을 활용해보세요.";
+
+        OverallCommentRuleValidator.ValidationResult result = validator.validate(comment, 550);
+
+        assertTrue(result.valid());
+    }
 }

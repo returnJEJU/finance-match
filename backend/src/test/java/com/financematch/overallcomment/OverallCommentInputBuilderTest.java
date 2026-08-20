@@ -255,6 +255,44 @@ class OverallCommentInputBuilderTest {
     }
 
     @Test
+    void 목표를_아직_달성하지_못했으면_shortfall이_채워진다() {
+        MatchCalculationInput input = baseInput().build(); // targetAmount 1억
+        MatchCalculationResult result =
+                baseResult()
+                        .assetStabilityScore(new BigDecimal("20.00"))
+                        .debtRepaymentScore(new BigDecimal("15.00"))
+                        .financialValueScore(new BigDecimal("20.00"))
+                        .goalFeasibilityScore(new BigDecimal("15.00"))
+                        .taxStrategyScore(new BigDecimal("5.00"))
+                        .expectedAsset(new BigDecimal("80000000")) // 1억 목표에 못 미침
+                        .build();
+
+        OverallCommentPromptInput promptInput =
+                builder.build(input, result, "김철수", "이영희", "HOUSING", NO_TAX_ROOM, NO_TAX_ROOM);
+
+        assertTrue(promptInput.getGoal().getShortfall() != null);
+        assertTrue(promptInput.getAllowedNumbers().contains(promptInput.getGoal().getShortfall()));
+    }
+
+    @Test
+    void 목표_기간이_12의_배수가_아니면_개월_단위로_표기한다() {
+        MatchCalculationInput input = baseInput().targetPeriodMonths(58).build();
+        MatchCalculationResult result =
+                baseResult()
+                        .assetStabilityScore(new BigDecimal("20.00"))
+                        .debtRepaymentScore(new BigDecimal("15.00"))
+                        .financialValueScore(new BigDecimal("20.00"))
+                        .goalFeasibilityScore(new BigDecimal("15.00"))
+                        .taxStrategyScore(new BigDecimal("5.00"))
+                        .build();
+
+        OverallCommentPromptInput promptInput =
+                builder.build(input, result, "김철수", "이영희", "HOUSING", NO_TAX_ROOM, NO_TAX_ROOM);
+
+        assertEquals("58개월", promptInput.getGoal().getMonthsLabel());
+    }
+
+    @Test
     void 이름은_님을_붙이지_않은_축약형_그대로_들어간다() {
         MatchCalculationInput input = baseInput().build();
         MatchCalculationResult result =
