@@ -738,11 +738,9 @@ const toggleCard = (key) => {
         <div
           v-if="openDescription === 'couple'"
           role="tooltip"
-          class="absolute top-full left-1/2 z-10 mt-2 w-[220px] -translate-x-1/2 rounded-[12px] bg-[#d5fae7] px-3 py-3 text-center text-[14px] leading-[1.5] font-medium tracking-[-0.3px] text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
+          class="absolute top-full left-1/2 z-10 mt-2 w-[220px] -translate-x-1/2 rounded-[12px] bg-mint px-3 py-3 text-center text-[14px] leading-[1.5] font-medium tracking-[-0.3px] text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
         >
-          <span
-            class="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-[#d5fae7]"
-          />
+          <span class="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-mint" />
           <p class="relative font-bold">{{ coupleTypeLabel }}</p>
           <p class="relative mt-0.5">{{ coupleTypeDescription }}</p>
         </div>
@@ -776,11 +774,9 @@ const toggleCard = (key) => {
           <div
             v-if="openDescription === 'me'"
             role="tooltip"
-            class="absolute top-full left-1/2 z-10 mt-2 w-[180px] -translate-x-1/2 rounded-[12px] bg-[#d5fae7] px-3 py-3 text-center text-[14px] leading-[1.5] font-medium tracking-[-0.3px] text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
+            class="absolute top-full left-1/2 z-10 mt-2 w-[180px] -translate-x-1/2 rounded-[12px] bg-mint px-3 py-3 text-center text-[14px] leading-[1.5] font-medium tracking-[-0.3px] text-ink shadow-[0_5px_14px_rgba(0,0,0,0.1)]"
           >
-            <span
-              class="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-[#d5fae7]"
-            />
+            <span class="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-mint" />
             <p class="relative font-bold">{{ me.label }}</p>
             <p class="relative mt-0.5">{{ me.description }}</p>
           </div>
