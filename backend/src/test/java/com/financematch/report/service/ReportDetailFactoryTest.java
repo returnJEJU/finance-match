@@ -60,7 +60,7 @@ class ReportDetailFactoryTest {
     }
 
     @Test
-    void 또래_대비_80에서_120퍼센트면_안정적인_수준으로_평가한다() {
+    void 또래_대비_100에서_120퍼센트면_안정적인_수준으로_평가한다() {
         ReportMemberDetailSource me = defaultMember("철수");
         ReportMemberDetailSource partner = defaultMember("영희");
         set(me, "financialAsset", new BigDecimal("90000000"));
