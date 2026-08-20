@@ -127,10 +127,6 @@ public class DepositRecommendationPolicy
                 product,
                 targetPeriodMonths);
 
-        if (applicableTerm == null) {
-            return Optional.empty();
-        }
-
         return findApplicableRate(product, applicableTerm)
                 .map(rate ->
                         new DepositCandidate(

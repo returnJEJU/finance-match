@@ -53,7 +53,6 @@ public class RecommendationResponseAssembler {
                                 .add(product));
 
         return productsBySlot.values().stream()
-                .filter(slotProducts -> !slotProducts.isEmpty())
                 .map(this::assemblePackageSlot)
                 .toList();
     }
@@ -97,21 +96,18 @@ public class RecommendationResponseAssembler {
         Integer aum = null;
         LoanPurpose loanPurpose = null;
 
-        switch (slotType) {
-            case DEPOSIT, SAVINGS -> {
-                comparisonLabel = "기본금리";
-                comparisonValue = formatRate(product.getApplicableBaseRate());
-            }
-            case INVESTMENT -> {
-                riskLevel = product.getRiskLevel();
-                riskLabel = riskLabel(riskLevel);
-                aum = product.getAum();
-            }
-            case LOAN -> {
-                comparisonLabel = "최고금리";
-                comparisonValue = formatRate(product.getLoanMaxRate());
-                loanPurpose = product.getLoanPurpose();
-            }
+        if (slotType == RecommendationSlotType.DEPOSIT
+                || slotType == RecommendationSlotType.SAVINGS) {
+            comparisonLabel = "기본금리";
+            comparisonValue = formatRate(product.getApplicableBaseRate());
+        } else if (slotType == RecommendationSlotType.INVESTMENT) {
+            riskLevel = product.getRiskLevel();
+            riskLabel = riskLabel(riskLevel);
+            aum = product.getAum();
+        } else {
+            comparisonLabel = "최고금리";
+            comparisonValue = formatRate(product.getLoanMaxRate());
+            loanPurpose = product.getLoanPurpose();
         }
 
         return new PackageProductResponse(

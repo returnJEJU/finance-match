@@ -193,7 +193,7 @@ public class RecommendationService {
 
         jointRecommendations.forEach(
                 (slotType, products) -> {
-                    if (products == null || products.isEmpty()) {
+                    if (products.isEmpty()) {
                         return;
                     }
 
