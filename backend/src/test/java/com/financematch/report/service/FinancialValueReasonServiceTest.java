@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.financematch.report.dto.reason.FinancialValueReasonInput;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class FinancialValueReasonServiceTest {
 
@@ -64,5 +65,28 @@ class FinancialValueReasonServiceTest {
         FinancialValueReasonInput input = new FinancialValueReasonInput(3, 3, 3, 3, 4, 4, 4, 4);
 
         assertEquals("두 분은 가치관이 비슷해요.", service.fallback(input));
+    }
+
+    /**
+     * 받침 유무로 이/가를 고르는 조사 처리.
+     *
+     * <p>지금은 "가" 쪽이 공개 경로로 닿지 않는다 — 이 분기를 타려면 항목 4개가 전부 달라야 하는데,
+     * 그러면 이어붙인 문자열이 항상 "손실 감내력"(받침 있음)으로 끝나기 때문이다. <b>항목 이름이
+     * 바뀌는 순간 살아나는 코드</b>라, 그때 "이해도이 차이가 나요" 같은 문장이 나가지 않도록
+     * 메서드를 직접 호출해 양쪽을 고정한다.
+     */
+    @Test
+    void 받침이_있으면_이_를_붙인다() {
+        assertEquals(
+                "투자 경험이",
+                ReflectionTestUtils.invokeMethod(service, "withSubjectParticle", "투자 경험"));
+    }
+
+    @Test
+    void 받침이_없으면_가_를_붙인다() {
+        assertEquals(
+                "금융 투자 상품 이해도가",
+                ReflectionTestUtils.invokeMethod(
+                        service, "withSubjectParticle", "금융 투자 상품 이해도"));
     }
 }

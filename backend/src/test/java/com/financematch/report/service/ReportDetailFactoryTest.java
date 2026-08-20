@@ -323,4 +323,27 @@ class ReportDetailFactoryTest {
         assertEquals("두 분은 궁합이 좋아요.", details.getAiComment().getBody());
         assertEquals("AI가 분석한 종합 평가예요.", details.getAiComment().getHeadline());
     }
+
+    /**
+     * 그래프 비율을 0~100 으로 자르는 방어 코드.
+     *
+     * <p>공개 경로로는 닿지 않는다 — 호출부가 모두 {@code won()} 을 거치는데 그 안에서 이미
+     * {@code .max(ZERO)} 로 음수를 0 으로 만들기 때문이다. 그래서 <b>메서드를 직접 호출</b>해
+     * 확인한다. 앞단이 바뀌어 음수가 흘러들어도 막대가 반대로 그려지지 않아야 한다.
+     */
+    @Test
+    void 비율은_0_아래로_내려가지_않는다() {
+        BigDecimal clamped =
+                ReflectionTestUtils.invokeMethod(factory, "clampPercent", new BigDecimal("-5"));
+
+        assertEquals(0, clamped.compareTo(BigDecimal.ZERO));
+    }
+
+    @Test
+    void 비율은_100_위로_올라가지_않는다() {
+        BigDecimal clamped =
+                ReflectionTestUtils.invokeMethod(factory, "clampPercent", new BigDecimal("140"));
+
+        assertEquals(0, clamped.compareTo(new BigDecimal("100")));
+    }
 }
