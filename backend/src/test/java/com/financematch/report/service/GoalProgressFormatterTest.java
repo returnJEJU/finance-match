@@ -54,4 +54,15 @@ class GoalProgressFormatterTest {
 
         assertEquals("89%", progress.getAchievementRate());
     }
+
+    /**
+     * 목표 금액이 0 이면 달성률을 계산할 수 없다(0 으로 나눔). 계산 대신 0% 로 내려보낸다 —
+     * 목표를 아직 정하지 않은 커플의 리포트가 여기서 터지면 화면 전체가 안 뜬다.
+     */
+    @Test
+    void 목표_금액이_0_이면_달성률은_0_퍼센트다() {
+        GoalProgress progress = formatter.format(new BigDecimal(50_000_000), BigDecimal.ZERO);
+
+        assertEquals("0%", progress.getAchievementRate());
+    }
 }
