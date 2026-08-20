@@ -23,7 +23,7 @@ class TaxStrategyReasonServiceTest {
         TaxSavingProfile partner = new TaxSavingProfile(TaxAccountInput.unopened(), OPEN_FULL, OPEN_FULL);
         TaxStrategyReasonInput input = new TaxStrategyReasonInput("김철수", "이영희", me, partner);
 
-        String reason = service.fallback(input);
+        String reason = service.generate(input);
 
         // GAP-08: 성을 뗀 축약형("영희")으로 부른다.
         assertEquals("영희님은 ISA 계좌를 개설하지 않았어요. 추천탭에서 상품들을 만나보세요.", reason);
@@ -39,7 +39,7 @@ class TaxStrategyReasonServiceTest {
         TaxSavingProfile partner = new TaxSavingProfile(OPEN_FULL, OPEN_FULL, OPEN_FULL);
         TaxStrategyReasonInput input = new TaxStrategyReasonInput("김철수", "이영희", me, partner);
 
-        String reason = service.fallback(input);
+        String reason = service.generate(input);
 
         assertEquals("철수님은 올해 ISA 한도 2,000만원을 다 채우지 않았어요. 더 채우고 세제 혜택 받으세요.", reason);
         assertTrue(!reason.contains("영희"));
@@ -55,7 +55,7 @@ class TaxStrategyReasonServiceTest {
         TaxSavingProfile partner = new TaxSavingProfile(OPEN_FULL, OPEN_FULL, OPEN_FULL);
         TaxStrategyReasonInput input = new TaxStrategyReasonInput("김철수", "이영희", me, partner);
 
-        String reason = service.fallback(input);
+        String reason = service.generate(input);
 
         assertEquals("철수님은 ISA·IRP·연금저축 모두 개설 안 하셨어요. 추천탭에서 상품들을 만나보세요.", reason);
     }
@@ -67,7 +67,7 @@ class TaxStrategyReasonServiceTest {
         TaxSavingProfile partner = new TaxSavingProfile(OPEN_FULL, OPEN_FULL, TaxAccountInput.unopened());
         TaxStrategyReasonInput input = new TaxStrategyReasonInput("김철수", "이영희", me, partner);
 
-        String reason = service.fallback(input);
+        String reason = service.generate(input);
 
         assertTrue(reason.indexOf("철수") < reason.indexOf("영희"), "가나다순(철수 먼저)이어야 함: " + reason);
     }
@@ -79,7 +79,7 @@ class TaxStrategyReasonServiceTest {
         TaxSavingProfile partner = new TaxSavingProfile(OPEN_FULL, OPEN_FULL, TaxAccountInput.unopened());
         TaxStrategyReasonInput input = new TaxStrategyReasonInput("김철수", "이영희", me, partner);
 
-        String reason = service.fallback(input);
+        String reason = service.generate(input);
 
         assertEquals(
                 "철수님은 IRP 계좌를 개설하지 않았어요. 영희님은 연금저축 계좌를 개설하지 않았어요. 추천탭에서 상품들을 만나보세요.",
@@ -98,7 +98,7 @@ class TaxStrategyReasonServiceTest {
         TaxSavingProfile partner = new TaxSavingProfile(underLimitIsa, OPEN_FULL, OPEN_FULL);
         TaxStrategyReasonInput input = new TaxStrategyReasonInput("김철수", "이영희", me, partner);
 
-        String reason = service.fallback(input);
+        String reason = service.generate(input);
 
         assertEquals(
                 "철수님은 IRP 계좌를 개설하지 않았어요. 추천탭에서 상품들을 만나보세요. "
@@ -116,7 +116,7 @@ class TaxStrategyReasonServiceTest {
         TaxSavingProfile partner = new TaxSavingProfile(OPEN_FULL, TaxAccountInput.unopened(), OPEN_FULL);
         TaxStrategyReasonInput input = new TaxStrategyReasonInput("김철수", "이영희", me, partner);
 
-        String reason = service.fallback(input);
+        String reason = service.generate(input);
 
         assertEquals(
                 "철수님은 올해 ISA 한도 2,000만원을 다 채우지 않았어요. 더 채우고 세제 혜택 받으세요. "
@@ -132,7 +132,7 @@ class TaxStrategyReasonServiceTest {
         TaxSavingProfile partner = new TaxSavingProfile(OPEN_FULL, TaxAccountInput.unopened(), OPEN_FULL);
         TaxStrategyReasonInput input = new TaxStrategyReasonInput("이영희", "김철수", me, partner);
 
-        String reason = service.fallback(input);
+        String reason = service.generate(input);
 
         assertTrue(reason.indexOf("철수") < reason.indexOf("영희"), "뷰어와 무관하게 가나다순이어야 함: " + reason);
     }
@@ -143,7 +143,7 @@ class TaxStrategyReasonServiceTest {
         TaxSavingProfile partner = new TaxSavingProfile(OPEN_FULL, OPEN_FULL, OPEN_FULL);
         TaxStrategyReasonInput input = new TaxStrategyReasonInput("김철수", "이영희", me, partner);
 
-        String reason = service.fallback(input);
+        String reason = service.generate(input);
 
         assertTrue(reason.contains("ISA") && reason.contains("IRP") && reason.contains("연금저축"));
         assertTrue(!reason.contains("철수") && !reason.contains("영희"));
