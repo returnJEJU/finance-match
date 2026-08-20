@@ -22,6 +22,7 @@ public class ReportDetailFactory {
 
     private static final BigDecimal ZERO = BigDecimal.ZERO;
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
+    private static final BigDecimal COUPLE_MEMBER_COUNT = BigDecimal.valueOf(2);
     private static final BigDecimal WON_PER_EOK = BigDecimal.valueOf(100_000_000L);
     private static final BigDecimal WON_PER_MAN = BigDecimal.valueOf(10_000L);
     private static final BigDecimal ASSET_GRAPH_MAX = BigDecimal.valueOf(200_000_000L);
@@ -50,14 +51,14 @@ public class ReportDetailFactory {
             ReportMemberDetailSource me,
             ReportMemberDetailSource partner,
             BigDecimal peerAssetMedian) {
-        BigDecimal referenceAsset = won(peerAssetMedian);
+        BigDecimal referenceAsset = won(peerAssetMedian).multiply(COUPLE_MEMBER_COUNT);
         BigDecimal coupleAsset = won(me.getFinancialAsset()).add(won(partner.getFinancialAsset()));
         BigDecimal ratio = percentage(coupleAsset, referenceAsset, 2);
 
         String note;
         if (ratio.compareTo(BigDecimal.valueOf(120)) >= 0) {
             note = "또래 커플 대비 높은 수준";
-        } else if (ratio.compareTo(BigDecimal.valueOf(80)) >= 0) {
+        } else if (ratio.compareTo(BigDecimal.valueOf(100)) >= 0) {
             note = "또래 커플 대비 안정적인 수준";
         } else {
             note = "또래 커플 대비 보완이 필요한 수준";

@@ -42,7 +42,9 @@ public class SimpleMyDataProvider implements MyDataProvider {
                     Map.entry("demo.newlywed@chaltteok.dev", MyDataScenario.NEWLYWED),
                     Map.entry("demo.renter@chaltteok.dev", MyDataScenario.RENTER),
                     Map.entry("demo.rich@chaltteok.dev", MyDataScenario.RICH),
-                    Map.entry("demo.debt@chaltteok.dev", MyDataScenario.HIGH_RATE_DEBT));
+                    Map.entry("demo.debt@chaltteok.dev", MyDataScenario.HIGH_RATE_DEBT),
+                    Map.entry("demo.video.jeonse1@chaltteok.dev", MyDataScenario.JEONSE_SAVER),
+                    Map.entry("demo.video.jeonse2@chaltteok.dev", MyDataScenario.JEONSE_ISA_DORMANT));
 
     private final MemberMapper memberMapper;
 
