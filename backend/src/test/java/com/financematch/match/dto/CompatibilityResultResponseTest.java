@@ -1,13 +1,12 @@
 package com.financematch.match.dto;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-
 import java.math.BigDecimal;
 
 import org.junit.jupiter.api.Test;
 
 import com.financematch.match.domain.CompatibilityResult;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class CompatibilityResultResponseTest {
 
@@ -67,6 +66,18 @@ class CompatibilityResultResponseTest {
         assertEquals(
                 new BigDecimal("69.29"),
                 response.getTotalScore()
+        );
+    }
+    @Test
+    void 결과가_null이면_예외를_던진다() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> CompatibilityResultResponse.from(null)
+        );
+
+        assertEquals(
+                "금융 궁합도 결과가 필요합니다.",
+                exception.getMessage()
         );
     }
 }
