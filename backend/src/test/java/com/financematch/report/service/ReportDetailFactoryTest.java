@@ -51,7 +51,8 @@ class ReportDetailFactoryTest {
     void 또래_대비_120퍼센트_이상이면_높은_수준으로_평가한다() {
         ReportMemberDetailSource me = defaultMember("철수");
         ReportMemberDetailSource partner = defaultMember("영희");
-        set(me, "financialAsset", new BigDecimal("150000000"));
+        // 또래 참조값은 이제 peerAssetMedian의 2배(2억)라서, 150%가 되려면 3억이 필요하다.
+        set(me, "financialAsset", new BigDecimal("300000000"));
 
         ReportDetails details =
                 factory.create(1L, defaultCouple(), me, partner, new BigDecimal("100000000"));
@@ -63,7 +64,8 @@ class ReportDetailFactoryTest {
     void 또래_대비_100에서_120퍼센트면_안정적인_수준으로_평가한다() {
         ReportMemberDetailSource me = defaultMember("철수");
         ReportMemberDetailSource partner = defaultMember("영희");
-        set(me, "financialAsset", new BigDecimal("90000000"));
+        // 또래 참조값은 peerAssetMedian의 2배(2억)라서, 110%가 되려면 2.2억이 필요하다.
+        set(me, "financialAsset", new BigDecimal("220000000"));
 
         ReportDetails details =
                 factory.create(1L, defaultCouple(), me, partner, new BigDecimal("100000000"));
