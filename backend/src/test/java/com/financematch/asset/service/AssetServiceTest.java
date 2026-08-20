@@ -29,6 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 
 @ExtendWith(MockitoExtension.class)
 class AssetServiceTest {
@@ -171,6 +172,119 @@ class AssetServiceTest {
      * {@code MyDataScenario}의 값이 바뀌어도 이 테스트는 영향을 받지 않아야 하므로 provider 를 직접
      * 붙이지 않는다. 7L 은 무부채, 8L 은 대출 보유 회원이다.
      */
+
+    // ===== 방어 코드 =====
+
+    /**
+     * 회원 ID 는 {@code @LoginMember} 리졸버가 채워주므로 정상 경로에서는 null 이 될 수 없다. 다만
+     * 서비스를 다른 곳에서 부르게 되면 null 이 들어올 수 있고, 그때 NullPointerException 이 나면
+     * 500 이 나간다. <b>입력이 잘못된 것은 400 으로 끝나야 한다.</b>
+     */
+    @Test
+    void 회원_ID_가_없으면_INVALID_INPUT_이다() {
+        assertEquals(
+                ErrorCode.INVALID_INPUT,
+                assertThrows(ApiException.class, () -> assetService.getAssets(null)).getErrorCode());
+        assertEquals(
+                ErrorCode.INVALID_INPUT,
+                assertThrows(ApiException.class, () -> assetService.link(null)).getErrorCode());
+        assertEquals(
+                ErrorCode.INVALID_INPUT,
+                assertThrows(ApiException.class, () -> assetService.refresh(null)).getErrorCode());
+    }
+
+    /**
+     * 마이데이터 응답이 비어 있으면 그 뒤 집계에서 NullPointerException 이 난다. 외부 연동 실패는
+     * 우리 서버의 오류가 아니므로 {@code MYDATA_LINK_FAILED} 로 바꿔 내보낸다.
+     */
+    @Test
+    void 마이데이터_응답이_없으면_MYDATA_LINK_FAILED_다() {
+        AssetService service = new AssetService(assetMapper, memberId -> null);
+
+        assertEquals(
+                ErrorCode.MYDATA_LINK_FAILED,
+                assertThrows(ApiException.class, () -> service.link(7L)).getErrorCode());
+    }
+
+    @Test
+    void 마이데이터_조회가_실패하면_MYDATA_LINK_FAILED_다() {
+        AssetService service =
+                new AssetService(
+                        assetMapper,
+                        memberId -> {
+                            throw new IllegalStateException("연동 서버 응답 없음");
+                        });
+
+        // 외부 연동 쪽 예외가 그대로 올라가면 500 이 나간다. 원인은 로그에만 남긴다.
+        assertEquals(
+                ErrorCode.MYDATA_LINK_FAILED,
+                assertThrows(ApiException.class, () -> service.link(7L)).getErrorCode());
+    }
+
+    /**
+     * INSERT 가 1행을 바꾸지 않았다는 것은 저장이 안 됐다는 뜻이다. 그대로 두면 <b>연동에 성공했다고
+     * 응답해놓고 DB 에는 아무것도 없는</b> 상태가 된다.
+     */
+    @Test
+    void 금융_요약_저장이_안_되면_기동을_멈춘다() {
+        when(assetMapper.insertFinancialSummary(any())).thenReturn(0);
+
+        IllegalStateException e =
+                assertThrows(IllegalStateException.class, () -> assetService.link(7L));
+
+        assertEquals("금융 요약 저장에 실패했습니다.", e.getMessage());
+    }
+
+    @Test
+    void 연금_ISA_저장이_안_되면_기동을_멈춘다() {
+        when(assetMapper.insertFinancialSummary(any())).thenReturn(1);
+        when(assetMapper.insertPensionIsaAccount(any())).thenReturn(0);
+
+        IllegalStateException e =
+                assertThrows(IllegalStateException.class, () -> assetService.link(7L));
+
+        assertEquals("연금·ISA 요약 저장에 실패했습니다.", e.getMessage());
+    }
+
+    /**
+     * 이미 연동된 회원이 다시 연동을 시도하면 유니크 제약에 걸린다. DB 예외를 그대로 올리지 않고
+     * 도메인 의미가 있는 코드로 바꾼다.
+     */
+    @Test
+    void 이미_연동된_회원이_다시_연동하면_ASSET_ALREADY_LINKED_다() {
+        when(assetMapper.insertFinancialSummary(any()))
+                .thenThrow(new DuplicateKeyException("member_id 중복"));
+
+        assertEquals(
+                ErrorCode.ASSET_ALREADY_LINKED,
+                assertThrows(ApiException.class, () -> assetService.link(7L)).getErrorCode());
+    }
+
+    /**
+     * upsert 는 새로 넣으면 1행, 기존 값을 바꾸면 2행을 보고한다(MySQL). 그 범위를 벗어났다면
+     * 쿼리나 스키마가 예상과 다른 것이다.
+     */
+    @Test
+    void 갱신_결과가_예상_범위를_벗어나면_기동을_멈춘다() {
+        when(assetMapper.upsertFinancialSummary(any())).thenReturn(3);
+
+        IllegalStateException e =
+                assertThrows(IllegalStateException.class, () -> assetService.refresh(7L));
+
+        assertEquals("금융 요약 갱신에 실패했습니다.", e.getMessage());
+    }
+
+    @Test
+    void 연금_ISA_갱신_결과가_음수면_기동을_멈춘다() {
+        when(assetMapper.upsertFinancialSummary(any())).thenReturn(1);
+        when(assetMapper.upsertPensionIsaAccount(any())).thenReturn(-1);
+
+        IllegalStateException e =
+                assertThrows(IllegalStateException.class, () -> assetService.refresh(7L));
+
+        assertEquals("연금·ISA 요약 갱신에 실패했습니다.", e.getMessage());
+    }
+
     private static final class FixedMyDataProvider implements MyDataProvider {
 
         @Override
