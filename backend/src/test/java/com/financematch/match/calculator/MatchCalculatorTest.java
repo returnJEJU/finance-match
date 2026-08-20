@@ -2,234 +2,89 @@ package com.financematch.match.calculator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class MatchCalculatorTest {
 
-    private final MatchCalculator calculator = new MatchCalculator(
-            new FinancialAssetEngine(),
-            new DebtRepaymentEngine(),
-            new GoalFeasibilityEngine(),
-            new FinancialValueEngine(),
-            new TaxStrategyEngine()
-    );
+    @Mock
+    private FinancialAssetEngine financialAssetEngine;
 
-    @Test
-    void 금융자산_점수를_계산한다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .age(32)
-                .ageGroupAssetMedian(new BigDecimal("93300000"))
-                .financialAsset(new BigDecimal("90000000"))
-                .build();
+    @Mock
+    private DebtRepaymentEngine debtRepaymentEngine;
 
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .age(33)
-                .ageGroupAssetMedian(new BigDecimal("93300000"))
-                .financialAsset(new BigDecimal("180000000"))
-                .build();
+    @Mock
+    private GoalFeasibilityEngine goalFeasibilityEngine;
 
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .build();
+    @Mock
+    private FinancialValueEngine financialValueEngine;
 
-        BigDecimal result = calculator.calculateAssetStabilityScore(input);
+    @Mock
+    private TaxStrategyEngine taxStrategyEngine;
 
-        System.out.println("금융자산 점수: " + result);
-        assertEquals(new BigDecimal("15.52"), result);
+    private MatchCalculator calculator;
+
+    @BeforeEach
+    void setUp() {
+        calculator = new MatchCalculator(
+                financialAssetEngine,
+                debtRepaymentEngine,
+                goalFeasibilityEngine,
+                financialValueEngine,
+                taxStrategyEngine
+        );
     }
 
     @Test
-    void 부채_점수를_계산한다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .annualIncome(new BigDecimal("45000000"))
-                .totalDebt(new BigDecimal("20000000"))
-                .annualDebtPayment(new BigDecimal("6000000"))
-                .financialAsset(new BigDecimal("90000000"))
-                .build();
+    void 전체_금융궁합도를_계산하고_결과를_조립한다() {
+        MatchCalculationInput input = createInput();
 
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .annualIncome(new BigDecimal("75000000"))
-                .totalDebt(new BigDecimal("40000000"))
-                .annualDebtPayment(new BigDecimal("10000000"))
-                .financialAsset(new BigDecimal("180000000"))
-                .build();
+        when(financialAssetEngine.calculateScore(input))
+                .thenReturn(new BigDecimal("15.52"));
 
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .build();
+        when(financialAssetEngine.calculateCoupleAssetRatio(input))
+                .thenReturn(1.45);
 
-        BigDecimal result = calculator.calculateDebtRepaymentScore(input);
+        when(debtRepaymentEngine.calculateScore(input))
+                .thenReturn(new BigDecimal("14.00"));
 
-        System.out.println("부채 점수: " + result);
-        assertEquals(new BigDecimal("14.00"), result);
-    }
+        when(debtRepaymentEngine.calculateMemberScore(
+                input.getMemberA()
+        )).thenReturn(62.5);
 
-    @Test
-    void 투자_가치관_일치도_점수를_계산한다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .financialAssetRatioScore(3)
-                .investmentExperienceScore(3)
-                .financialKnowledgeScore(3)
-                .capitalPreservationScore(4)
-                .build();
+        when(debtRepaymentEngine.calculateMemberScore(
+                input.getMemberB()
+        )).thenReturn(100.0);
 
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .financialAssetRatioScore(4)
-                .investmentExperienceScore(4)
-                .financialKnowledgeScore(4)
-                .capitalPreservationScore(2)
-                .build();
+        when(financialValueEngine.calculateScore(input))
+                .thenReturn(new BigDecimal("16.95"));
 
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .build();
+        when(goalFeasibilityEngine.calculateScore(input))
+                .thenReturn(new BigDecimal("17.05"));
 
-        BigDecimal result = calculator.calculateFinancialValueScore(input);
+        when(goalFeasibilityEngine.calculateExpectedAsset(input))
+                .thenReturn(new BigDecimal("362000000"));
 
-        System.out.println("투자 가치관 일치도 점수: " + result);
-        assertEquals(new BigDecimal("16.95"), result);
-    }
+        when(taxStrategyEngine.calculateScore(input))
+                .thenReturn(new BigDecimal("8.00"));
 
-    @Test
-    void 목표_달성_가능성_점수를_계산한다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .financialAsset(new BigDecimal("90000000"))
-                .monthlyAvailableAmount(new BigDecimal("1000000"))
-                .pensionSavingBalance(new BigDecimal("5000000"))
-                .irpBalance(BigDecimal.ZERO)
-                .pensionAnnualPayment(new BigDecimal("6000000"))
-                .irpAnnualPayment(BigDecimal.ZERO)
-                .build();
+        when(taxStrategyEngine.isCalculated(input))
+                .thenReturn(true);
 
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .financialAsset(new BigDecimal("180000000"))
-                .monthlyAvailableAmount(new BigDecimal("1500000"))
-                .pensionSavingBalance(new BigDecimal("20000000"))
-                .irpBalance(new BigDecimal("15000000"))
-                .pensionAnnualPayment(new BigDecimal("6000000"))
-                .irpAnnualPayment(new BigDecimal("3000000"))
-                .build();
-
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .firstGoalType("HOUSING")
-                .targetAmount(new BigDecimal("350000000"))
-                .targetPeriodMonths(36)
-                .build();
-
-        BigDecimal result = calculator.calculateGoalFeasibilityScore(input);
-
-        System.out.println("목표 달성 가능성 점수: " + result);
-
-        assertEquals(new BigDecimal("17.05"), result);
-    }
-
-    @Test
-    void 절세_활용도_점수를_계산한다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .pensionAnnualPayment(new BigDecimal("6000000"))
-                .irpAnnualPayment(BigDecimal.ZERO)
-                .dcAnnualPayment(BigDecimal.ZERO)
-                .isaAnnualDeposit(new BigDecimal("10000000"))
-                .taxEligibilityStatus("ELIGIBLE")
-                .isaEligibilityStatus("ELIGIBLE")
-                .build();
-
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .pensionAnnualPayment(new BigDecimal("6000000"))
-                .irpAnnualPayment(new BigDecimal("3000000"))
-                .dcAnnualPayment(BigDecimal.ZERO)
-                .isaAnnualDeposit(new BigDecimal("20000000"))
-                .taxEligibilityStatus("ELIGIBLE")
-                .isaEligibilityStatus("ELIGIBLE")
-                .build();
-
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .build();
-
-        BigDecimal result = calculator.calculateTaxStrategyScore(input);
-
-        System.out.println("절세 활용도 점수: " + result);
-
-        assertEquals(new BigDecimal("8.00"), result);
-    }
-
-    @Test
-    void 전체_금융_궁합도_점수를_계산한다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .age(32)
-                .ageGroupAssetMedian(new BigDecimal("93300000"))
-                .financialAsset(new BigDecimal("90000000"))
-
-                .annualIncome(new BigDecimal("45000000"))
-                .totalDebt(new BigDecimal("20000000"))
-                .annualDebtPayment(new BigDecimal("6000000"))
-
-                .financialAssetRatioScore(3)
-                .investmentExperienceScore(3)
-                .financialKnowledgeScore(3)
-                .capitalPreservationScore(4)
-
-                .monthlyAvailableAmount(new BigDecimal("1000000"))
-                .pensionSavingBalance(new BigDecimal("5000000"))
-                .irpBalance(BigDecimal.ZERO)
-                .pensionAnnualPayment(new BigDecimal("6000000"))
-                .irpAnnualPayment(BigDecimal.ZERO)
-
-                .dcAnnualPayment(BigDecimal.ZERO)
-                .isaAnnualDeposit(new BigDecimal("10000000"))
-                .taxEligibilityStatus("ELIGIBLE")
-                .isaEligibilityStatus("ELIGIBLE")
-                .build();
-
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .age(33)
-                .ageGroupAssetMedian(new BigDecimal("93300000"))
-                .financialAsset(new BigDecimal("180000000"))
-
-                .annualIncome(new BigDecimal("75000000"))
-                .totalDebt(new BigDecimal("40000000"))
-                .annualDebtPayment(new BigDecimal("10000000"))
-
-                .financialAssetRatioScore(4)
-                .investmentExperienceScore(4)
-                .financialKnowledgeScore(4)
-                .capitalPreservationScore(2)
-
-                .monthlyAvailableAmount(new BigDecimal("1500000"))
-                .pensionSavingBalance(new BigDecimal("20000000"))
-                .irpBalance(new BigDecimal("15000000"))
-                .pensionAnnualPayment(new BigDecimal("6000000"))
-                .irpAnnualPayment(new BigDecimal("3000000"))
-
-                .dcAnnualPayment(BigDecimal.ZERO)
-                .isaAnnualDeposit(new BigDecimal("20000000"))
-                .taxEligibilityStatus("ELIGIBLE")
-                .isaEligibilityStatus("ELIGIBLE")
-                .build();
-
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .firstGoalType("HOUSING")
-                .targetAmount(new BigDecimal("350000000"))
-                .targetPeriodMonths(36)
-                .build();
-
-        MatchCalculationResult result = calculator.calculate(input);
-
-        System.out.println(result);
+        MatchCalculationResult result =
+                calculator.calculate(input);
 
         assertEquals(
                 new BigDecimal("15.52"),
@@ -237,8 +92,24 @@ class MatchCalculatorTest {
         );
 
         assertEquals(
+                1.45,
+                result.getCoupleAssetRatio(),
+                0.0001
+        );
+
+        assertEquals(
                 new BigDecimal("14.00"),
                 result.getDebtRepaymentScore()
+        );
+
+        assertEquals(
+                new BigDecimal("62.50"),
+                result.getMemberADebtScore()
+        );
+
+        assertEquals(
+                new BigDecimal("100.00"),
+                result.getMemberBDebtScore()
         );
 
         assertEquals(
@@ -249,6 +120,11 @@ class MatchCalculatorTest {
         assertEquals(
                 new BigDecimal("17.05"),
                 result.getGoalFeasibilityScore()
+        );
+
+        assertEquals(
+                new BigDecimal("362000000"),
+                result.getExpectedAsset()
         );
 
         assertEquals(
@@ -256,97 +132,93 @@ class MatchCalculatorTest {
                 result.getTaxStrategyScore()
         );
 
+        assertTrue(result.isTaxStrategyCalculated());
+
+        /*
+         * 반올림 후 합산:
+         *
+         * 15.52 → 16
+         * 14.00 → 14
+         * 16.95 → 17
+         * 17.05 → 17
+         * 8.00  → 8
+         *
+         * 총점 = 72
+         */
         assertEquals(
                 new BigDecimal("72"),
                 result.getTotalScore()
         );
+
+        verify(financialAssetEngine)
+                .calculateScore(input);
+
+        verify(financialAssetEngine)
+                .calculateCoupleAssetRatio(input);
+
+        verify(debtRepaymentEngine)
+                .calculateScore(input);
+
+        verify(debtRepaymentEngine)
+                .calculateMemberScore(input.getMemberA());
+
+        verify(debtRepaymentEngine)
+                .calculateMemberScore(input.getMemberB());
+
+        verify(financialValueEngine)
+                .calculateScore(input);
+
+        verify(goalFeasibilityEngine)
+                .calculateScore(input);
+
+        verify(goalFeasibilityEngine)
+                .calculateExpectedAsset(input);
+
+        verify(taxStrategyEngine)
+                .calculateScore(input);
+
+        verify(taxStrategyEngine)
+                .isCalculated(input);
     }
 
     @Test
     void 절세가_미산출이면_90점을_100점으로_환산한다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .age(32)
-                .ageGroupAssetMedian(new BigDecimal("93300000"))
-                .financialAsset(new BigDecimal("90000000"))
+        MatchCalculationInput input = createInput();
 
-                .annualIncome(new BigDecimal("45000000"))
-                .totalDebt(new BigDecimal("20000000"))
-                .annualDebtPayment(new BigDecimal("6000000"))
+        when(financialAssetEngine.calculateScore(input))
+                .thenReturn(new BigDecimal("15.52"));
 
-                .financialAssetRatioScore(3)
-                .investmentExperienceScore(3)
-                .financialKnowledgeScore(3)
-                .capitalPreservationScore(4)
+        when(financialAssetEngine.calculateCoupleAssetRatio(input))
+                .thenReturn(1.45);
 
-                .monthlyAvailableAmount(new BigDecimal("1000000"))
-                .pensionSavingBalance(new BigDecimal("5000000"))
-                .irpBalance(BigDecimal.ZERO)
-                .pensionAnnualPayment(new BigDecimal("6000000"))
-                .irpAnnualPayment(BigDecimal.ZERO)
+        when(debtRepaymentEngine.calculateScore(input))
+                .thenReturn(new BigDecimal("14.00"));
 
-                .dcAnnualPayment(BigDecimal.ZERO)
-                .isaAnnualDeposit(new BigDecimal("10000000"))
-                .taxEligibilityStatus("INELIGIBLE")
-                .isaEligibilityStatus("INELIGIBLE")
-                .build();
+        when(debtRepaymentEngine.calculateMemberScore(
+                input.getMemberA()
+        )).thenReturn(62.5);
 
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .age(33)
-                .ageGroupAssetMedian(new BigDecimal("93300000"))
-                .financialAsset(new BigDecimal("180000000"))
+        when(debtRepaymentEngine.calculateMemberScore(
+                input.getMemberB()
+        )).thenReturn(100.0);
 
-                .annualIncome(new BigDecimal("75000000"))
-                .totalDebt(new BigDecimal("40000000"))
-                .annualDebtPayment(new BigDecimal("10000000"))
+        when(financialValueEngine.calculateScore(input))
+                .thenReturn(new BigDecimal("16.95"));
 
-                .financialAssetRatioScore(4)
-                .investmentExperienceScore(4)
-                .financialKnowledgeScore(4)
-                .capitalPreservationScore(2)
+        when(goalFeasibilityEngine.calculateScore(input))
+                .thenReturn(new BigDecimal("17.05"));
 
-                .monthlyAvailableAmount(new BigDecimal("1500000"))
-                .pensionSavingBalance(new BigDecimal("20000000"))
-                .irpBalance(new BigDecimal("15000000"))
-                .pensionAnnualPayment(new BigDecimal("6000000"))
-                .irpAnnualPayment(new BigDecimal("3000000"))
+        when(goalFeasibilityEngine.calculateExpectedAsset(input))
+                .thenReturn(new BigDecimal("362000000"));
 
-                .dcAnnualPayment(BigDecimal.ZERO)
-                .isaAnnualDeposit(new BigDecimal("20000000"))
-                .taxEligibilityStatus("INELIGIBLE")
-                .isaEligibilityStatus("INELIGIBLE")
-                .build();
+        when(taxStrategyEngine.calculateScore(input))
+                .thenReturn(new BigDecimal("0.00"));
 
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .firstGoalType("HOUSING")
-                .targetAmount(new BigDecimal("350000000"))
-                .targetPeriodMonths(36)
-                .build();
+        when(taxStrategyEngine.isCalculated(input))
+                .thenReturn(false);
 
-        MatchCalculationResult result = calculator.calculate(input);
-
-        System.out.println("절세 미산출 결과: " + result);
-
-        assertEquals(
-                new BigDecimal("15.52"),
-                result.getAssetStabilityScore()
-        );
-
-        assertEquals(
-                new BigDecimal("14.00"),
-                result.getDebtRepaymentScore()
-        );
-
-        assertEquals(
-                new BigDecimal("16.95"),
-                result.getFinancialValueScore()
-        );
-
-        assertEquals(
-                new BigDecimal("17.05"),
-                result.getGoalFeasibilityScore()
-        );
+        MatchCalculationResult result =
+                calculator.calculate(input);
 
         assertEquals(
                 new BigDecimal("0.00"),
@@ -355,364 +227,254 @@ class MatchCalculatorTest {
 
         assertFalse(result.isTaxStrategyCalculated());
 
+        /*
+         * 절세 제외 점수:
+         * 16 + 14 + 17 + 17 = 64
+         *
+         * 90점 만점을 100점으로 환산:
+         * 64 × 100 / 90 = 71.11...
+         * 정수 반올림 결과 = 71
+         */
         assertEquals(
                 new BigDecimal("71"),
                 result.getTotalScore()
         );
     }
 
-    //-------------예외처리 테스트 ------------------------
-    //
-    //
-    //금융 자산 경계값 테스트
     @Test
-    void 서로_다른_연령대_중앙값을_합산해_금융자산_점수를_계산한다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .ageGroupAssetMedian(new BigDecimal("50000000"))
-                .financialAsset(new BigDecimal("50000000"))
-                .build();
+    void 전체_궁합계산입력이_null이면_예외를_던진다() {
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> calculator.calculate(null)
+                );
 
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .ageGroupAssetMedian(new BigDecimal("100000000"))
-                .financialAsset(new BigDecimal("100000000"))
-                .build();
+        assertEquals(
+                "두 회원의 궁합 계산 입력값이 필요합니다.",
+                exception.getMessage()
+        );
+    }
 
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .build();
+    @Test
+    void 전체_궁합계산의_첫번째_회원입력이_null이면_예외를_던진다() {
+        MatchCalculationInput input =
+                MatchCalculationInput.builder()
+                        .memberA(null)
+                        .memberB(
+                                MemberCalculationInput.builder()
+                                        .build()
+                        )
+                        .build();
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> calculator.calculate(input)
+        );
+    }
+
+    @Test
+    void 전체_궁합계산의_두번째_회원입력이_null이면_예외를_던진다() {
+        MatchCalculationInput input =
+                MatchCalculationInput.builder()
+                        .memberA(
+                                MemberCalculationInput.builder()
+                                        .build()
+                        )
+                        .memberB(null)
+                        .build();
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> calculator.calculate(input)
+        );
+    }
+
+    @Test
+    void 금융자산점수_계산을_엔진에_위임한다() {
+        MatchCalculationInput input = createInput();
+
+        BigDecimal expected =
+                new BigDecimal("15.52");
+
+        when(financialAssetEngine.calculateScore(input))
+                .thenReturn(expected);
 
         BigDecimal result =
                 calculator.calculateAssetStabilityScore(input);
 
-        assertEquals(new BigDecimal("12.50"), result);
+        assertSame(expected, result);
+
+        verify(financialAssetEngine)
+                .calculateScore(input);
     }
 
     @Test
-    void 금융자산이_모두_0원이면_0점이다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .ageGroupAssetMedian(new BigDecimal("50000000"))
-                .financialAsset(BigDecimal.ZERO)
-                .build();
+    void 커플_금융자산비율_계산을_엔진에_위임한다() {
+        MatchCalculationInput input = createInput();
 
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .ageGroupAssetMedian(new BigDecimal("100000000"))
-                .financialAsset(BigDecimal.ZERO)
-                .build();
+        when(financialAssetEngine.calculateCoupleAssetRatio(input))
+                .thenReturn(1.45);
 
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .build();
+        double result =
+                calculator.calculateCoupleAssetRatio(input);
 
         assertEquals(
-                new BigDecimal("0.00"),
-                calculator.calculateAssetStabilityScore(input)
+                1.45,
+                result,
+                0.0001
         );
+
+        verify(financialAssetEngine)
+                .calculateCoupleAssetRatio(input);
     }
 
     @Test
-    void 금융자산_중앙값이_0이면_예외가_발생한다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .ageGroupAssetMedian(BigDecimal.ZERO)
-                .financialAsset(new BigDecimal("10000000"))
-                .build();
+    void 부채상환점수_계산을_엔진에_위임한다() {
+        MatchCalculationInput input = createInput();
 
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .ageGroupAssetMedian(new BigDecimal("50000000"))
-                .financialAsset(new BigDecimal("10000000"))
-                .build();
+        BigDecimal expected =
+                new BigDecimal("14.00");
 
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .build();
+        when(debtRepaymentEngine.calculateScore(input))
+                .thenReturn(expected);
 
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> calculator.calculateAssetStabilityScore(input)
-        );
+        BigDecimal result =
+                calculator.calculateDebtRepaymentScore(input);
+
+        assertSame(expected, result);
+
+        verify(debtRepaymentEngine)
+                .calculateScore(input);
     }
 
     @Test
-    void 부채가_없으면_부채_점수는_20점이다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .annualIncome(BigDecimal.ZERO)
-                .totalDebt(BigDecimal.ZERO)
-                .annualDebtPayment(BigDecimal.ZERO)
-                .financialAsset(BigDecimal.ZERO)
-                .build();
+    void 회원_부채점수_계산을_엔진에_위임한다() {
+        MemberCalculationInput member =
+                MemberCalculationInput.builder()
+                        .build();
 
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .annualIncome(new BigDecimal("50000000"))
-                .totalDebt(BigDecimal.ZERO)
-                .annualDebtPayment(BigDecimal.ZERO)
-                .financialAsset(new BigDecimal("100000000"))
-                .build();
+        when(debtRepaymentEngine.calculateMemberScore(member))
+                .thenReturn(70.0);
 
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .build();
+        double result =
+                calculator.calculateMemberDebtScore(member);
 
         assertEquals(
-                new BigDecimal("20.00"),
-                calculator.calculateDebtRepaymentScore(input)
+                70.0,
+                result,
+                0.0001
         );
+
+        verify(debtRepaymentEngine)
+                .calculateMemberScore(member);
     }
 
     @Test
-    void 부채는_있지만_소득과_금융자산이_없으면_0점이다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .annualIncome(BigDecimal.ZERO)
-                .totalDebt(new BigDecimal("10000000"))
-                .annualDebtPayment(new BigDecimal("1000000"))
-                .financialAsset(BigDecimal.ZERO)
-                .build();
+    void 목표달성가능성점수_계산을_엔진에_위임한다() {
+        MatchCalculationInput input = createInput();
 
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .annualIncome(BigDecimal.ZERO)
-                .totalDebt(new BigDecimal("20000000"))
-                .annualDebtPayment(new BigDecimal("2000000"))
-                .financialAsset(BigDecimal.ZERO)
-                .build();
+        BigDecimal expected =
+                new BigDecimal("17.05");
 
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .build();
+        when(goalFeasibilityEngine.calculateScore(input))
+                .thenReturn(expected);
+
+        BigDecimal result =
+                calculator.calculateGoalFeasibilityScore(input);
+
+        assertSame(expected, result);
+
+        verify(goalFeasibilityEngine)
+                .calculateScore(input);
+    }
+
+    @Test
+    void 예상자산_계산을_엔진에_위임한다() {
+        MatchCalculationInput input = createInput();
+
+        BigDecimal expected =
+                new BigDecimal("362000000");
+
+        when(goalFeasibilityEngine.calculateExpectedAsset(input))
+                .thenReturn(expected);
+
+        BigDecimal result =
+                calculator.calculateExpectedAsset(input);
+
+        assertSame(expected, result);
+
+        verify(goalFeasibilityEngine)
+                .calculateExpectedAsset(input);
+    }
+
+    @Test
+    void 투자가치관점수_계산을_엔진에_위임한다() {
+        MatchCalculationInput input = createInput();
+
+        BigDecimal expected =
+                new BigDecimal("16.95");
+
+        when(financialValueEngine.calculateScore(input))
+                .thenReturn(expected);
+
+        BigDecimal result =
+                calculator.calculateFinancialValueScore(input);
+
+        assertSame(expected, result);
+
+        verify(financialValueEngine)
+                .calculateScore(input);
+    }
+
+    @Test
+    void 절세활용도점수_계산을_엔진에_위임한다() {
+        MatchCalculationInput input = createInput();
+
+        BigDecimal expected =
+                new BigDecimal("8.00");
+
+        when(taxStrategyEngine.calculateScore(input))
+                .thenReturn(expected);
+
+        BigDecimal result =
+                calculator.calculateTaxStrategyScore(input);
+
+        assertSame(expected, result);
+
+        verify(taxStrategyEngine)
+                .calculateScore(input);
+    }
+
+    @Test
+    void 호환용_절세한도가_엔진의_한도와_같다() {
+        assertEquals(
+                TaxStrategyEngine.PENSION_SAVING_ANNUAL_LIMIT,
+                MatchCalculator.PENSION_SAVING_ANNUAL_LIMIT
+        );
 
         assertEquals(
-                new BigDecimal("0.00"),
-                calculator.calculateDebtRepaymentScore(input)
+                TaxStrategyEngine.PENSION_IRP_ANNUAL_LIMIT,
+                MatchCalculator.PENSION_IRP_ANNUAL_LIMIT
         );
-    }
-
-    @Test
-    void 두_사람의_가치관이_완전히_같으면_25점이다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .financialAssetRatioScore(3)
-                .investmentExperienceScore(3)
-                .financialKnowledgeScore(3)
-                .capitalPreservationScore(3)
-                .build();
-
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .financialAssetRatioScore(3)
-                .investmentExperienceScore(3)
-                .financialKnowledgeScore(3)
-                .capitalPreservationScore(3)
-                .build();
-
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .build();
 
         assertEquals(
-                new BigDecimal("25.00"),
-                calculator.calculateFinancialValueScore(input)
+                TaxStrategyEngine.ISA_ANNUAL_LIMIT_AMOUNT,
+                MatchCalculator.ISA_ANNUAL_LIMIT_AMOUNT
         );
     }
 
-    @Test
-    void 가치관_응답점수가_범위를_벗어나면_예외가_발생한다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .financialAssetRatioScore(0)
-                .investmentExperienceScore(3)
-                .financialKnowledgeScore(3)
-                .capitalPreservationScore(3)
-                .build();
+    private MatchCalculationInput createInput() {
+        MemberCalculationInput memberA =
+                MemberCalculationInput.builder()
+                        .build();
 
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .financialAssetRatioScore(3)
-                .investmentExperienceScore(3)
-                .financialKnowledgeScore(3)
-                .capitalPreservationScore(3)
-                .build();
+        MemberCalculationInput memberB =
+                MemberCalculationInput.builder()
+                        .build();
 
-        MatchCalculationInput input = MatchCalculationInput.builder()
+        return MatchCalculationInput.builder()
                 .memberA(memberA)
                 .memberB(memberB)
                 .build();
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> calculator.calculateFinancialValueScore(input)
-        );
-    }
-
-    @Test
-    void 은퇴_목표에서는_연금잔액을_제외하지_않는다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .financialAsset(new BigDecimal("50000000"))
-                .monthlyAvailableAmount(BigDecimal.ZERO)
-                .pensionSavingBalance(new BigDecimal("20000000"))
-                .irpBalance(BigDecimal.ZERO)
-                .pensionAnnualPayment(BigDecimal.ZERO)
-                .irpAnnualPayment(BigDecimal.ZERO)
-                .build();
-
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .financialAsset(new BigDecimal("50000000"))
-                .monthlyAvailableAmount(BigDecimal.ZERO)
-                .pensionSavingBalance(new BigDecimal("20000000"))
-                .irpBalance(BigDecimal.ZERO)
-                .pensionAnnualPayment(BigDecimal.ZERO)
-                .irpAnnualPayment(BigDecimal.ZERO)
-                .build();
-
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .firstGoalType("RETIREMENT")
-                .targetAmount(new BigDecimal("100000000"))
-                .targetPeriodMonths(1)
-                .build();
-
-        assertEquals(
-                new BigDecimal("20.00"),
-                calculator.calculateGoalFeasibilityScore(input)
-        );
-    }
-
-    @Test
-    void 목표금액이_0이면_예외가_발생한다() {
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(MemberCalculationInput.builder().build())
-                .memberB(MemberCalculationInput.builder().build())
-                .firstGoalType("HOUSING")
-                .targetAmount(BigDecimal.ZERO)
-                .targetPeriodMonths(12)
-                .build();
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> calculator.calculateGoalFeasibilityScore(input)
-        );
-    }
-
-    @Test
-    void 한_사람만_연금_평가대상이고_한도를_모두_활용하면_10점이다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .pensionAnnualPayment(new BigDecimal("6000000"))
-                .irpAnnualPayment(new BigDecimal("3000000"))
-                .dcAnnualPayment(BigDecimal.ZERO)
-                .isaAnnualDeposit(BigDecimal.ZERO)
-                .taxEligibilityStatus("ELIGIBLE")
-                .isaEligibilityStatus("INELIGIBLE")
-                .build();
-
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .pensionAnnualPayment(BigDecimal.ZERO)
-                .irpAnnualPayment(BigDecimal.ZERO)
-                .dcAnnualPayment(BigDecimal.ZERO)
-                .isaAnnualDeposit(BigDecimal.ZERO)
-                .taxEligibilityStatus("INELIGIBLE")
-                .isaEligibilityStatus("INELIGIBLE")
-                .build();
-
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .build();
-
-        assertEquals(
-                new BigDecimal("10.00"),
-                calculator.calculateTaxStrategyScore(input)
-        );
-    }
-
-    @Test
-    void 절세_평가상태가_UNKNOWN이면_예외가_발생한다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .pensionAnnualPayment(BigDecimal.ZERO)
-                .irpAnnualPayment(BigDecimal.ZERO)
-                .dcAnnualPayment(BigDecimal.ZERO)
-                .isaAnnualDeposit(BigDecimal.ZERO)
-                .taxEligibilityStatus("UNKNOWN")
-                .isaEligibilityStatus("ELIGIBLE")
-                .build();
-
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .pensionAnnualPayment(BigDecimal.ZERO)
-                .irpAnnualPayment(BigDecimal.ZERO)
-                .dcAnnualPayment(BigDecimal.ZERO)
-                .isaAnnualDeposit(BigDecimal.ZERO)
-                .taxEligibilityStatus("ELIGIBLE")
-                .isaEligibilityStatus("ELIGIBLE")
-                .build();
-
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .build();
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> calculator.calculateTaxStrategyScore(input)
-        );
-    }
-
-    @Test
-    void 절세_납입액이_음수이면_예외가_발생한다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .pensionAnnualPayment(new BigDecimal("-1"))
-                .irpAnnualPayment(BigDecimal.ZERO)
-                .dcAnnualPayment(BigDecimal.ZERO)
-                .isaAnnualDeposit(BigDecimal.ZERO)
-                .taxEligibilityStatus("ELIGIBLE")
-                .isaEligibilityStatus("ELIGIBLE")
-                .build();
-
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .pensionAnnualPayment(BigDecimal.ZERO)
-                .irpAnnualPayment(BigDecimal.ZERO)
-                .dcAnnualPayment(BigDecimal.ZERO)
-                .isaAnnualDeposit(BigDecimal.ZERO)
-                .taxEligibilityStatus("ELIGIBLE")
-                .isaEligibilityStatus("ELIGIBLE")
-                .build();
-
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .build();
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> calculator.calculateTaxStrategyScore(input)
-        );
-    }
-
-    @Test
-    void 절세_입력값이_null이면_예외가_발생한다() {
-        MemberCalculationInput memberA = MemberCalculationInput.builder()
-                .pensionAnnualPayment(null)
-                .irpAnnualPayment(BigDecimal.ZERO)
-                .dcAnnualPayment(BigDecimal.ZERO)
-                .isaAnnualDeposit(BigDecimal.ZERO)
-                .taxEligibilityStatus("ELIGIBLE")
-                .isaEligibilityStatus("ELIGIBLE")
-                .build();
-
-        MemberCalculationInput memberB = MemberCalculationInput.builder()
-                .pensionAnnualPayment(BigDecimal.ZERO)
-                .irpAnnualPayment(BigDecimal.ZERO)
-                .dcAnnualPayment(BigDecimal.ZERO)
-                .isaAnnualDeposit(BigDecimal.ZERO)
-                .taxEligibilityStatus("ELIGIBLE")
-                .isaEligibilityStatus("ELIGIBLE")
-                .build();
-
-        MatchCalculationInput input = MatchCalculationInput.builder()
-                .memberA(memberA)
-                .memberB(memberB)
-                .build();
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> calculator.calculateTaxStrategyScore(input)
-        );
     }
 }

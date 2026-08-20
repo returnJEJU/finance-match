@@ -1,11 +1,19 @@
 package com.financematch.match.service;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verifyNoInteractions;
+
+import com.financematch.common.ErrorCode;
+import com.financematch.exception.ApiException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.anyLong;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 
@@ -323,5 +331,323 @@ class MatchServiceTest {
         assertEquals(
                 MatchCalculator.PENSION_SAVING_ANNUAL_LIMIT,
                 capturedTaxInput.getPartner().getPension().getAnnualLimit());
+    }
+    @Test
+    void 계산요청시_회원ID가_null이면_예외를_던진다() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> matchService.getOrCalculateCompatibilityResult(null)
+        );
+
+        assertEquals("회원 ID가 필요합니다.", exception.getMessage());
+        verifyNoInteractions(matchMapper);
+    }
+
+    @Test
+    void 계산요청시_연결된_커플이_없으면_예외를_던진다() {
+        when(matchMapper.findCoupleDataByMemberId(1L))
+                .thenReturn(null);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> matchService.getOrCalculateCompatibilityResult(1L)
+        );
+
+        assertEquals(
+                "연결된 커플 정보를 찾을 수 없습니다.",
+                exception.getMessage()
+        );
+
+        verify(matchMapper).findCoupleDataByMemberId(1L);
+        verify(matchMapper, never())
+                .findCompatibilityResultByCoupleId(anyLong());
+    }
+
+    @Test
+    void 계산요청시_첫번째_회원정보가_없으면_예외를_던진다() {
+        MatchCoupleData couple = createCouple();
+        MatchMemberData memberB = new MatchMemberData();
+        memberB.setMemberId(2L);
+
+        when(matchMapper.findCoupleDataByMemberId(1L))
+                .thenReturn(couple);
+        when(matchMapper.findCompatibilityResultByCoupleId(1L))
+                .thenReturn(null);
+        when(matchMapper.findMemberDataByMemberId(1L))
+                .thenReturn(null);
+        when(matchMapper.findMemberDataByMemberId(2L))
+                .thenReturn(memberB);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> matchService.getOrCalculateCompatibilityResult(1L)
+        );
+
+        assertEquals(
+                "금융 궁합도 계산에 필요한 회원 정보를 찾을 수 없습니다.",
+                exception.getMessage()
+        );
+
+        verify(matchCalculationPersistenceService, never())
+                .calculateAndPersist(
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any()
+                );
+    }
+
+    @Test
+    void 계산요청시_두번째_회원정보가_없으면_예외를_던진다() {
+        MatchCoupleData couple = createCouple();
+        MatchMemberData memberA = new MatchMemberData();
+        memberA.setMemberId(1L);
+
+        when(matchMapper.findCoupleDataByMemberId(1L))
+                .thenReturn(couple);
+        when(matchMapper.findCompatibilityResultByCoupleId(1L))
+                .thenReturn(null);
+        when(matchMapper.findMemberDataByMemberId(1L))
+                .thenReturn(memberA);
+        when(matchMapper.findMemberDataByMemberId(2L))
+                .thenReturn(null);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> matchService.getOrCalculateCompatibilityResult(1L)
+        );
+
+        assertEquals(
+                "금융 궁합도 계산에 필요한 회원 정보를 찾을 수 없습니다.",
+                exception.getMessage()
+        );
+
+        verify(matchCalculationPersistenceService, never())
+                .calculateAndPersist(
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any()
+                );
+    }
+
+    @Test
+    void 저장된_궁합도_결과를_조회해서_반환한다() {
+        MatchCoupleData couple = createCouple();
+
+        CompatibilityResult existingResult = new CompatibilityResult();
+        existingResult.setCoupleId(1L);
+        existingResult.setTotalScore(new BigDecimal("73.15"));
+
+        when(matchMapper.findCoupleDataByMemberId(1L))
+                .thenReturn(couple);
+        when(matchMapper.findCompatibilityResultByCoupleId(1L))
+                .thenReturn(existingResult);
+
+        CompatibilityResult result =
+                matchService.getCompatibilityResult(1L);
+
+        assertSame(existingResult, result);
+
+        verify(matchMapper).findCoupleDataByMemberId(1L);
+        verify(matchMapper).findCompatibilityResultByCoupleId(1L);
+    }
+
+    @Test
+    void 궁합도조회시_회원ID가_null이면_INVALID_INPUT_예외를_던진다() {
+        ApiException exception = assertThrows(
+                ApiException.class,
+                () -> matchService.getCompatibilityResult(null)
+        );
+
+        assertEquals(ErrorCode.INVALID_INPUT, exception.getErrorCode());
+        verifyNoInteractions(matchMapper);
+    }
+
+    @Test
+    void 궁합도조회시_연결된_커플이_없으면_NOT_FOUND_예외를_던진다() {
+        when(matchMapper.findCoupleDataByMemberId(1L))
+                .thenReturn(null);
+
+        ApiException exception = assertThrows(
+                ApiException.class,
+                () -> matchService.getCompatibilityResult(1L)
+        );
+
+        assertEquals(ErrorCode.NOT_FOUND, exception.getErrorCode());
+        assertEquals(
+                "연결된 커플 정보를 찾을 수 없습니다.",
+                exception.getMessage()
+        );
+
+        verify(matchMapper).findCoupleDataByMemberId(1L);
+        verify(matchMapper, never())
+                .findCompatibilityResultByCoupleId(anyLong());
+    }
+
+    @Test
+    void 궁합도조회시_계산결과가_없으면_NOT_FOUND_예외를_던진다() {
+        MatchCoupleData couple = createCouple();
+
+        when(matchMapper.findCoupleDataByMemberId(1L))
+                .thenReturn(couple);
+        when(matchMapper.findCompatibilityResultByCoupleId(1L))
+                .thenReturn(null);
+
+        ApiException exception = assertThrows(
+                ApiException.class,
+                () -> matchService.getCompatibilityResult(1L)
+        );
+
+        assertEquals(ErrorCode.NOT_FOUND, exception.getErrorCode());
+        assertEquals(
+                "금융 궁합도 계산 결과를 찾을 수 없습니다.",
+                exception.getMessage()
+        );
+
+        verify(matchMapper).findCoupleDataByMemberId(1L);
+        verify(matchMapper).findCompatibilityResultByCoupleId(1L);
+    }
+
+    private MatchCoupleData createCouple() {
+        MatchCoupleData couple = new MatchCoupleData();
+        couple.setCoupleId(1L);
+        couple.setInviterId(1L);
+        couple.setInviteeId(2L);
+        return couple;
+    }
+    @Test
+    void 첫번째_회원은_부채가_없고_두번째_회원은_부채가_있으면_부채여부를_정확히_전달한다() {
+        MatchCoupleData couple = new MatchCoupleData();
+        couple.setCoupleId(1L);
+        couple.setInviterId(1L);
+        couple.setInviteeId(2L);
+        couple.setFirstGoalType("HOUSING");
+        couple.setTargetAmount(new BigDecimal("350000000"));
+        couple.setTargetPeriodMonths(36);
+
+        MatchMemberData memberA = new MatchMemberData();
+        memberA.setMemberId(1L);
+        memberA.setMemberName("김철수");
+
+        MatchMemberData memberB = new MatchMemberData();
+        memberB.setMemberId(2L);
+        memberB.setMemberName("이영희");
+
+        // 기존 테스트와 반대로 설정:
+        // A는 부채 없음(false), B는 부채 있음(true)
+        MemberCalculationInput memberACalcInput =
+                MemberCalculationInput.builder()
+                        .totalDebt(BigDecimal.ZERO)
+                        .financialAssetRatioScore(3)
+                        .investmentExperienceScore(2)
+                        .financialKnowledgeScore(4)
+                        .capitalPreservationScore(5)
+                        .hasIsa(true)
+                        .isaAnnualDeposit(new BigDecimal("12000000"))
+                        .hasIrp(true)
+                        .irpAnnualPayment(new BigDecimal("3000000"))
+                        .dcAnnualPayment(new BigDecimal("1000000"))
+                        .hasPensionSaving(false)
+                        .pensionAnnualPayment(BigDecimal.ZERO)
+                        .build();
+
+        MemberCalculationInput memberBCalcInput =
+                MemberCalculationInput.builder()
+                        .totalDebt(new BigDecimal("2000000"))
+                        .financialAssetRatioScore(3)
+                        .investmentExperienceScore(2)
+                        .financialKnowledgeScore(1)
+                        .capitalPreservationScore(2)
+                        .hasIsa(false)
+                        .isaAnnualDeposit(BigDecimal.ZERO)
+                        .hasIrp(true)
+                        .irpAnnualPayment(new BigDecimal("5000000"))
+                        .dcAnnualPayment(BigDecimal.ZERO)
+                        .hasPensionSaving(true)
+                        .pensionAnnualPayment(new BigDecimal("6000000"))
+                        .build();
+
+        MatchCalculationInput calculationInput =
+                MatchCalculationInput.builder()
+                        .memberA(memberACalcInput)
+                        .memberB(memberBCalcInput)
+                        .targetAmount(new BigDecimal("350000000"))
+                        .targetPeriodMonths(36)
+                        .build();
+
+        MatchCalculationResult calculationResult =
+                MatchCalculationResult.builder()
+                        .assetStabilityScore(new BigDecimal("18.62"))
+                        .coupleAssetRatio(1.1)
+                        .debtRepaymentScore(new BigDecimal("14.00"))
+                        .memberADebtScore(new BigDecimal("100.00"))
+                        .memberBDebtScore(new BigDecimal("62.50"))
+                        .financialValueScore(new BigDecimal("16.95"))
+                        .goalFeasibilityScore(new BigDecimal("12.79"))
+                        .expectedAsset(new BigDecimal("362000000"))
+                        .taxStrategyScore(new BigDecimal("8.00"))
+                        .taxStrategyCalculated(true)
+                        .totalScore(new BigDecimal("70.36"))
+                        .build();
+
+        CompatibilityResult savedResult = new CompatibilityResult();
+        savedResult.setId(10L);
+        savedResult.setCoupleId(1L);
+        savedResult.setTotalScore(new BigDecimal("70.36"));
+
+        when(matchMapper.findCoupleDataByMemberId(1L))
+                .thenReturn(couple);
+
+        when(matchMapper.findCompatibilityResultByCoupleId(1L))
+                .thenReturn(null);
+
+        when(matchMapper.findMemberDataByMemberId(1L))
+                .thenReturn(memberA);
+
+        when(matchMapper.findMemberDataByMemberId(2L))
+                .thenReturn(memberB);
+
+        when(matchCalculationPersistenceService.calculateAndPersist(
+                couple,
+                memberA,
+                memberB
+        )).thenReturn(
+                new MatchCalculationPersistenceResult(
+                        savedResult,
+                        calculationInput,
+                        calculationResult
+                )
+        );
+
+        CompatibilityResult result =
+                matchService.getOrCalculateCompatibilityResult(1L);
+
+        assertSame(savedResult, result);
+
+        ArgumentCaptor<DebtRepaymentReasonInput> debtInputCaptor =
+                ArgumentCaptor.forClass(DebtRepaymentReasonInput.class);
+
+        verify(debtRepaymentScoreService).generateAndSave(
+                org.mockito.ArgumentMatchers.eq(10L),
+                debtInputCaptor.capture()
+        );
+
+        DebtRepaymentReasonInput capturedInput =
+                debtInputCaptor.getValue();
+
+        assertEquals("김철수", capturedInput.getMeName());
+        assertEquals("이영희", capturedInput.getPartnerName());
+
+        // 새로 채우려는 두 분기
+        assertFalse(capturedInput.isMeHasDebt());
+        assertTrue(capturedInput.isPartnerHasDebt());
+
+        assertEquals(
+                new BigDecimal("100.00"),
+                capturedInput.getMeScore()
+        );
+        assertEquals(
+                new BigDecimal("62.50"),
+                capturedInput.getPartnerScore()
+        );
     }
 }

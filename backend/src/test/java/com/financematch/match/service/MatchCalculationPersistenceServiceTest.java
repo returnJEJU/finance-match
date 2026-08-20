@@ -45,25 +45,40 @@ class MatchCalculationPersistenceServiceTest {
         MatchMemberData memberA = new MatchMemberData();
         MatchMemberData memberB = new MatchMemberData();
 
-        MatchCalculationInput calculationInput = MatchCalculationInput.builder().build();
+        MatchCalculationInput calculationInput =
+                MatchCalculationInput.builder().build();
+
         MatchCalculationResult calculationResult =
-                MatchCalculationResult.builder().totalScore(new BigDecimal("70.36")).build();
+                MatchCalculationResult.builder()
+                        .totalScore(new BigDecimal("70.36"))
+                        .build();
 
         CompatibilityResult savedResult = new CompatibilityResult();
         savedResult.setId(10L);
 
-        when(converter.convert(couple, memberA, memberB)).thenReturn(calculationInput);
-        when(calculator.calculate(calculationInput)).thenReturn(calculationResult);
-        when(matchMapper.insertCompatibilityResult(1L, calculationResult)).thenReturn(1);
-        when(matchMapper.findCompatibilityResultByCoupleId(1L)).thenReturn(savedResult);
+        when(converter.convert(couple, memberA, memberB))
+                .thenReturn(calculationInput);
 
-        MatchCalculationPersistenceResult result = service.calculateAndPersist(couple, memberA, memberB);
+        when(calculator.calculate(calculationInput))
+                .thenReturn(calculationResult);
+
+        when(matchMapper.insertCompatibilityResult(1L, calculationResult))
+                .thenReturn(1);
+
+        when(matchMapper.findCompatibilityResultByCoupleId(1L))
+                .thenReturn(savedResult);
+
+        MatchCalculationPersistenceResult result =
+                service.calculateAndPersist(couple, memberA, memberB);
 
         assertSame(savedResult, result.savedResult());
         assertSame(calculationInput, result.calculationInput());
         assertSame(calculationResult, result.calculationResult());
 
+        verify(converter).convert(couple, memberA, memberB);
+        verify(calculator).calculate(calculationInput);
         verify(matchMapper).insertCompatibilityResult(1L, calculationResult);
+        verify(matchMapper).findCompatibilityResultByCoupleId(1L);
     }
 
     @Test
@@ -74,15 +89,77 @@ class MatchCalculationPersistenceServiceTest {
         MatchMemberData memberA = new MatchMemberData();
         MatchMemberData memberB = new MatchMemberData();
 
-        MatchCalculationInput calculationInput = MatchCalculationInput.builder().build();
-        MatchCalculationResult calculationResult = MatchCalculationResult.builder().build();
+        MatchCalculationInput calculationInput =
+                MatchCalculationInput.builder().build();
 
-        when(converter.convert(couple, memberA, memberB)).thenReturn(calculationInput);
-        when(calculator.calculate(calculationInput)).thenReturn(calculationResult);
-        when(matchMapper.insertCompatibilityResult(1L, calculationResult)).thenReturn(0);
+        MatchCalculationResult calculationResult =
+                MatchCalculationResult.builder().build();
+
+        when(converter.convert(couple, memberA, memberB))
+                .thenReturn(calculationInput);
+
+        when(calculator.calculate(calculationInput))
+                .thenReturn(calculationResult);
+
+        when(matchMapper.insertCompatibilityResult(1L, calculationResult))
+                .thenReturn(0);
 
         assertThrows(
                 IllegalStateException.class,
-                () -> service.calculateAndPersist(couple, memberA, memberB));
+                () -> service.calculateAndPersist(
+                        couple,
+                        memberA,
+                        memberB
+                )
+        );
+
+        verify(matchMapper)
+                .insertCompatibilityResult(1L, calculationResult);
+    }
+
+    @Test
+    void 저장_후_결과를_다시_찾을_수_없으면_예외를_던진다() {
+        MatchCoupleData couple = new MatchCoupleData();
+        couple.setCoupleId(1L);
+
+        MatchMemberData memberA = new MatchMemberData();
+        MatchMemberData memberB = new MatchMemberData();
+
+        MatchCalculationInput calculationInput =
+                MatchCalculationInput.builder().build();
+
+        MatchCalculationResult calculationResult =
+                MatchCalculationResult.builder()
+                        .totalScore(new BigDecimal("70.36"))
+                        .build();
+
+        when(converter.convert(couple, memberA, memberB))
+                .thenReturn(calculationInput);
+
+        when(calculator.calculate(calculationInput))
+                .thenReturn(calculationResult);
+
+        // INSERT는 정상적으로 1건 처리됨
+        when(matchMapper.insertCompatibilityResult(1L, calculationResult))
+                .thenReturn(1);
+
+        // 하지만 저장한 결과를 다시 조회하지 못한 상황
+        when(matchMapper.findCompatibilityResultByCoupleId(1L))
+                .thenReturn(null);
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.calculateAndPersist(
+                        couple,
+                        memberA,
+                        memberB
+                )
+        );
+
+        verify(matchMapper)
+                .insertCompatibilityResult(1L, calculationResult);
+
+        verify(matchMapper)
+                .findCompatibilityResultByCoupleId(1L);
     }
 }
