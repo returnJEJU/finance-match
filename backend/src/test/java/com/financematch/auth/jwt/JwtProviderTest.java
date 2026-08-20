@@ -145,6 +145,19 @@ class JwtProviderTest {
     }
 
     /** 같은 키로 서명하되 subject·타입을 마음대로 지정한 토큰을 만든다. */
+    /**
+     * {@code typ} 클레임이 없는 토큰은 이 기능을 넣기 전에 발급된 access 토큰이다.
+     *
+     * <p>거절하면 <b>배포 직후 모든 사용자의 로그인이 한꺼번에 풀린다.</b> 유효기간이 지나 자연히
+     * 사라질 때까지는 access 로 취급해야 한다.
+     */
+    @Test
+    void 타입이_없는_예전_토큰도_access_로_받아준다() {
+        String legacyToken = signedToken("7", null);
+
+        assertEquals(7L, jwtProvider.getMemberId(legacyToken));
+    }
+
     private String signedToken(String subject, String type) {
         return Jwts.builder()
                 .setSubject(subject)
