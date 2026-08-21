@@ -236,7 +236,7 @@ const items = computed(() => [
         화면을 다시 볼 수 없게 된다.
       -->
       <BaseButton :to="{ name: 'login' }">
-        찰떡귱합 시작하기
+        시작하기
         <ChevronRight class="h-[18px] w-[18px]" />
       </BaseButton>
     </div>

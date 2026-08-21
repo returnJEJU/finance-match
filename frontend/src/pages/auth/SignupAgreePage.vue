@@ -102,7 +102,7 @@ function goNext() {
       <p
         class="bg-brand-soft text-brand-ink rounded-field mt-4.5 px-3.5 py-3 text-[12px] leading-[1.6]"
       >
-        찰떡귱합은 마이데이터로 내 자산 정보를 불러옵니다. 연동한 자산 정보는 내가 초대한 상대방에게
+        마이데이터로 내 자산 정보를 불러옵니다. 연동한 자산 정보는 내가 초대한 상대방에게
         <b class="font-bold">궁합 결과 형태로만</b> 공유될 수 있어요.
       </p>
 
