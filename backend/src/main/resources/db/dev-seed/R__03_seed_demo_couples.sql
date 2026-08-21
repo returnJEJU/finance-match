@@ -1,7 +1,7 @@
 -- =====================================================================
--- 찰떡궁합 — seed-demo-couples.sql (데모 커플 3쌍 완성본 · 운영 X)
+-- 찰떡궁합 — seed-demo-couples.sql (데모 커플 4쌍 완성본 · 운영 X)
 -- 실행: R__01_seed_product → R__02_seed_demo 다음.
--- 내용: 회원 6명(3~8번) + 마이데이터 + 설문 + 커플연결 + 궁합점수 + 리포트 + 추천
+-- 내용: 회원 6명(3~8번) + 회원 2명(401403·401404번) + 마이데이터 + 설문 + 커플연결 + 궁합점수 + 리포트 + 추천
 -- =====================================================================
 -- 【 이 값들은 손으로 적은 것이 아니다 】
 --   앱에서 실제로 가입·연동·설문을 마친 뒤, 계산기와 추천정책이 만들어 낸 결과를 그대로 덤프한 것이다.
@@ -17,16 +17,19 @@
 --   6 정민호   demo.renter@    32세 남 · 자산 240만 · 대출 2건 5,700만 · 균형설계형
 --   7 한서연   demo.rich@      38세 여 · 자산 3억 · 무부채 · 든든지킴형
 --   8 오태윤   demo.debt@      30세 남 · 자산 250만 · 카드론 17.9% 고금리 · 과감도전형
+--   401403 박정훈   demo.video.retire1@  46세 남 · 자산 4,000만 · 대출 1,000만 · 적극성장형
+--   401404 최은영   demo.video.retire2@  43세 여 · 자산 4,000만 · 대출 1,000만 · 균형설계형
 --
 -- 【 커플 】
---   커플2 = 3 + 4  둘 다 안정 · 성향 반대(DIFF_3)  → 추천 4종 전부 + 개인투자(박준서)
---   커플4 = 5 + 6  둘 다 불안정 · 성향 일치(DIFF_0) → 예금·투자·개인투자 꺼짐
---   커플3 = 7 + 8  극과 극(DIFF_4)                 → 대출 꺼짐(고금리) · 개인투자 TDF(오태윤)
+--   커플2 = 3 + 4         둘 다 안정 · 성향 반대(DIFF_3)  → 추천 4종 전부 + 개인투자(박준서)
+--   커플4 = 5 + 6         둘 다 불안정 · 성향 일치(DIFF_0) → 예금·투자·개인투자 꺼짐
+--   커플3 = 7 + 8         극과 극(DIFF_4)                 → 대출 꺼짐(고금리) · 개인투자 TDF(오태윤)
+--   커플5 = 401403+401404 노후 목표 · 성향 닮음(DIFF_1)    → 예금·적금·투자(TDF) · 대출 없음(loan_purpose NONE) · 개인투자(박정훈만)
 --
 --   커플 조합은 고정이 아니다. 마이페이지에서 커플을 끊고 다른 사람과 이어도 되며,
 --   자산은 이메일에 묶여 있어 조합을 바꿔도 그 사람을 따라간다(asset/README.md 참고).
 -- =====================================================================
--- ⚠️ 재실행하면 3~8번 회원의 모든 데이터가 지워지고 이 파일 내용으로 되돌아간다.
+-- ⚠️ 재실행하면 3~8번·401403~401404번 회원의 모든 데이터가 지워지고 이 파일 내용으로 되돌아간다.
 --    앱에서 새로 만들어 둔 내용이 있으면 날아간다(리셋 용도로 일부러 쓰기도 한다).
 --    기존 데모 커플(1 김하나 · 2 이두리)은 건드리지 않는다.
 -- =====================================================================
@@ -37,48 +40,48 @@ DELETE FROM recommendation_product
    SELECT id FROM recommendation_slot WHERE recommendation_id IN (
      SELECT id FROM recommendation WHERE couple_id IN (
        SELECT id FROM couple
-        WHERE inviter_id IN (3,4,5,6,7,8) OR invitee_id IN (3,4,5,6,7,8))));
+        WHERE inviter_id IN (3,4,5,6,7,8,401403,401404) OR invitee_id IN (3,4,5,6,7,8,401403,401404))));
 
 DELETE FROM recommendation_slot
  WHERE recommendation_id IN (
    SELECT id FROM recommendation WHERE couple_id IN (
      SELECT id FROM couple
-      WHERE inviter_id IN (3,4,5,6,7,8) OR invitee_id IN (3,4,5,6,7,8)));
+      WHERE inviter_id IN (3,4,5,6,7,8,401403,401404) OR invitee_id IN (3,4,5,6,7,8,401403,401404)));
 
 DELETE FROM recommendation
  WHERE couple_id IN (
    SELECT id FROM couple
-    WHERE inviter_id IN (3,4,5,6,7,8) OR invitee_id IN (3,4,5,6,7,8));
+    WHERE inviter_id IN (3,4,5,6,7,8,401403,401404) OR invitee_id IN (3,4,5,6,7,8,401403,401404));
 
 DELETE FROM report
  WHERE compatibility_result_id IN (
    SELECT id FROM compatibility_result WHERE couple_id IN (
      SELECT id FROM couple
-      WHERE inviter_id IN (3,4,5,6,7,8) OR invitee_id IN (3,4,5,6,7,8)));
+      WHERE inviter_id IN (3,4,5,6,7,8,401403,401404) OR invitee_id IN (3,4,5,6,7,8,401403,401404)));
 
 DELETE FROM compatibility_result
  WHERE couple_id IN (
    SELECT id FROM couple
-    WHERE inviter_id IN (3,4,5,6,7,8) OR invitee_id IN (3,4,5,6,7,8));
+    WHERE inviter_id IN (3,4,5,6,7,8,401403,401404) OR invitee_id IN (3,4,5,6,7,8,401403,401404));
 
-DELETE FROM personal_recommendation_tax_saving  WHERE member_id IN (3,4,5,6,7,8);
-DELETE FROM personal_recommendation_investment  WHERE member_id IN (3,4,5,6,7,8);
-DELETE FROM favorite_product                    WHERE member_id IN (3,4,5,6,7,8);
-DELETE FROM pension_isa_account                 WHERE member_id IN (3,4,5,6,7,8);
-DELETE FROM financial_summary                   WHERE member_id IN (3,4,5,6,7,8);
+DELETE FROM personal_recommendation_tax_saving  WHERE member_id IN (3,4,5,6,7,8,401403,401404);
+DELETE FROM personal_recommendation_investment  WHERE member_id IN (3,4,5,6,7,8,401403,401404);
+DELETE FROM favorite_product                    WHERE member_id IN (3,4,5,6,7,8,401403,401404);
+DELETE FROM pension_isa_account                 WHERE member_id IN (3,4,5,6,7,8,401403,401404);
+DELETE FROM financial_summary                   WHERE member_id IN (3,4,5,6,7,8,401403,401404);
 
 DELETE FROM personal_survey_investment_experience
- WHERE personal_survey_id IN (SELECT id FROM personal_survey WHERE member_id IN (3,4,5,6,7,8));
-DELETE FROM personal_survey WHERE member_id IN (3,4,5,6,7,8);
+ WHERE personal_survey_id IN (SELECT id FROM personal_survey WHERE member_id IN (3,4,5,6,7,8,401403,401404));
+DELETE FROM personal_survey WHERE member_id IN (3,4,5,6,7,8,401403,401404);
 
 -- couple 이 invitation_code 를 참조하므로 couple 부터 지운다.
-DELETE FROM couple WHERE inviter_id IN (3,4,5,6,7,8) OR invitee_id IN (3,4,5,6,7,8);
+DELETE FROM couple WHERE inviter_id IN (3,4,5,6,7,8,401403,401404) OR invitee_id IN (3,4,5,6,7,8,401403,401404);
 DELETE FROM invitation_code
- WHERE common_survey_id IN (SELECT id FROM common_survey WHERE member_id IN (3,4,5,6,7,8));
-DELETE FROM common_survey   WHERE member_id IN (3,4,5,6,7,8);
+ WHERE common_survey_id IN (SELECT id FROM common_survey WHERE member_id IN (3,4,5,6,7,8,401403,401404));
+DELETE FROM common_survey   WHERE member_id IN (3,4,5,6,7,8,401403,401404);
 
-DELETE FROM member_agreement WHERE member_id IN (3,4,5,6,7,8);
-DELETE FROM member           WHERE id        IN (3,4,5,6,7,8);
+DELETE FROM member_agreement WHERE member_id IN (3,4,5,6,7,8,401403,401404);
+DELETE FROM member           WHERE id        IN (3,4,5,6,7,8,401403,401404);
 
 -- 회원
 INSERT INTO `member` (`id`, `email`, `password`, `name`, `gender`, `birth_date`, `status`, `last_login_at`, `investment_type`, `kb_star_savings_eligible`, `recommendation_input_updated_at`, `created_at`, `updated_at`, `deleted_at`) VALUES (3,'demo.saver@chaltteok.dev','$2b$10$S7kxCvVErKro6iMGGYtqieadaYQh/mlP/3AOB6q8G81Dl2MoyJeBG','김보람','F','1993-04-10','ACTIVE','2026-08-12 16:36:44','STABLE',1,'2026-08-12 16:48:32','2026-08-12 16:24:00','2026-08-12 16:48:32',NULL);
@@ -254,3 +257,101 @@ INSERT INTO `personal_recommendation_tax_saving` (`id`, `member_id`, `product_id
 INSERT INTO `personal_recommendation_tax_saving` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (22,8,12,3,NULL,'2026-08-12 17:15:44','2026-08-12 17:15:44');
 INSERT INTO `personal_recommendation_tax_saving` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (23,8,8,4,NULL,'2026-08-12 17:15:44','2026-08-12 17:15:44');
 INSERT INTO `personal_recommendation_tax_saving` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (24,8,9,5,NULL,'2026-08-12 17:15:44','2026-08-12 17:15:44');
+
+-- =====================================================================
+-- 커플5 — 박정훈(401403) + 최은영(401404). 위 3~8번과 마찬가지로 앱에서 실제
+-- 가입·연동·설문을 마친 뒤 덤프한 값이다. FK 의존 순서(회원 → 마이데이터/설문 →
+-- 공동설문 → 초대코드 → 커플 → 궁합점수 → 리포트 → 추천)대로 삽입한다.
+-- =====================================================================
+
+-- 회원
+INSERT INTO `member` (`id`, `email`, `password`, `name`, `gender`, `birth_date`, `status`, `last_login_at`, `investment_type`, `kb_star_savings_eligible`, `recommendation_input_updated_at`, `created_at`, `updated_at`, `deleted_at`) VALUES (401403,'demo.video.retire1@chaltteok.dev','$2a$10$JxnEElVdBJax1ZGPbd/eb.mz99XhrLmGm68uTcTfF.O7bmKWBFxAi','박정훈','M','1980-05-14','ACTIVE','2026-08-20 16:28:36','AGGRESSIVE',0,'2026-08-20 13:01:27','2026-08-20 13:01:09','2026-08-20 16:28:36',NULL);
+INSERT INTO `member` (`id`, `email`, `password`, `name`, `gender`, `birth_date`, `status`, `last_login_at`, `investment_type`, `kb_star_savings_eligible`, `recommendation_input_updated_at`, `created_at`, `updated_at`, `deleted_at`) VALUES (401404,'demo.video.retire2@chaltteok.dev','$2a$10$bDwJ/O4HCVCclTFHJKfaG.bnUciWLt7e6a6AJAV4wG/sL9IP3NjCK','최은영','F','1982-11-02','ACTIVE',NULL,'NEUTRAL',0,'2026-08-20 13:01:27','2026-08-20 13:01:09','2026-08-20 13:01:27',NULL);
+
+-- 약관 동의
+INSERT INTO `member_agreement` (`id`, `member_id`, `agree_mydata_terms`, `agree_privacy`, `agree_asset_link`, `agree_couple_share`, `agree_marketing`, `agreed_at`, `created_at`, `updated_at`) VALUES (80,401403,1,1,1,1,0,'2026-08-20 13:01:09','2026-08-20 13:01:09','2026-08-20 13:01:09');
+INSERT INTO `member_agreement` (`id`, `member_id`, `agree_mydata_terms`, `agree_privacy`, `agree_asset_link`, `agree_couple_share`, `agree_marketing`, `agreed_at`, `created_at`, `updated_at`) VALUES (81,401404,1,1,1,1,0,'2026-08-20 13:01:09','2026-08-20 13:01:09','2026-08-20 13:01:09');
+
+-- 개인설문
+INSERT INTO `personal_survey` (`id`, `member_id`, `annual_income`, `monthly_available_amount`, `financial_asset_ratio`, `financial_knowledge`, `capital_preservation_attitude`, `created_at`, `updated_at`) VALUES (973,401403,100000000,2500000,'UNDER_50','MEDIUM','UNDER_20','2026-08-20 13:01:27','2026-08-20 13:01:27');
+INSERT INTO `personal_survey` (`id`, `member_id`, `annual_income`, `monthly_available_amount`, `financial_asset_ratio`, `financial_knowledge`, `capital_preservation_attitude`, `created_at`, `updated_at`) VALUES (974,401404,60000000,1500000,'UNDER_30','LOW','UNDER_10','2026-08-20 13:01:27','2026-08-20 13:01:27');
+
+-- 개인설문 투자경험(다중응답)
+INSERT INTO `personal_survey_investment_experience` (`id`, `personal_survey_id`, `investment_experience`, `created_at`, `updated_at`) VALUES (274,973,'LOW_RISK','2026-08-20 13:01:27','2026-08-20 13:01:27');
+INSERT INTO `personal_survey_investment_experience` (`id`, `personal_survey_id`, `investment_experience`, `created_at`, `updated_at`) VALUES (275,973,'MODERATE_RISK','2026-08-20 13:01:27','2026-08-20 13:01:27');
+INSERT INTO `personal_survey_investment_experience` (`id`, `personal_survey_id`, `investment_experience`, `created_at`, `updated_at`) VALUES (276,973,'MODERATE_LOW_RISK','2026-08-20 13:01:27','2026-08-20 13:01:27');
+INSERT INTO `personal_survey_investment_experience` (`id`, `personal_survey_id`, `investment_experience`, `created_at`, `updated_at`) VALUES (277,974,'LOW_RISK','2026-08-20 13:01:27','2026-08-20 13:01:27');
+INSERT INTO `personal_survey_investment_experience` (`id`, `personal_survey_id`, `investment_experience`, `created_at`, `updated_at`) VALUES (278,974,'MODERATE_LOW_RISK','2026-08-20 13:01:27','2026-08-20 13:01:27');
+
+-- 공동설문 (초대자 박정훈이 작성)
+INSERT INTO `common_survey` (`id`, `member_id`, `first_goal_type`, `second_goal_type`, `target_amount`, `target_period_months`, `loan_purpose`, `has_loan_within_one_month`, `created_at`, `updated_at`) VALUES (201097,401403,'RETIREMENT','INVESTMENT',1000000000,180,'NONE',0,'2026-08-20 13:01:16','2026-08-20 13:01:16');
+
+-- 초대코드
+INSERT INTO `invitation_code` (`id`, `common_survey_id`, `code_value`, `status`, `created_at`, `updated_at`) VALUES (201067,201097,'DFV6ZDBG','USED','2026-08-20 13:01:16','2026-08-20 13:01:16');
+
+-- 커플
+INSERT INTO `couple` (`id`, `inviter_id`, `invitee_id`, `invitation_code_id`, `investment_type`, `profile_message`, `created_at`, `updated_at`) VALUES (201017,401403,401404,201067,'DIFF_1',NULL,'2026-08-20 13:01:16','2026-08-20 13:01:27');
+
+-- 마이데이터 자산·부채 요약
+INSERT INTO `financial_summary` (`id`, `member_id`, `financial_asset`, `total_debt`, `available_balance`, `annual_debt_payment`, `average_interest_rate`, `has_high_rate_debt`, `created_at`, `updated_at`) VALUES (78,401403,40000000,10000000,5000000,3000000,5.50,0,'2026-08-20 13:01:16','2026-08-20 13:01:16');
+INSERT INTO `financial_summary` (`id`, `member_id`, `financial_asset`, `total_debt`, `available_balance`, `annual_debt_payment`, `average_interest_rate`, `has_high_rate_debt`, `created_at`, `updated_at`) VALUES (79,401404,40000000,10000000,5000000,3000000,5.50,0,'2026-08-20 13:01:16','2026-08-20 13:01:16');
+
+-- 마이데이터 연금·ISA 요약
+INSERT INTO `pension_isa_account` (`id`, `member_id`, `has_pension_saving`, `has_irp`, `has_dc`, `has_isa`, `pension_saving_balance`, `irp_balance`, `pension_annual_payment`, `irp_annual_payment`, `dc_annual_payment`, `isa_annual_deposit`, `tax_eligibility_status`, `isa_eligibility_status`, `created_at`, `updated_at`) VALUES (78,401403,0,0,0,0,0,0,0,0,0,0,'ELIGIBLE','ELIGIBLE','2026-08-20 13:01:16','2026-08-20 13:01:16');
+INSERT INTO `pension_isa_account` (`id`, `member_id`, `has_pension_saving`, `has_irp`, `has_dc`, `has_isa`, `pension_saving_balance`, `irp_balance`, `pension_annual_payment`, `irp_annual_payment`, `dc_annual_payment`, `isa_annual_deposit`, `tax_eligibility_status`, `isa_eligibility_status`, `created_at`, `updated_at`) VALUES (79,401404,0,0,0,0,0,0,0,0,0,0,'ELIGIBLE','ELIGIBLE','2026-08-20 13:01:16','2026-08-20 13:01:16');
+
+-- 궁합 점수
+INSERT INTO `compatibility_result` (`id`, `couple_id`, `asset_stability_score`, `debt_repayment_score`, `financial_value_score`, `goal_feasibility_score`, `tax_strategy_score`, `tax_strategy_calculated`, `total_score`, `result_summary`, `created_at`, `updated_at`) VALUES (154,201017,6.99,17.14,19.35,20.00,0.00,1,63.00,NULL,'2026-08-20 13:01:27','2026-08-20 13:01:27');
+
+-- 리포트
+INSERT INTO `report` (`id`, `compatibility_result_id`, `asset_stability_reason`, `debt_repayment_reason`, `financial_value_reason`, `goal_feasibility_reason`, `expected_asset`, `tax_strategy_reason`, `expert_comment`, `created_at`, `updated_at`) VALUES (373,154,'금융 자산을 쌓기 위해 더 분발할 필요가 있어요. 금융 자산을 쌓는 걸 도와줄 상품들을 추천탭에서 만나보세요.','두 분 모두 부채가 있어요. 하지만 부채 위험도는 은영님이 더 높아요.','두 분은 가치관이 비슷해요.','180개월 후 목표 달성 가능성이 커요. 목표 달성을 더 확실하게 도와줄 상품을 추천탭에서 만나보세요.',1029595031,'정훈님은 ISA·IRP·연금저축 모두 개설 안 하셨어요. 은영님은 ISA·IRP·연금저축 모두 개설 안 하셨어요. 추천탭에서 상품들을 만나보세요.','**두 분의 목표 달성 가능성이 매우 탄탄해요.** 15년 뒤에는 목표의 103%에 해당하는 10억 2,959만원에 도달할 것으로 예상해요. 이 점에서 보잘것없는 2,959만원이라는 초과 성과가 생길 것 같아요. 부채 상환 부분에서도 잘하고 있어요. 정훈님과 은영님 각각 1,000만원의 부채를 가지고 있어서 이 부분도 관리가 잘 되고 있어요. 또한 두 분의 투자 가치관도 77%로 일치하고 있어서 함께 투자하는 데에 어려움이 없을 것으로 보여요.\n\n**절세 활용은 보완이 필요해요.** 현재 정훈님과 은영님 모두 ISA, IRP, 연금저축을 개설하지 않은 상태여서 절세의 기회를 활용하지 못하고 있어요. 이 부분에 조금 더 신경 쓰면 좋겠어요. 금융 자산 부분에 있어서는 현재 두 분 합산으로 8,000만원이지만 또래 커플 대비 47% 정도에 해당하니 더 늘려보는 것도 좋겠어요. 이 부분을 보완하면 앞으로 더 안정적인 금융 상황을 마련할 수 있을 것 같아요.','2026-08-20 13:01:27','2026-08-20 13:01:32');
+
+-- 추천
+INSERT INTO `recommendation` (`id`, `couple_id`, `created_at`, `updated_at`) VALUES (629,201017,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+
+-- 추천 슬롯
+INSERT INTO `recommendation_slot` (`id`, `recommendation_id`, `slot_type`, `created_at`, `updated_at`) VALUES (2173,629,'INVESTMENT','2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_slot` (`id`, `recommendation_id`, `slot_type`, `created_at`, `updated_at`) VALUES (2174,629,'DEPOSIT','2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_slot` (`id`, `recommendation_id`, `slot_type`, `created_at`, `updated_at`) VALUES (2175,629,'SAVINGS','2026-08-20 13:01:32','2026-08-20 13:01:32');
+
+-- 추천 상품
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8288,2173,21,1,1,'노후 목표와 투자성향에 맞는 TDF 상품을 우선 골랐어요.','2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8289,2173,20,2,0,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8290,2173,19,3,0,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8291,2173,18,4,0,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8292,2173,17,5,0,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8293,2173,15,6,0,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8294,2173,16,7,0,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8295,2173,14,8,0,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8296,2173,13,9,0,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8297,2174,2,1,1,'두 분의 목표 기간에 맞고 기본금리가 높은 예금 상품이에요.','2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8298,2174,1,2,0,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8299,2175,6,1,1,'목표 기간과 월 저축액에 맞고 기본금리가 높은 적금 상품이에요.','2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8300,2175,7,2,0,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8301,2175,4,3,0,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `recommendation_product` (`id`, `recommendation_slot_id`, `product_id`, `rank_no`, `is_selected`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (8302,2175,3,4,0,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+
+-- 개인 투자 추천 (박정훈만 — 최은영은 개인 투자 추천 대상 아님)
+INSERT INTO `personal_recommendation_investment` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (5922,401403,21,1,'노후 목표와 투자성향에 맞는 TDF 상품을 우선 골랐어요.','2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_investment` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (5923,401403,20,2,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_investment` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (5924,401403,19,3,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_investment` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (5925,401403,22,4,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_investment` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (5926,401403,23,5,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_investment` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (5927,401403,18,6,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_investment` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (5928,401403,17,7,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_investment` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (5929,401403,15,8,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_investment` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (5930,401403,16,9,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_investment` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (5931,401403,14,10,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_investment` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (5932,401403,13,11,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+
+-- 개인 절세 추천
+INSERT INTO `personal_recommendation_tax_saving` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (100,401404,10,1,'노후 목표와 계좌 현황에 잘 맞는 연금저축 상품을 골랐어요.','2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_tax_saving` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (101,401404,11,2,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_tax_saving` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (102,401404,12,3,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_tax_saving` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (103,401404,9,4,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_tax_saving` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (104,401404,8,5,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_tax_saving` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (105,401403,10,1,'노후 목표와 계좌 현황에 잘 맞는 연금저축 상품을 골랐어요.','2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_tax_saving` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (106,401403,11,2,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_tax_saving` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (107,401403,12,3,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_tax_saving` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (108,401403,8,4,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
+INSERT INTO `personal_recommendation_tax_saving` (`id`, `member_id`, `product_id`, `rank_no`, `recommendation_reason`, `created_at`, `updated_at`) VALUES (109,401403,9,5,NULL,'2026-08-20 13:01:32','2026-08-20 13:01:32');
