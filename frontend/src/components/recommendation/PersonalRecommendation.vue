@@ -88,7 +88,7 @@ const visibleProducts = computed(() => {
         <span class="sr-only">개인 추천 정렬 기준</span>
         <select
           v-model="sortType"
-          class="appearance-none rounded-lg border border-line-card bg-white py-1 pr-8 pl-3 text-[14px] font-semibold text-ink outline-none focus:border-ink"
+          class="appearance-none rounded-lg border border-line-card bg-white py-1 pr-8 pl-3 text-[16px] font-semibold text-ink outline-none focus:border-ink"
         >
           <option value="recommendation">추천순</option>
           <option value="name">이름순</option>

@@ -127,7 +127,7 @@ function submit() {
         type="email"
         autocomplete="username"
         placeholder="이메일을 입력하세요"
-        class="border-line-field rounded-field placeholder:text-muted-soft h-12 border bg-white px-3.5 text-[14px] outline-none"
+        class="border-line-field rounded-field placeholder:text-muted-soft h-12 border bg-white px-3.5 text-[16px] outline-none"
       />
 
       <label class="text-ink-sub mt-4 mb-1.5 text-[12px] font-semibold">비밀번호</label>
@@ -139,7 +139,7 @@ function submit() {
           :type="showPassword ? 'text' : 'password'"
           autocomplete="current-password"
           placeholder="비밀번호를 입력하세요"
-          class="placeholder:text-muted-soft flex-1 bg-transparent text-[14px] outline-none"
+          class="placeholder:text-muted-soft flex-1 bg-transparent text-[16px] outline-none"
         />
         <button
           type="button"
