@@ -47,7 +47,7 @@ const authStore = useAuthStore()
         {{ authStore.member?.name ?? '회원' }}님의 자산<br />한 번에 찾아볼게요
       </PageTitle>
       <p class="text-muted mt-2 text-center text-[14px] leading-[1.5]">
-        흩어져 있는 금융 정보를 하나로 합쳐<br />완벽한 찰떡귱합 리포트를 만들어요.
+        흩어져 있는 금융 정보를 하나로 합쳐<br />완벽한 찰떡궁합 리포트를 만들어요.
       </p>
 
       <!-- 전체 선택 -->

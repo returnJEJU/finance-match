@@ -56,8 +56,8 @@ function investmentTypeMetaFor(code) {
 // TEMP: 실제 디자인·문구가 아직 기획되지 않아 임시 라벨·설명으로 연결해둔다. 확정되면 여기만 교체하면 된다.
 const coupleInvestmentTypeMeta = {
   DIFF_0: {
-    label: '찰떡귱합형',
-    description: '금융을 바라보는 기준과 방향이 꼭 닮은 찰떡귱합이에요.',
+    label: '찰떡궁합형',
+    description: '금융을 바라보는 기준과 방향이 꼭 닮은 찰떡궁합이에요.',
   },
   DIFF_1: {
     label: '닮은성향형',
