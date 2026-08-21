@@ -1896,7 +1896,7 @@ const confirmWithdraw = async () => {
             autocomplete="current-password"
             placeholder="비밀번호를 입력하세요"
             :disabled="isWithdrawing"
-            class="mt-2 h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-[14px] text-gray-900 outline-none placeholder:text-gray-300 disabled:bg-gray-50"
+            class="mt-2 h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-[16px] text-gray-900 outline-none placeholder:text-gray-300 disabled:bg-gray-50"
           />
           <p v-if="withdrawPasswordError" class="mt-2 text-[13px] font-medium text-red-500">
             {{ withdrawPasswordError }}
@@ -1910,7 +1910,7 @@ const confirmWithdraw = async () => {
             type="text"
             placeholder="회원 탈퇴"
             :disabled="isWithdrawing"
-            class="mt-2 h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-[14px] text-gray-900 outline-none placeholder:text-gray-300 disabled:bg-gray-50"
+            class="mt-2 h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-[16px] text-gray-900 outline-none placeholder:text-gray-300 disabled:bg-gray-50"
           />
           <p class="mt-2 text-[12px] leading-[1.5] text-gray-400">
             확인을 위해 '{{ WITHDRAW_CONFIRMATION_TEXT }}'를 입력해 주세요.

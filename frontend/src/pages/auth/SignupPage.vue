@@ -189,7 +189,7 @@ function goNext() {
         type="text"
         :maxlength="NAME_MAX_LENGTH"
         placeholder="성함을 입력해 주세요"
-        class="border-line-field rounded-field placeholder:text-muted-soft h-12 border bg-white px-3.5 text-[14px] outline-none"
+        class="border-line-field rounded-field placeholder:text-muted-soft h-12 border bg-white px-3.5 text-[16px] outline-none"
       />
 
       <span class="text-ink-sub mt-6 mb-1.5 text-[14px] font-semibold">성별</span>
@@ -216,7 +216,7 @@ function goNext() {
         inputmode="numeric"
         maxlength="10"
         placeholder="YYYY-MM-DD"
-        class="border-line-field rounded-field placeholder:text-muted-soft h-12 border bg-white px-3.5 text-[14px] outline-none"
+        class="border-line-field rounded-field placeholder:text-muted-soft h-12 border bg-white px-3.5 text-[16px] outline-none"
         @input="formatBirth"
       />
 
@@ -231,7 +231,7 @@ function goNext() {
         inputmode="email"
         autocomplete="email"
         placeholder="example@gmail.com"
-        class="border-line-field rounded-field placeholder:text-muted-soft h-12 border bg-white px-3.5 text-[14px] outline-none"
+        class="border-line-field rounded-field placeholder:text-muted-soft h-12 border bg-white px-3.5 text-[16px] outline-none"
       />
 
       <p v-if="emailInvalid" class="mt-2 text-[12px] font-medium text-red-500">
@@ -246,7 +246,7 @@ function goNext() {
           v-model="form.password"
           :type="showPassword ? 'text' : 'password'"
           placeholder="8~16자 영문, 숫자, 특수문자 조합"
-          class="placeholder:text-muted-soft flex-1 bg-transparent text-[14px] outline-none"
+          class="placeholder:text-muted-soft flex-1 bg-transparent text-[16px] outline-none"
         />
         <button
           type="button"
@@ -270,7 +270,7 @@ function goNext() {
           v-model="form.passwordConfirm"
           :type="showPasswordConfirm ? 'text' : 'password'"
           placeholder="비밀번호를 한번 더 입력해 주세요"
-          class="placeholder:text-muted-soft flex-1 bg-transparent text-[14px] outline-none"
+          class="placeholder:text-muted-soft flex-1 bg-transparent text-[16px] outline-none"
         />
         <button
           type="button"
