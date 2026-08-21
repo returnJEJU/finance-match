@@ -10,9 +10,12 @@ import com.financematch.common.ErrorCode;
 import com.financematch.exception.ApiException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.WeakKeyException;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+import java.util.Date;
 import org.junit.jupiter.api.Test;
 
 class JwtProviderTest {
@@ -114,6 +117,60 @@ class JwtProviderTest {
     }
 
     /** 발급된 토큰을 같은 비밀키로 검증·해석한다. 검증 메서드는 ④ 에서 JwtProvider 에 추가한다. */
+    // ===== subject 가 회원 ID 가 아닌 토큰 =====
+
+    /**
+     * 서명은 우리 키로 맞지만 {@code subject} 가 회원 ID 가 아닌 토큰.
+     *
+     * <p>발급은 항상 이 클래스가 하므로 정상 경로에서는 나오지 않는다. 다만 키가 유출되거나 발급 코드가
+     * 바뀌면 생길 수 있고, 그때 {@code NumberFormatException} 이 그대로 올라가면 500 이 나간다.
+     * 토큰이 이상한 것은 서버 오류가 아니라 <b>401 로 끝나야 한다.</b>
+     */
+    @Test
+    void subject_가_숫자가_아니면_INVALID_TOKEN_이다() {
+        String token = signedToken("not-a-number", "access");
+
+        ApiException e = assertThrows(ApiException.class, () -> jwtProvider.getMemberId(token));
+
+        assertEquals(ErrorCode.INVALID_TOKEN, e.getErrorCode());
+    }
+
+    @Test
+    void subject_가_없으면_INVALID_TOKEN_이다() {
+        String token = signedToken(null, "access");
+
+        ApiException e = assertThrows(ApiException.class, () -> jwtProvider.getMemberId(token));
+
+        assertEquals(ErrorCode.INVALID_TOKEN, e.getErrorCode());
+    }
+
+    /** 같은 키로 서명하되 subject·타입을 마음대로 지정한 토큰을 만든다. */
+    /**
+     * {@code typ} 클레임이 없는 토큰은 이 기능을 넣기 전에 발급된 access 토큰이다.
+     *
+     * <p>거절하면 <b>배포 직후 모든 사용자의 로그인이 한꺼번에 풀린다.</b> 유효기간이 지나 자연히
+     * 사라질 때까지는 access 로 취급해야 한다.
+     */
+    @Test
+    void 타입이_없는_예전_토큰도_access_로_받아준다() {
+        String legacyToken = signedToken("7", null);
+
+        assertEquals(7L, jwtProvider.getMemberId(legacyToken));
+    }
+
+    private String signedToken(String subject, String type) {
+        return Jwts.builder()
+                .setSubject(subject)
+                .claim("typ", type)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + VALIDITY_MS))
+                .setId(UUID.randomUUID().toString())
+                .signWith(
+                        Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8)),
+                        SignatureAlgorithm.HS256)
+                .compact();
+    }
+
     private Claims parse(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8)))
