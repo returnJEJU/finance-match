@@ -146,4 +146,25 @@ class OverallCommentLlmClientTest {
             Thread.interrupted(); // 다른 테스트에 영향 주지 않도록 인터럽트 상태 정리
         }
     }
+
+    /**
+     * 응답 스키마 파싱 실패 처리.
+     *
+     * <p>실제 인자는 클래스 안의 상수라 운영에서는 실패할 수 없다. 다만 {@code readTree} 가 검사
+     * 예외를 던져 처리를 생략할 수 없고, 생성자 안에 두면 그 처리가 <b>영원히 실행되지 않는 채로</b>
+     * 남는다. 파싱을 인자 받는 메서드로 분리해 두었으므로 여기서 고정한다.
+     */
+    @Test
+    void 스키마가_JSON_이_아니면_기동을_멈춘다() {
+        IllegalStateException e =
+                assertThrows(IllegalStateException.class, () -> client.parseSchema("{\"type\":"));
+
+        assertEquals("응답 스키마 파싱 실패", e.getMessage());
+        assertInstanceOf(IOException.class, e.getCause());
+    }
+
+    @Test
+    void 정상_스키마는_그대로_파싱된다() {
+        assertEquals("object", client.parseSchema("{\"type\":\"object\"}").get("type").asText());
+    }
 }
