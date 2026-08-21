@@ -15,7 +15,7 @@ class FinancialValueReasonServiceTest {
         // 전부 diff=1, THRESHOLD=1 → 경계값에서 "비슷함" 판정
         FinancialValueReasonInput input = new FinancialValueReasonInput(3, 3, 3, 3, 4, 4, 4, 4);
 
-        assertEquals("두 분은 가치관이 비슷해요.", service.fallback(input));
+        assertEquals("두 분은 가치관이 비슷해요.", service.generate(input));
     }
 
     @Test
@@ -25,7 +25,7 @@ class FinancialValueReasonServiceTest {
 
         assertEquals(
                 "두 분은 총자산 중 금융자산 비중·투자 경험·금융 투자 상품 이해도·손실 감내력이 차이가 나요.",
-                service.fallback(input));
+                service.generate(input));
     }
 
     @Test
@@ -35,7 +35,7 @@ class FinancialValueReasonServiceTest {
 
         assertEquals(
                 "두 분은 총자산 중 금융자산 비중·투자 경험·손실 감내력은 비슷하지만, 금융 투자 상품 이해도는 차이가 나요.",
-                service.fallback(input));
+                service.generate(input));
     }
 
     @Test
@@ -45,7 +45,7 @@ class FinancialValueReasonServiceTest {
 
         assertEquals(
                 "두 분은 총자산 중 금융자산 비중·손실 감내력은 비슷하지만, 투자 경험·금융 투자 상품 이해도는 차이가 나요.",
-                service.fallback(input));
+                service.generate(input));
     }
 
     @Test
@@ -56,7 +56,7 @@ class FinancialValueReasonServiceTest {
 
         assertEquals(
                 "두 분은 총자산 중 금융자산 비중·투자 경험은 비슷하지만, 금융 투자 상품 이해도·손실 감내력은 차이가 나요.",
-                service.fallback(input));
+                service.generate(input));
     }
 
     @Test
@@ -64,7 +64,7 @@ class FinancialValueReasonServiceTest {
         // lossTolerance raw diff=1 → 보정 후 0.8 (THRESHOLD=1 이내), 나머지 문항도 diff<=1
         FinancialValueReasonInput input = new FinancialValueReasonInput(3, 3, 3, 3, 4, 4, 4, 4);
 
-        assertEquals("두 분은 가치관이 비슷해요.", service.fallback(input));
+        assertEquals("두 분은 가치관이 비슷해요.", service.generate(input));
     }
 
     /**

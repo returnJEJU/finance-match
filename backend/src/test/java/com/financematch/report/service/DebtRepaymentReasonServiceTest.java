@@ -21,7 +21,7 @@ class DebtRepaymentReasonServiceTest {
                         new BigDecimal("100"),
                         new BigDecimal("100"));
 
-        assertEquals("두 분 모두 부채가 없어 높은 점수가 나왔어요.", service.fallback(input));
+        assertEquals("두 분 모두 부채가 없어 높은 점수가 나왔어요.", service.generate(input));
     }
 
     @Test
@@ -36,7 +36,7 @@ class DebtRepaymentReasonServiceTest {
                         new BigDecimal("62.50"),
                         new BigDecimal("100"));
 
-        assertEquals("부채 점수 감점에 철수님이 더 큰 영향을 끼쳤어요.", service.fallback(input));
+        assertEquals("부채 점수 감점에 철수님이 더 큰 영향을 끼쳤어요.", service.generate(input));
     }
 
     @Test
@@ -50,7 +50,7 @@ class DebtRepaymentReasonServiceTest {
                         new BigDecimal("100"),
                         new BigDecimal("40.00"));
 
-        assertEquals("부채 점수 감점에 영희님이 더 큰 영향을 끼쳤어요.", service.fallback(input));
+        assertEquals("부채 점수 감점에 영희님이 더 큰 영향을 끼쳤어요.", service.generate(input));
     }
 
     @Test
@@ -65,7 +65,7 @@ class DebtRepaymentReasonServiceTest {
                         new BigDecimal("70.00"),
                         new BigDecimal("69.00"));
 
-        assertEquals("두 분 모두 부채가 있어요. 하지만 부채 위험도는 영희님이 더 높아요.", service.fallback(input));
+        assertEquals("두 분 모두 부채가 있어요. 하지만 부채 위험도는 영희님이 더 높아요.", service.generate(input));
     }
 
     @Test
@@ -79,7 +79,7 @@ class DebtRepaymentReasonServiceTest {
                         new BigDecimal("40.00"),
                         new BigDecimal("80.00"));
 
-        assertEquals("두 분 모두 부채가 있어요. 하지만 부채 위험도는 철수님이 더 높아요.", service.fallback(input));
+        assertEquals("두 분 모두 부채가 있어요. 하지만 부채 위험도는 철수님이 더 높아요.", service.generate(input));
     }
 
     @Test
@@ -93,6 +93,6 @@ class DebtRepaymentReasonServiceTest {
                         new BigDecimal("55.00"),
                         new BigDecimal("55.00"));
 
-        assertEquals("두 분 모두 부채 위험도가 높아요.", service.fallback(input));
+        assertEquals("두 분 모두 부채 위험도가 높아요.", service.generate(input));
     }
 }

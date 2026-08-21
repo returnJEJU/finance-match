@@ -10,6 +10,8 @@ import com.financematch.report.dto.detail.ReportDetails;
 import com.financematch.report.dto.detail.TaxStatusRow;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class ReportDetailFactoryTest {
@@ -51,7 +53,8 @@ class ReportDetailFactoryTest {
     void 또래_대비_120퍼센트_이상이면_높은_수준으로_평가한다() {
         ReportMemberDetailSource me = defaultMember("철수");
         ReportMemberDetailSource partner = defaultMember("영희");
-        set(me, "financialAsset", new BigDecimal("150000000"));
+        // 또래 참조값은 이제 peerAssetMedian의 2배(2억)라서, 150%가 되려면 3억이 필요하다.
+        set(me, "financialAsset", new BigDecimal("300000000"));
 
         ReportDetails details =
                 factory.create(1L, defaultCouple(), me, partner, new BigDecimal("100000000"));
@@ -60,10 +63,11 @@ class ReportDetailFactoryTest {
     }
 
     @Test
-    void 또래_대비_80에서_120퍼센트면_안정적인_수준으로_평가한다() {
+    void 또래_대비_100에서_120퍼센트면_안정적인_수준으로_평가한다() {
         ReportMemberDetailSource me = defaultMember("철수");
         ReportMemberDetailSource partner = defaultMember("영희");
-        set(me, "financialAsset", new BigDecimal("90000000"));
+        // 또래 참조값은 peerAssetMedian의 2배(2억)라서, 110%가 되려면 2.2억이 필요하다.
+        set(me, "financialAsset", new BigDecimal("220000000"));
 
         ReportDetails details =
                 factory.create(1L, defaultCouple(), me, partner, new BigDecimal("100000000"));
@@ -322,6 +326,58 @@ class ReportDetailFactoryTest {
 
         assertEquals("두 분은 궁합이 좋아요.", details.getAiComment().getBody());
         assertEquals("AI가 분석한 종합 평가예요.", details.getAiComment().getHeadline());
+    }
+
+    /**
+     * 손실 감내도 등급을 전부 확인한다. 등급마다 {@code if} 가 하나씩 있어, 두 등급만 확인하면
+     * 나머지는 한 번도 판정되지 않는다 — 등급을 추가하거나 문자열을 오타 내도 통과해 버린다.
+     */
+    @ParameterizedTest(name = "{0} → {1}")
+    @CsvSource({
+        "ZERO,0%",
+        "UNDER_10,10%",
+        "UNDER_20,20%",
+        "UNDER_50,50%",
+        "UNDER_70,70%",
+        "FULL,100%"
+    })
+    void 손실_감내도_등급마다_비율이_다르다(String attitude, String expected) {
+        ReportMemberDetailSource me = defaultMember("철수");
+        set(me, "capitalPreservationAttitude", attitude);
+
+        ReportDetails details =
+                factory.create(1L, defaultCouple(), me, defaultMember("영희"), BigDecimal.ZERO);
+
+        assertEquals(expected, details.getInvestmentValue().getRows().get(2).getMe());
+    }
+
+    /** 모르는 등급 문자열이 들어오면 0% 로 본다. 여기서 예외가 나면 리포트 상세가 통째로 실패한다. */
+    @Test
+    void 알_수_없는_손실_감내도는_0_퍼센트로_본다() {
+        ReportMemberDetailSource me = defaultMember("철수");
+        set(me, "capitalPreservationAttitude", "UNKNOWN_GRADE");
+
+        ReportDetails details =
+                factory.create(1L, defaultCouple(), me, defaultMember("영희"), BigDecimal.ZERO);
+
+        assertEquals("0%", details.getInvestmentValue().getRows().get(2).getMe());
+    }
+
+    /**
+     * 그래프에 그릴 비율은 0~100 으로 자른다. 예상 자산이 음수(부채가 자산을 넘는 경우)면 달성률이
+     * 음수가 되는데, 그대로 넘기면 막대가 반대로 그려진다.
+     */
+    @Test
+    void 달성률이_음수면_0_으로_자른다() {
+        ReportCoupleDetailSource couple = defaultCouple();
+        set(couple, "targetAmount", new BigDecimal("100000000"));
+        set(couple, "expectedAsset", new BigDecimal("-5000000"));
+
+        ReportDetails details =
+                factory.create(
+                        1L, couple, defaultMember("철수"), defaultMember("영희"), BigDecimal.ZERO);
+
+        assertEquals(0, details.getGoal().getProgress().compareTo(BigDecimal.ZERO));
     }
 
     /**

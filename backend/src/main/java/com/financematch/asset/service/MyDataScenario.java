@@ -172,6 +172,39 @@ public enum MyDataScenario {
         }
     },
 
+    /** 김지은 · 전세·결혼 자금 모으는 사람 · 자산 5,500만 · 절세계좌 전무. */
+    JEONSE_SAVER {
+        @Override
+        MyDataSnapshot build(LocalDateTime fetchedAt) {
+            return new MyDataSnapshot(
+                    List.of(
+                            checking("KB국민은행", "KB국민ONE통장", 5_000_000L),
+                            savings("KB국민은행", "KB Star 정기예금", 35_000_000L),
+                            securities("KB증권", "KB증권 종합위탁", 15_000_000L)),
+                    List.of(loan("KB국민은행", "KB 직장인든든 신용대출", 5_000_000L, 1_500_000L, "5.50")),
+                    noAccounts(),
+                    fetchedAt);
+        }
+    },
+
+    /** 이도현 · 전세·결혼 자금 모으는 사람 · 자산 9,900만 · IRP 300만(연 170만 납입) · ISA 연 1,000만 납입. */
+    JEONSE_ISA_DORMANT {
+        @Override
+        MyDataSnapshot build(LocalDateTime fetchedAt) {
+            return new MyDataSnapshot(
+                    List.of(
+                            checking("토스뱅크", "토스뱅크 통장", 9_000_000L),
+                            savings("KB국민은행", "KB Star 정기예금", 60_000_000L),
+                            securities("KB증권", "KB증권 종합위탁", 30_000_000L)),
+                    List.of(loan("KB국민은행", "KB 직장인든든 신용대출", 5_000_000L, 1_500_000L, "5.50")),
+                    accounts(
+                            false, true, true,
+                            0L, 3_000_000L,
+                            0L, 1_700_000L, 10_000_000L),
+                    fetchedAt);
+        }
+    },
+
     /** 매핑에 없는 회원(직접 가입한 테스트 계정 등)이 받는 기본 시나리오. */
     DEFAULT {
         @Override

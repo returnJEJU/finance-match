@@ -312,6 +312,25 @@ class AuthServiceTest {
         verifyNoInteractions(tokenBlacklist);
     }
 
+    /**
+     * access 토큰 해석이 실패해도 로그아웃 자체는 성공해야 한다.
+     *
+     * <p>여기까지 왔다면 필터가 이미 검증한 토큰이라 정상적으로는 나지 않는다. 다만 해석에 실패했다고
+     * 로그아웃을 실패시키면, 사용자는 <b>로그아웃 버튼이 듣지 않는 상태</b>에 갇힌다. refresh 는 이미
+     * 지웠고 해석되지 않는 토큰은 어차피 인증을 통과하지 못하므로, 삼키고 넘어가는 것이 맞다.
+     */
+    @Test
+    void access_토큰_해석에_실패해도_로그아웃은_성공한다() {
+        when(jwtProvider.getJti(ACCESS_TOKEN))
+                .thenThrow(new ApiException(ErrorCode.INVALID_TOKEN));
+
+        assertDoesNotThrow(() -> authService.logout(1L, ACCESS_TOKEN));
+
+        // 폐기 목록에 올릴 대상을 못 찾았을 뿐, refresh 삭제는 그대로 수행돼야 한다.
+        verify(refreshTokenStore).delete(1L);
+        verifyNoInteractions(tokenBlacklist);
+    }
+
     // ===== 토큰 재발급 =====
 
     @Test

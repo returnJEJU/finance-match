@@ -2,6 +2,7 @@ package com.financematch.asset.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -155,6 +156,31 @@ class SimpleMyDataProviderTest {
         SimpleMyDataProvider provider = new SimpleMyDataProvider(memberMapper);
 
         assertThrows(IllegalArgumentException.class, () -> provider.fetch(null));
+    }
+
+    /**
+     * 시나리오는 이메일로 고른다. 회원을 못 찾거나 이메일이 비어 있으면 기본 시나리오로 떨어져야 한다 —
+     * 여기서 막지 않으면 데모 중에 조회 실패가 그대로 예외로 튄다.
+     */
+    @Test
+    void 회원을_찾지_못하면_기본_시나리오를_쓴다() {
+        when(memberMapper.findById(1L)).thenReturn(null);
+
+        MyDataSnapshot snapshot = new SimpleMyDataProvider(memberMapper).fetch(1L);
+
+        assertEquals(totalAsset(fetchAs("등록되지-않은-이메일@chaltteok.dev")), totalAsset(snapshot));
+    }
+
+    @Test
+    void 이메일이_없는_회원도_기본_시나리오를_쓴다() {
+        Member member = mock(Member.class);
+        when(member.getEmail()).thenReturn(null);
+        when(memberMapper.findById(1L)).thenReturn(member);
+
+        MyDataSnapshot snapshot = new SimpleMyDataProvider(memberMapper).fetch(1L);
+
+        assertNotNull(snapshot);
+        assertFalse(snapshot.assets().isEmpty());
     }
 
     private MyDataSnapshot fetchAs(String email) {
