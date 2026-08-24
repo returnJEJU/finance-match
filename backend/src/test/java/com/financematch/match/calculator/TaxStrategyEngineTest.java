@@ -18,14 +18,14 @@ class TaxStrategyEngineTest {
     void 연금과_ISA_활용도_점수를_계산한다() {
         /*
          * 두 회원의 연금 활용도: 모두 100%
-         * 연금 점수: 6점
+         * 연금 점수: 4점
          *
          * A ISA 활용도: 50%
          * B ISA 활용도: 100%
          * 커플 평균: 75%
-         * ISA 점수: 4 * 0.75 = 3점
+         * ISA 점수: 6 * 0.75 = 4.5점
          *
-         * 최종 점수: 9점
+         * 최종 점수: 8.5점
          */
         MemberCalculationInput memberA = createMember(
                 "6000000",
@@ -51,7 +51,7 @@ class TaxStrategyEngineTest {
         );
 
         assertEquals(
-                new BigDecimal("9.00"),
+                new BigDecimal("8.50"),
                 engine.calculateScore(input)
         );
     }
@@ -61,10 +61,10 @@ class TaxStrategyEngineTest {
         /*
          * 연금 인정 납입액: 4,500,000
          * 연금 활용률: 50%
-         * 연금 원점수: 6 * 0.5 = 3
+         * 연금 원점수: 4 * 0.5 = 2
          *
          * 연금만 평가하므로:
-         * 10 * (3 / 6) = 5점
+         * 10 * (2 / 4) = 5점
          */
         MemberCalculationInput memberA = createMember(
                 "4500000",
@@ -100,10 +100,10 @@ class TaxStrategyEngineTest {
         /*
          * ISA 납입액 10,000,000 / 한도 20,000,000
          * 활용률 50%
-         * ISA 원점수: 4 * 0.5 = 2
+         * ISA 원점수: 6 * 0.5 = 3
          *
          * ISA만 평가하므로:
-         * 10 * (2 / 4) = 5점
+         * 10 * (3 / 6) = 5점
          */
         MemberCalculationInput memberA = createMember(
                 "0",
