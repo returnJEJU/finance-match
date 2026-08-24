@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 public class TaxStrategyEngine {
 
     private static final double TAX_MAX_SCORE = 10.0;
-    private static final double PENSION_MAX_SCORE = 6.0;
-    private static final double ISA_MAX_SCORE = 4.0;
+    private static final double PENSION_MAX_SCORE = 4.0;
+    private static final double ISA_MAX_SCORE = 6.0;
 
     private static final double PENSION_SAVING_LIMIT =
             6_000_000.0;
