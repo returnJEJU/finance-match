@@ -250,7 +250,7 @@ function goNext() {
         />
         <button
           type="button"
-          class="text-muted-soft flex-none cursor-pointer"
+          class="text-muted-soft mr-3 flex-none cursor-pointer"
           :aria-label="showPassword ? '비밀번호 숨기기' : '비밀번호 표시'"
           @click="showPassword = !showPassword"
         >
@@ -274,7 +274,7 @@ function goNext() {
         />
         <button
           type="button"
-          class="text-muted-soft flex-none cursor-pointer"
+          class="text-muted-soft mr-3 flex-none cursor-pointer"
           :aria-label="showPasswordConfirm ? '비밀번호 숨기기' : '비밀번호 표시'"
           @click="showPasswordConfirm = !showPasswordConfirm"
         >

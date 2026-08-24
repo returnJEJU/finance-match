@@ -7,7 +7,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { getCurrentMember } from '@/api/auth'
 import { disconnectCouple, getCoupleProfileMessage, updateCoupleProfileMessage } from '@/api/couple'
 import { getPersonalSurveyResult } from '@/api/personalSurvey'
-import RecommendationProductCard from '@/components/recommendation/RecommendationProductCard.vue'
 import { investmentTypeMeta } from '@/constants/investmentTypeMeta'
 import { useAuthStore } from '@/stores/auth'
 
@@ -18,7 +17,6 @@ import {
   RefreshCw,
   HeartCrack,
   HeartHandshake,
-  Heart,
   LogOut,
   UserRoundX,
   Pencil,
@@ -508,95 +506,6 @@ const submitSurveyRefreshForm = () => {
 }
 
 // ========================================
-// 관심 상품 바텀시트
-// ========================================
-
-const isInterestProductSheetOpen = ref(false)
-
-const interestProducts = ref([
-  {
-    productId: 1,
-    productName: 'KB국민은행 일임형 ISA',
-    description: '일임형 ISA',
-    productUrl: 'https://www.kbstar.com/',
-    slotType: 'TAX_SAVING',
-    accountType: 'ISA',
-  },
-  {
-    productId: 2,
-    productName: 'KB증권 중개형 ISA',
-    description: '직접운용 ISA',
-    productUrl: 'https://www.kbsec.com/',
-    slotType: 'TAX_SAVING',
-    accountType: 'ISA',
-  },
-  {
-    productId: 3,
-    productName: 'KB증권 개인연금저축',
-    description: '연금저축계좌',
-    productUrl: 'https://www.kbsec.com/',
-    slotType: 'TAX_SAVING',
-    accountType: 'PENSION_SAVINGS',
-  },
-])
-
-const openInterestProductSheet = () => {
-  sheetDragY.value = 0
-  isInterestProductSheetOpen.value = true
-}
-
-const closeInterestProductSheet = () => {
-  isInterestProductSheetOpen.value = false
-  sheetDragY.value = 0
-}
-
-// ========================================
-// 바텀시트 드래그
-// ========================================
-
-const sheetStartY = ref(0)
-const sheetDragY = ref(0)
-const isSheetDragging = ref(false)
-
-// 드래그 시작
-const startSheetDrag = (event) => {
-  sheetStartY.value = event.touches[0].clientY
-  isSheetDragging.value = true
-}
-
-// 드래그 중
-const moveSheetDrag = (event) => {
-  if (!isSheetDragging.value) return
-
-  const currentY = event.touches[0].clientY
-  const distance = currentY - sheetStartY.value
-
-  // 위쪽으로는 움직이지 못하게
-  sheetDragY.value = Math.max(distance, 0)
-}
-
-// 드래그 종료
-const endSheetDrag = () => {
-  isSheetDragging.value = false
-
-  // 100px 이상 내렸으면 닫기
-  if (sheetDragY.value >= 100) {
-    // 아래로 내려가는 애니메이션
-    sheetDragY.value = window.innerHeight
-
-    setTimeout(() => {
-      isInterestProductSheetOpen.value = false
-      sheetDragY.value = 0
-    }, 250)
-
-    return
-  }
-
-  // 충분히 내리지 않았으면 원래 위치로 복귀
-  sheetDragY.value = 0
-}
-
-// ========================================
 // 커플 연결 끊기 바텀시트
 // ========================================
 
@@ -878,28 +787,6 @@ const confirmWithdraw = async () => {
       </div>
     </section>
 
-    <!-- 상품 추천 -->
-    <section class="mt-3">
-      <h2 class="mb-2 text-[13px] font-medium text-gray-500">상품 추천</h2>
-
-      <div
-        class="flex cursor-pointer items-center rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm transition hover:bg-gray-50"
-        @click="openInterestProductSheet"
-      >
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
-          <Heart :size="20" :stroke-width="1.8" class="text-pink-400" />
-        </div>
-
-        <div class="ml-3 flex-1">
-          <p class="text-[18px] font-bold text-gray-900">관심 상품</p>
-
-          <p class="mt-0.5 text-[13px] text-gray-500">관심 상품 목록으로 이동합니다</p>
-        </div>
-
-        <ChevronRight :size="18" :stroke-width="1.8" class="text-[#b8b18a]" />
-      </div>
-    </section>
-
     <!-- 커플 관리 -->
     <section class="mt-3">
       <h2 class="mb-2 text-[13px] font-medium text-gray-500">커플 관리</h2>
@@ -1114,7 +1001,7 @@ const confirmWithdraw = async () => {
               aria-hidden="true"
             />
 
-            <h3 class="text-[18px] leading-[1.4] font-bold text-gray-800">
+            <h3 class="text-[17px] leading-[1.4] font-bold text-gray-800">
               {{ personalSurveyResult.headline }}
             </h3>
           </div>
@@ -1598,62 +1485,6 @@ const confirmWithdraw = async () => {
             안전하게 관리됩니다.
           </p>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ======================================== -->
-  <!-- 관심 상품 바텀시트 -->
-  <!-- ======================================== -->
-  <div
-    v-if="isInterestProductSheetOpen"
-    class="fixed inset-0 z-[100] bg-black/40"
-    @click.self="closeInterestProductSheet"
-  >
-    <div
-      class="absolute bottom-0 left-1/2 max-h-[82vh] w-full max-w-[430px] overflow-y-auto rounded-t-[28px] bg-white px-5 pb-8 pt-3 shadow-2xl"
-      :style="{
-        transform: `translate(-50%, ${sheetDragY}px)`,
-        transition: isSheetDragging ? 'none' : 'transform 0.25s ease',
-      }"
-    >
-      <!-- 상단 핸들 -->
-      <div
-        class="flex cursor-grab touch-none justify-center py-2 active:cursor-grabbing"
-        @touchstart="startSheetDrag"
-        @touchmove.prevent="moveSheetDrag"
-        @touchend="endSheetDrag"
-      >
-        <div class="h-1.5 w-12 rounded-full bg-gray-300"></div>
-      </div>
-
-      <!-- 헤더 -->
-      <div class="mt-5 flex items-start justify-between">
-        <div>
-          <h2 class="text-[22px] font-bold text-gray-900">관심 상품</h2>
-
-          <p class="mt-2 text-[12px] text-gray-500">관심 상품을 확인하고 비교해 보세요.</p>
-        </div>
-
-        <button
-          type="button"
-          class="flex h-8 w-8 cursor-pointer items-center justify-center text-gray-600"
-          @click="closeInterestProductSheet"
-        >
-          <X :size="24" :stroke-width="2" />
-        </button>
-      </div>
-
-      <!-- 상품 목록 -->
-      <div class="mt-6 space-y-4">
-        <RecommendationProductCard
-          v-for="product in interestProducts"
-          :key="product.productId"
-          :product="product"
-          :slot-type="product.slotType"
-          :favorite-state="true"
-          compact
-        />
       </div>
     </div>
   </div>

@@ -969,9 +969,10 @@ const toggleCard = (key) => {
                 <span class="text-[18px] font-bold text-ink">{{ section.title }}</span>
               </span>
               <span class="flex items-center gap-1.5">
-                <span class="text-[17px] font-bold text-ink"
-                  >{{ roundScore(section.score) }}/{{ section.maxScore }}</span
-                >
+                <span class="text-[17px] font-bold text-ink">
+                  {{ roundScore(section.score)
+                  }}<span class="text-muted">/{{ section.maxScore }}</span>
+                </span>
                 <ChevronUp v-if="isOpen(section.key)" :size="16" class="text-muted" />
                 <ChevronDown v-else :size="16" class="text-muted" />
               </span>
@@ -1177,7 +1178,7 @@ const toggleCard = (key) => {
 
                   <template v-for="row in section.rows" :key="row.label">
                     <div class="flex items-center justify-center border-t border-line-soft py-4">
-                      <span class="text-[19px] font-extrabold text-ink">{{ row.label }}</span>
+                      <span class="text-[16px] font-extrabold text-ink">{{ row.label }}</span>
                     </div>
                     <div class="flex items-center justify-center border-t border-line-soft py-4">
                       <span
@@ -1324,7 +1325,7 @@ const toggleCard = (key) => {
                     {{ column }}
                   </span>
                   <template v-for="row in section.rows" :key="row.label">
-                    <span class="text-[19px] font-extrabold text-ink">{{ row.label }}</span>
+                    <span class="text-[16px] font-extrabold text-ink">{{ row.label }}</span>
                     <span class="text-[16px] font-extrabold" :class="taxStatusClass(row.me)">
                       {{ row.me }}
                     </span>

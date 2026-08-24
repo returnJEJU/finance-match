@@ -169,7 +169,7 @@ const formattedAum = computed(() =>
       <div class="min-w-0 flex-1">
         <div class="flex min-h-14 items-start gap-3">
           <h3
-            class="flex min-h-14 min-w-0 flex-1 items-center text-[19px] leading-7 font-bold text-ink"
+            class="flex min-h-14 min-w-0 flex-1 items-center text-[18px] leading-7 font-bold text-ink"
           >
             {{ product.productName }}
           </h3>
@@ -181,32 +181,36 @@ const formattedAum = computed(() =>
           >
             {{ product.riskLabel }}
           </span>
-
-          <span
-            v-else-if="!listMode && product.comparisonValue"
-            class="shrink-0 whitespace-nowrap pt-0.5 text-[15px] leading-5 font-bold text-ink"
-          >
-            {{ product.comparisonValue }}
-          </span>
         </div>
 
         <p
           v-if="product.description"
-          class="mt-2 -ml-[68px] flex items-start gap-2 text-[15px] leading-6 text-muted"
+          class="mt-2 -ml-[68px] flex items-start gap-2 text-[14px] leading-6 text-muted"
         >
           <Check class="mt-0.5 h-5 w-5 shrink-0 text-muted" stroke-width="2.5" />
           <span>{{ product.description }}</span>
         </p>
 
-        <button
-          type="button"
-          class="-ml-[48px] inline-flex items-center gap-1.5 border-b border-ink text-[15px] font-bold text-ink"
+        <div
+          class="-ml-[48px] flex items-center justify-between gap-3"
           :class="personalMode && !showRecommendationReason ? 'mt-7' : 'mt-4'"
-          @click.stop="openProduct(product.productUrl)"
         >
-          상품 상세 보기
-          <ArrowUpRight class="h-5 w-5" stroke-width="2.5" />
-        </button>
+          <button
+            type="button"
+            class="inline-flex items-center gap-1.5 border-b border-ink text-[15px] font-bold text-ink"
+            @click.stop="openProduct(product.productUrl)"
+          >
+            상품 상세 보기
+            <ArrowUpRight class="h-5 w-5" stroke-width="2.5" />
+          </button>
+
+          <span
+            v-if="!listMode && product.comparisonValue"
+            class="shrink-0 whitespace-nowrap text-[13px] leading-5 font-semibold text-muted"
+          >
+            {{ product.comparisonValue }}
+          </span>
+        </div>
         <div v-if="listMode" class="mt-7 -ml-[68px] flex min-h-7 items-center">
           <div v-if="slotType === 'INVESTMENT' && formattedAum" class="flex items-baseline gap-2">
             <span class="text-[14px] text-muted">순자산</span>
@@ -232,7 +236,7 @@ const formattedAum = computed(() =>
 
         <div
           v-if="showRecommendationReason && product.recommendationReason"
-          class="mt-4 -ml-[68px] flex items-start gap-1.5 rounded-xl bg-[#FFFBE0] px-3.5 py-3.5 text-[15px] leading-6 text-[#665F18]"
+          class="mt-4 -ml-[68px] flex items-start gap-1.5 rounded-xl bg-[#FFFBE0] px-3.5 py-3.5 text-[14px] leading-6 text-[#665F18]"
         >
           <Lightbulb class="mt-0.5 h-5 w-5 shrink-0 text-[#C79B00]" stroke-width="2.3" />
           <p>

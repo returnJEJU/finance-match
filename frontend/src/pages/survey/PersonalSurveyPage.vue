@@ -54,15 +54,15 @@ const financialKnowledgeOptions = [
   },
   {
     value: 'MEDIUM',
-    label: '주식·채권·펀드의 손실 가능성을 이해하고 있음',
+    label: '주식·채권·펀드의 손실 가능성을 이해함',
   },
   {
     value: 'HIGH',
-    label: '주식·채권·펀드의 구조를 구체적으로 이해하고 있음',
+    label: '주식·채권·펀드의 구조를 구체적으로 이해함',
   },
   {
     value: 'VERY_HIGH',
-    label: '대부분의 금융투자상품을 깊이 있게 이해하고 있음',
+    label: '대부분의 금융투자상품을 깊이 있게 이해함',
   },
 ]
 
@@ -255,7 +255,7 @@ function submitSurvey() {
       <div class="rounded-field flex items-center gap-4 bg-brand px-4 py-4">
         <img :src="characterExcited" alt="" class="h-16 w-16 flex-none object-contain" />
 
-        <p class="text-[16px] leading-[1.45] font-bold text-brand-ink">
+        <p class="text-[14px] leading-[1.45] font-bold text-brand-ink">
           찰떡같은 금융 궁합 진단을 위해 개인 질문에 답해 주세요. 두 분의 금융 상황과 투자 가치관을
           바탕으로 금융 궁합을 분석해요.
         </p>
@@ -264,8 +264,8 @@ function submitSurvey() {
       <form class="mt-7 space-y-7" @submit.prevent="submitSurvey">
         <!-- Q1 -->
         <fieldset class="min-w-0">
-          <label for="annual-income" class="text-[20px] font-extrabold text-ink">
-            <span class="text-[22px]">Q1.</span> 최근 <span class="text-good">1년</span>간 세전
+          <label for="annual-income" class="text-[17.5px] font-extrabold text-ink">
+            <span class="text-[20px]">Q1.</span> 최근 <span class="text-good">1년</span>간 세전
             <span class="text-good">총소득</span>은 얼마인가요?
           </label>
 
@@ -293,8 +293,8 @@ function submitSurvey() {
 
         <!-- Q2 -->
         <fieldset class="min-w-0">
-          <label for="monthly-amount" class="text-[20px] font-extrabold text-ink">
-            <span class="text-[22px]">Q2.</span> <span class="text-good">매달</span> 무리 없이
+          <label for="monthly-amount" class="text-[17.5px] font-extrabold text-ink">
+            <span class="text-[20px]">Q2.</span> <span class="text-good">매달</span> 무리 없이
             <span class="text-good">저축</span>하거나 <span class="text-good">투자</span>할 수 있는
             금액은 얼마인가요?
           </label>
@@ -323,8 +323,8 @@ function submitSurvey() {
 
         <!-- Q3 -->
         <fieldset>
-          <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
-            <span class="text-[22px]">Q3.</span> 총 자산(부동산 등을 포함) 중
+          <legend class="text-[17.5px] leading-[1.5] font-extrabold text-ink">
+            <span class="text-[20px]">Q3.</span> 총 자산(부동산 등을 포함) 중
             <span class="text-good">금융자산</span>이 차지하는 <span class="text-good">비중</span>은
             어느 정도인가요?
           </legend>
@@ -334,7 +334,7 @@ function submitSurvey() {
               v-for="option in financialAssetRatioOptions"
               :key="option.value"
               type="button"
-              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[18px] font-semibold transition"
+              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[16px] font-semibold transition"
               :class="
                 financialAssetRatio === option.value
                   ? 'border-good bg-mint text-ink'
@@ -349,8 +349,8 @@ function submitSurvey() {
 
         <!-- Q4: 복수 선택 -->
         <fieldset>
-          <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
-            <span class="text-[22px]">Q4.</span> 지금까지 거래하거나 가입해 본
+          <legend class="text-[17.5px] leading-[1.5] font-extrabold text-ink">
+            <span class="text-[20px]">Q4.</span> 지금까지 거래하거나 가입해 본
             <span class="text-good">금융상품</span>을 <span class="text-good">모두</span> 선택해
             주세요.
           </legend>
@@ -359,7 +359,7 @@ function submitSurvey() {
               v-for="option in investmentExperienceOptions"
               :key="option.value"
               type="button"
-              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[18px] leading-[1.45] font-semibold transition"
+              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[16px] leading-[1.45] font-semibold transition"
               :class="
                 investmentExperiences.includes(option.value)
                   ? 'border-good bg-mint text-ink'
@@ -375,8 +375,8 @@ function submitSurvey() {
 
         <!-- Q5 -->
         <fieldset>
-          <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
-            <span class="text-[22px]">Q5.</span> 금융투자상품에 대한
+          <legend class="text-[17.5px] leading-[1.5] font-extrabold text-ink">
+            <span class="text-[20px]">Q5.</span> 금융투자상품에 대한
             <span class="text-good">이해도</span>는 어느 정도인가요?
           </legend>
 
@@ -385,7 +385,7 @@ function submitSurvey() {
               v-for="option in financialKnowledgeOptions"
               :key="option.value"
               type="button"
-              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[18px] leading-[1.45] font-semibold transition"
+              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[16px] leading-[1.45] font-semibold transition"
               :class="
                 financialKnowledge === option.value
                   ? 'border-good bg-mint text-ink'
@@ -400,8 +400,8 @@ function submitSurvey() {
 
         <!-- Q6 -->
         <fieldset>
-          <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
-            <span class="text-[22px]">Q6.</span> 현재 금융 목표를 위해 투자한다고 가정했을 때,
+          <legend class="text-[17.5px] leading-[1.5] font-extrabold text-ink">
+            <span class="text-[20px]">Q6.</span> 현재 금융 목표를 위해 투자한다고 가정했을 때,
             <span class="text-good">원금 보존 태도</span>는 무엇인가요?
           </legend>
 
@@ -410,7 +410,7 @@ function submitSurvey() {
               v-for="option in capitalPreservationOptions"
               :key="option.value"
               type="button"
-              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[18px] font-semibold transition"
+              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[16px] font-semibold transition"
               :class="
                 capitalPreservationAttitude === option.value
                   ? 'border-good bg-mint text-ink'

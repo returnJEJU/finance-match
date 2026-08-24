@@ -94,11 +94,11 @@ const compatibilityScore = computed(() =>
       <header>
         <h1 class="text-[22px] font-extrabold tracking-[-0.03em]">우리를 위한 추천 패키지</h1>
 
-        <p class="mt-1.5 text-[14px] leading-5 text-muted">
+        <p class="mt-1.5 text-[13px] leading-5 text-muted">
           <template v-if="compatibilityScore !== null">
-            우리 궁합 {{ compatibilityScore }}점 · 두 사람의 목표와 자산 흐름을 반영했어요
+            우리 궁합 {{ compatibilityScore }}점 · 두 사람의 목표와 금융 상태를 반영했어요
           </template>
-          <template v-else>두 사람의 목표와 자산 흐름을 반영했어요</template>
+          <template v-else>두 사람의 목표와 금융 상태를 반영했어요</template>
         </p>
       </header>
 
