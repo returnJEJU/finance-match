@@ -70,7 +70,7 @@ function startCoupleSurvey() {
               초대 코드 보낼게요
             </strong>
             <span class="mt-1 block text-[16px] leading-[1.45] font-medium text-muted">
-              공동 목표를 정하고 새 초대 코드를 <br />만들어요.
+              공동 목표를 정하고 새 초대 코드를 만들어요.
             </span>
           </span>
 
@@ -97,8 +97,7 @@ function startCoupleSurvey() {
               초대 코드 입력할게요
             </strong>
             <span class="mt-1 block text-[16px] leading-[1.45] font-medium text-muted">
-              파트너에게 받은 코드를 입력하고 <br />
-              바로 연결해요.
+              파트너에게 받은 코드를 입력하고 바로 연결해요.
             </span>
           </span>
 

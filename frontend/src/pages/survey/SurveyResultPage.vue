@@ -102,13 +102,13 @@ async function handleNext() {
             aria-hidden="true"
           />
 
-          <h2 class="text-[20px] leading-[1.4] font-bold">
+          <h2 class="text-[18px] leading-[1.4] font-bold">
             {{ result.headline }}
           </h2>
         </div>
 
         <div
-          class="text-ink-sub mt-2 min-h-0 flex-1 overflow-y-auto pr-2 text-[18px] leading-[1.7]"
+          class="text-ink-sub mt-2 min-h-0 flex-1 overflow-y-auto pr-2 text-[17px] leading-[1.7]"
         >
           <p>{{ result.description }}</p>
         </div>

@@ -217,7 +217,7 @@ function submitSurvey() {
     <main class="mt-1 flex-1">
       <div class="rounded-field flex items-center gap-4 bg-brand px-4 py-4">
         <img :src="characterExcited" alt="" class="h-16 w-16 flex-none object-contain" />
-        <p class="text-[16px] leading-[1.45] font-bold text-brand-ink">
+        <p class="text-[14px] leading-[1.45] font-bold text-brand-ink">
           두 분이 함께 준비하고 싶은 공동 목표를 알려주세요. 목표 달성 가능성 진단과 맞춤형 금융상품
           추천에 활용돼요.
         </p>
@@ -225,8 +225,8 @@ function submitSurvey() {
 
       <form class="mt-7 space-y-7" @submit.prevent="submitSurvey">
         <fieldset>
-          <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
-            <span class="text-[22px]">Q1.</span> 두 분이 우선으로 생각하는
+          <legend class="text-[17.5px] leading-[1.5] font-extrabold text-ink">
+            <span class="text-[20px]">Q1.</span> 두 분이 우선으로 생각하는
             <span class="text-good">금융 목표</span>는 무엇인가요? 중요한 순서대로
             <span class="text-good">2개</span>를 골라 주세요.
           </legend>
@@ -236,7 +236,7 @@ function submitSurvey() {
               v-for="option in goalOptions"
               :key="option.value"
               type="button"
-              class="rounded-chip flex min-h-12 w-full items-center justify-between border px-4 py-3 text-left text-[18px] font-semibold transition"
+              class="rounded-chip flex min-h-12 w-full items-center justify-between border px-4 py-3 text-left text-[16px] font-semibold transition"
               :class="
                 selectedGoalRank(option.value)
                   ? 'border-good bg-mint text-ink'
@@ -256,8 +256,8 @@ function submitSurvey() {
         </fieldset>
 
         <fieldset class="min-w-0">
-          <label for="target-amount" class="text-[20px] font-extrabold text-ink">
-            <span class="text-[22px]">Q2.</span> <span class="text-good">1순위</span> 공동 목표를
+          <label for="target-amount" class="text-[17.5px] font-extrabold text-ink">
+            <span class="text-[20px]">Q2.</span> <span class="text-good">1순위</span> 공동 목표를
             위해 <span class="text-good">필요한 금액</span>은 얼마인가요?
           </label>
 
@@ -282,8 +282,8 @@ function submitSurvey() {
         </fieldset>
 
         <fieldset class="min-w-0">
-          <label for="target-period" class="text-[20px] font-extrabold text-ink">
-            <span class="text-[22px]">Q3.</span> <span class="text-good">1순위</span> 공동 목표를
+          <label for="target-period" class="text-[17.5px] font-extrabold text-ink">
+            <span class="text-[20px]">Q3.</span> <span class="text-good">1순위</span> 공동 목표를
             <span class="text-good">몇 개월 안에</span> 이루고 싶으신가요?
           </label>
 
@@ -308,8 +308,8 @@ function submitSurvey() {
         </fieldset>
 
         <fieldset>
-          <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
-            <span class="text-[22px]">Q4.</span> 두 분이 앞으로
+          <legend class="text-[17.5px] leading-[1.5] font-extrabold text-ink">
+            <span class="text-[20px]">Q4.</span> 두 분이 앞으로
             <span class="text-good">대출</span>을 받는다면, 주된
             <span class="text-good">목적</span>은 무엇인가요?
           </legend>
@@ -319,7 +319,7 @@ function submitSurvey() {
               v-for="option in loanPurposeOptions"
               :key="option.value"
               type="button"
-              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[18px] font-semibold transition"
+              class="rounded-chip flex min-h-12 w-full items-center justify-center border px-4 py-3 text-center text-[16px] font-semibold transition"
               :class="
                 loanPurpose === option.value
                   ? 'border-good bg-mint text-ink'
@@ -333,8 +333,8 @@ function submitSurvey() {
         </fieldset>
 
         <fieldset>
-          <legend class="text-[20px] leading-[1.5] font-extrabold text-ink">
-            <span class="text-[22px]">Q5.</span> <span class="text-good">최근 1개월</span> 이내
+          <legend class="text-[17.5px] leading-[1.5] font-extrabold text-ink">
+            <span class="text-[20px]">Q5.</span> <span class="text-good">최근 1개월</span> 이내
             대출을 받았거나, <span class="text-good">앞으로 1개월</span> 이내 대출을 받을
             예정인가요?
           </legend>
@@ -342,7 +342,7 @@ function submitSurvey() {
           <div class="mt-3 grid grid-cols-2 gap-3">
             <button
               type="button"
-              class="rounded-chip h-12 border text-[18px] font-extrabold transition"
+              class="rounded-chip h-12 border text-[16px] font-extrabold transition"
               :class="
                 hasLoanWithinOneMonth === true
                   ? 'border-good bg-mint text-ink'
@@ -354,7 +354,7 @@ function submitSurvey() {
             </button>
             <button
               type="button"
-              class="rounded-chip h-12 border text-[18px] font-extrabold transition"
+              class="rounded-chip h-12 border text-[16px] font-extrabold transition"
               :class="
                 hasLoanWithinOneMonth === false
                   ? 'border-good bg-mint text-ink'
