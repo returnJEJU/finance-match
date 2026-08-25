@@ -34,6 +34,7 @@ import com.financematch.match.domain.MatchMemberData;
 import com.financematch.match.mapper.MatchMapper;
 import com.financematch.overallcomment.OverallCommentInputBuilder;
 import com.financematch.overallcomment.OverallCommentService;
+import com.financematch.overallcomment.dto.OverallCommentPromptInput;
 import com.financematch.report.dto.reason.DebtRepaymentReasonInput;
 import com.financematch.report.dto.reason.FinancialValueReasonInput;
 import com.financematch.report.dto.reason.TaxStrategyReasonInput;
@@ -505,6 +506,147 @@ class MatchServiceTest {
 
         verify(matchMapper).findCoupleDataByMemberId(1L);
         verify(matchMapper).findCompatibilityResultByCoupleId(1L);
+    }
+
+    @Test
+    void 재시도시_회원ID가_null이면_INVALID_INPUT_예외를_던진다() {
+        ApiException exception = assertThrows(
+                ApiException.class,
+                () -> matchService.retryOverallComment(null)
+        );
+
+        assertEquals(ErrorCode.INVALID_INPUT, exception.getErrorCode());
+        verifyNoInteractions(matchMapper);
+    }
+
+    @Test
+    void 재시도시_연결된_커플이_없으면_NOT_FOUND_예외를_던진다() {
+        when(matchMapper.findCoupleDataByMemberId(1L))
+                .thenReturn(null);
+
+        ApiException exception = assertThrows(
+                ApiException.class,
+                () -> matchService.retryOverallComment(1L)
+        );
+
+        assertEquals(ErrorCode.NOT_FOUND, exception.getErrorCode());
+        verify(matchMapper, never()).findCompatibilityResultByCoupleId(anyLong());
+    }
+
+    @Test
+    void 재시도시_궁합도_계산결과가_없으면_NOT_FOUND_예외를_던진다() {
+        MatchCoupleData couple = createCouple();
+
+        when(matchMapper.findCoupleDataByMemberId(1L))
+                .thenReturn(couple);
+        when(matchMapper.findCompatibilityResultByCoupleId(1L))
+                .thenReturn(null);
+
+        ApiException exception = assertThrows(
+                ApiException.class,
+                () -> matchService.retryOverallComment(1L)
+        );
+
+        assertEquals(ErrorCode.NOT_FOUND, exception.getErrorCode());
+        assertEquals("금융 궁합도 계산 결과를 찾을 수 없습니다.", exception.getMessage());
+    }
+
+    @Test
+    void 재시도시_회원_정보가_없으면_NOT_FOUND_예외를_던지고_재계산을_요청하지_않는다() {
+        MatchCoupleData couple = createCouple();
+        CompatibilityResult existingResult = new CompatibilityResult();
+        existingResult.setId(10L);
+
+        when(matchMapper.findCoupleDataByMemberId(1L))
+                .thenReturn(couple);
+        when(matchMapper.findCompatibilityResultByCoupleId(1L))
+                .thenReturn(existingResult);
+        when(matchMapper.findMemberDataByMemberId(1L))
+                .thenReturn(null);
+        when(matchMapper.findMemberDataByMemberId(2L))
+                .thenReturn(new MatchMemberData());
+
+        ApiException exception = assertThrows(
+                ApiException.class,
+                () -> matchService.retryOverallComment(1L)
+        );
+
+        assertEquals(ErrorCode.NOT_FOUND, exception.getErrorCode());
+        verify(matchCalculationPersistenceService, never()).recalculate(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void 재시도하면_새로_저장하지_않고_기존_결과_id로_종합_코멘트_재생성만_요청한다() {
+        MatchCoupleData couple = createCouple();
+        couple.setFirstGoalType("HOUSING");
+
+        MatchMemberData memberA = new MatchMemberData();
+        memberA.setMemberId(1L);
+        memberA.setMemberName("김철수");
+
+        MatchMemberData memberB = new MatchMemberData();
+        memberB.setMemberId(2L);
+        memberB.setMemberName("이영희");
+
+        CompatibilityResult existingResult = new CompatibilityResult();
+        existingResult.setId(10L);
+        existingResult.setCoupleId(1L);
+
+        MemberCalculationInput memberACalcInput =
+                MemberCalculationInput.builder()
+                        .totalDebt(BigDecimal.ZERO)
+                        .hasIsa(false)
+                        .isaAnnualDeposit(BigDecimal.ZERO)
+                        .hasIrp(false)
+                        .irpAnnualPayment(BigDecimal.ZERO)
+                        .dcAnnualPayment(BigDecimal.ZERO)
+                        .hasPensionSaving(false)
+                        .pensionAnnualPayment(BigDecimal.ZERO)
+                        .build();
+
+        MatchCalculationInput calculationInput =
+                MatchCalculationInput.builder()
+                        .memberA(memberACalcInput)
+                        .memberB(memberACalcInput)
+                        .build();
+
+        MatchCalculationResult calculationResult =
+                MatchCalculationResult.builder()
+                        .totalScore(new BigDecimal("70.36"))
+                        .build();
+
+        OverallCommentPromptInput promptInput = org.mockito.Mockito.mock(OverallCommentPromptInput.class);
+
+        when(matchMapper.findCoupleDataByMemberId(1L))
+                .thenReturn(couple);
+        when(matchMapper.findCompatibilityResultByCoupleId(1L))
+                .thenReturn(existingResult);
+        when(matchMapper.findMemberDataByMemberId(1L))
+                .thenReturn(memberA);
+        when(matchMapper.findMemberDataByMemberId(2L))
+                .thenReturn(memberB);
+        when(matchCalculationPersistenceService.recalculate(couple, memberA, memberB, existingResult))
+                .thenReturn(new MatchCalculationPersistenceResult(existingResult, calculationInput, calculationResult));
+        when(overallCommentInputBuilder.build(
+                        org.mockito.ArgumentMatchers.eq(calculationInput),
+                        org.mockito.ArgumentMatchers.eq(calculationResult),
+                        org.mockito.ArgumentMatchers.eq("김철수"),
+                        org.mockito.ArgumentMatchers.eq("이영희"),
+                        org.mockito.ArgumentMatchers.eq("HOUSING"),
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any()))
+                .thenReturn(promptInput);
+
+        matchService.retryOverallComment(1L);
+
+        verify(matchMapper, never()).insertCompatibilityResult(
+                org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.any());
+        verify(overallCommentService).generateAndSave(10L, promptInput);
     }
 
     private MatchCoupleData createCouple() {

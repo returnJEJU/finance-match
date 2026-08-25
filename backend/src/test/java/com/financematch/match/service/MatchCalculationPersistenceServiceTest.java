@@ -162,4 +162,41 @@ class MatchCalculationPersistenceServiceTest {
         verify(matchMapper)
                 .findCompatibilityResultByCoupleId(1L);
     }
+
+    @Test
+    void 재계산은_새로_저장하지_않고_기존_결과를_그대로_돌려준다() {
+        MatchCoupleData couple = new MatchCoupleData();
+        couple.setCoupleId(1L);
+
+        MatchMemberData memberA = new MatchMemberData();
+        MatchMemberData memberB = new MatchMemberData();
+
+        MatchCalculationInput calculationInput =
+                MatchCalculationInput.builder().build();
+
+        MatchCalculationResult calculationResult =
+                MatchCalculationResult.builder()
+                        .totalScore(new BigDecimal("70.36"))
+                        .build();
+
+        CompatibilityResult existingResult = new CompatibilityResult();
+        existingResult.setId(10L);
+
+        when(converter.convert(couple, memberA, memberB))
+                .thenReturn(calculationInput);
+
+        when(calculator.calculate(calculationInput))
+                .thenReturn(calculationResult);
+
+        MatchCalculationPersistenceResult result =
+                service.recalculate(couple, memberA, memberB, existingResult);
+
+        assertSame(existingResult, result.savedResult());
+        assertSame(calculationInput, result.calculationInput());
+        assertSame(calculationResult, result.calculationResult());
+
+        verify(matchMapper, org.mockito.Mockito.never()).insertCompatibilityResult(
+                org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.any());
+    }
 }

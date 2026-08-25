@@ -7,6 +7,8 @@ import com.financematch.report.mapper.ReportWriteMapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -43,16 +45,30 @@ public class OverallCommentService {
     private final OverallCommentPromptBuilder promptBuilder;
     private final OverallCommentRuleValidator ruleValidator;
     private final OverallCommentValidator overallCommentValidator;
+    private final OverallCommentToneValidator toneValidator;
     private final ReportWriteMapper reportWriteMapper;
     private final ObjectMapper mapper = new ObjectMapper();
+
+    // 최초 생성(MatchService.getOrCalculateCompatibilityResult)과 실패 후 재시도(프론트 "다시 시도"
+    // 버튼)가 같은 compatibilityResultId에 대해 겹쳐 호출될 수 있다 — 사용자가 재시도 버튼을 연타하는
+    // 경우가 대표적. 같은 id에 대한 생성이 이미 진행 중이면 새로 시작하지 않고 건너뛴다(비용 낭비 방지).
+    private final Set<Long> inFlight = ConcurrentHashMap.newKeySet();
 
     /** {@link #generate}로 만든 결과를 {@code report.expert_comment}에 저장한다. 실패하면 저장을 건너뛴다. */
     @Async
     public void generateAndSave(Long compatibilityResultId, OverallCommentPromptInput input) {
-        generate(input)
-                .ifPresentOrElse(
-                        comment -> reportWriteMapper.upsertExpertComment(compatibilityResultId, comment),
-                        () -> log.warn("종합 코멘트가 비어 있어 저장을 건너뜁니다(compatibilityResultId={})", compatibilityResultId));
+        if (!inFlight.add(compatibilityResultId)) {
+            log.info("종합 코멘트 생성이 이미 진행 중이라 건너뜁니다(compatibilityResultId={})", compatibilityResultId);
+            return;
+        }
+        try {
+            generate(input)
+                    .ifPresentOrElse(
+                            comment -> reportWriteMapper.upsertExpertComment(compatibilityResultId, comment),
+                            () -> log.warn("종합 코멘트가 비어 있어 저장을 건너뜁니다(compatibilityResultId={})", compatibilityResultId));
+        } finally {
+            inFlight.remove(compatibilityResultId);
+        }
     }
 
     public Optional<String> generate(OverallCommentPromptInput input) {
@@ -86,15 +102,26 @@ public class OverallCommentService {
             }
 
             OverallCommentValidator.ValidationResult result = overallCommentValidator.validate(fullText, input);
-            if (result.valid()) {
+            if (!result.valid()) {
+                log.warn(
+                        "종합 코멘트 검증 실패(시도 {}/{}): {} — {}",
+                        attempt,
+                        MAX_ATTEMPTS,
+                        fullText,
+                        result.violations());
+                continue;
+            }
+
+            OverallCommentToneValidator.ValidationResult toneResult = toneValidator.validate(fullText, input);
+            if (toneResult.valid()) {
                 return Optional.of(fullText);
             }
             log.warn(
-                    "종합 코멘트 검증 실패(시도 {}/{}): {} — {}",
+                    "종합 코멘트 톤 검증 실패(시도 {}/{}): {} — {}",
                     attempt,
                     MAX_ATTEMPTS,
                     fullText,
-                    result.violations());
+                    toneResult.violations());
         }
 
         log.warn("종합 코멘트 생성 {}회 모두 실패", MAX_ATTEMPTS);

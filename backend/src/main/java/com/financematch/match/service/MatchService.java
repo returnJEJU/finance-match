@@ -166,6 +166,56 @@ public class MatchService {
         return savedResult;
     }
 
+    /**
+     * 종합 코멘트({@code report.expert_comment}) 생성이 {@link OverallCommentService}의 재시도
+     * 횟수까지 전부 실패해서 비어있는 경우, 프론트의 "다시 시도" 버튼으로 코멘트만 재생성한다.
+     * 5축 점수({@link CompatibilityResult})는 이미 계산·저장돼 있으니 재계산·재저장하지 않고, 원천
+     * 데이터로 계산 입력값만 다시 만들어({@link MatchCalculationPersistenceService#recalculate})
+     * 기존 {@code CompatibilityResult}의 id에 새 코멘트를 덮어쓴다.
+     */
+    public void retryOverallComment(Long memberId) {
+        if (memberId == null) {
+            throw new ApiException(ErrorCode.INVALID_INPUT);
+        }
+
+        MatchCoupleData couple = matchMapper.findCoupleDataByMemberId(memberId);
+        if (couple == null) {
+            throw new ApiException(ErrorCode.NOT_FOUND, "연결된 커플 정보를 찾을 수 없습니다.");
+        }
+
+        CompatibilityResult existingResult =
+                matchMapper.findCompatibilityResultByCoupleId(couple.getCoupleId());
+        if (existingResult == null) {
+            throw new ApiException(ErrorCode.NOT_FOUND, "금융 궁합도 계산 결과를 찾을 수 없습니다.");
+        }
+
+        MatchMemberData memberA = matchMapper.findMemberDataByMemberId(couple.getInviterId());
+        MatchMemberData memberB = matchMapper.findMemberDataByMemberId(couple.getInviteeId());
+        if (memberA == null || memberB == null) {
+            throw new ApiException(ErrorCode.NOT_FOUND, "금융 궁합도 계산에 필요한 회원 정보를 찾을 수 없습니다.");
+        }
+
+        MatchCalculationPersistenceResult recalculated =
+                matchCalculationPersistenceService.recalculate(couple, memberA, memberB, existingResult);
+        MatchCalculationInput calculationInput = recalculated.calculationInput();
+        MatchCalculationResult calculationResult = recalculated.calculationResult();
+
+        TaxSavingProfile memberATaxProfile = buildTaxSavingProfile(calculationInput.getMemberA());
+        TaxSavingProfile memberBTaxProfile = buildTaxSavingProfile(calculationInput.getMemberB());
+
+        OverallCommentPromptInput overallCommentInput =
+                overallCommentInputBuilder.build(
+                        calculationInput,
+                        calculationResult,
+                        memberA.getMemberName(),
+                        memberB.getMemberName(),
+                        couple.getFirstGoalType(),
+                        memberATaxProfile,
+                        memberBTaxProfile);
+
+        overallCommentService.generateAndSave(existingResult.getId(), overallCommentInput);
+    }
+
     @Transactional(readOnly = true)
     public CompatibilityResult getCompatibilityResult(
             Long memberId

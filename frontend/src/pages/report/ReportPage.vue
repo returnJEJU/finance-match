@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import {
   ArrowRight,
   ChevronDown,
@@ -13,7 +13,7 @@ import {
   TriangleAlert,
 } from 'lucide-vue-next'
 
-import { getReport, getReportStatus } from '@/api/report'
+import { getReport, getReportStatus, retryExpertComment } from '@/api/report'
 import AnimatedCharacter from '@/components/ui/AnimatedCharacter.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import characterExcited from '@/assets/images/characters/character-excited.png'
@@ -136,6 +136,70 @@ watch(
       queryClient.invalidateQueries({ queryKey: ['report'] })
     }
   },
+)
+
+// AI 종합 코멘트는 5축 reason과 달리 결정론적 fallback이 없다. 게다가 5축과 달리 완성 여부를
+// 따로 폴링할 상태 필드가 없어서(report.scoreDetails.aiComment.body가 비어있는 이유가 "아직
+// 생성 중"인지 "재시도(백엔드 최대 3회)까지 다 실패"인지 서버 응답만으로는 구분이 안 됨), 프론트가
+// 직접 몇 차례 더 물어보고 판단한다 — 이 폴링 창 안에 채워지면 "로딩", 그래도 안 채워지면 그때
+// "실패"로 확정해 재시도 UI를 보여준다.
+const AI_COMMENT_POLL_INTERVAL_MS = 4000
+const AI_COMMENT_MAX_POLLS = 8 // 약 32초 — 실제 관찰된 생성 시간(수 초~수십 초)보다 넉넉하게 잡음
+
+const aiCommentPollCount = ref(0)
+let aiCommentPollTimer = null
+
+// report 자체가 아직 없을 때(축 계산 전)는 이 로직이 관여할 대상이 아니다 — 그건 isNotReady가
+// 따로 처리한다. report는 있는데 코멘트만 비어있는 경우만 본다.
+const isAiCommentBodyEmpty = computed(
+  () => Boolean(report.value) && !report.value.scoreDetails?.aiComment?.body,
+)
+const isAiCommentLoading = computed(
+  () => isAiCommentBodyEmpty.value && aiCommentPollCount.value < AI_COMMENT_MAX_POLLS,
+)
+const isAiCommentFailed = computed(
+  () => isAiCommentBodyEmpty.value && aiCommentPollCount.value >= AI_COMMENT_MAX_POLLS,
+)
+
+const stopAiCommentPolling = () => {
+  if (aiCommentPollTimer) {
+    clearInterval(aiCommentPollTimer)
+    aiCommentPollTimer = null
+  }
+}
+
+watch(
+  isAiCommentBodyEmpty,
+  (isEmpty) => {
+    if (!isEmpty) {
+      stopAiCommentPolling()
+      return
+    }
+    if (aiCommentPollTimer || aiCommentPollCount.value >= AI_COMMENT_MAX_POLLS) {
+      return
+    }
+    aiCommentPollTimer = setInterval(() => {
+      aiCommentPollCount.value += 1
+      if (aiCommentPollCount.value >= AI_COMMENT_MAX_POLLS) {
+        stopAiCommentPolling()
+      }
+      queryClient.invalidateQueries({ queryKey: ['report'] })
+    }, AI_COMMENT_POLL_INTERVAL_MS)
+  },
+  { immediate: true },
+)
+
+onUnmounted(stopAiCommentPolling)
+
+const retryCommentMutation = useMutation({
+  mutationFn: retryExpertComment,
+})
+const isRetryingComment = computed(() => retryCommentMutation.isPending.value)
+const hasRequestedRetry = computed(() => retryCommentMutation.isSuccess.value)
+const aiCommentFallbackMessage = computed(() =>
+  hasRequestedRetry.value
+    ? '다시 생성을 요청했어요. 잠시 후 새로고침 해보세요.'
+    : '코멘트를 불러오지 못했어요. 새로고침 해보세요.',
 )
 
 // report.scoreAxes(점수·만점)와 report.scoreDetails(항목별 상세 데이터)를 합쳐서 카드 하나로 만든다.
@@ -1350,15 +1414,35 @@ const toggleCard = (key) => {
               </h3>
             </div>
             <div class="mt-4 pb-16">
-              <p class="text-[16px] font-extrabold text-warn">
-                {{ report.scoreDetails.aiComment.headline }}
-              </p>
-              <p class="mt-2 whitespace-pre-line text-[15px] leading-[1.65] text-ink-sub">
-                <template v-for="(segment, index) in aiCommentBodySegments" :key="index">
-                  <strong v-if="segment.bold" class="font-bold text-ink">{{ segment.text }}</strong>
-                  <template v-else>{{ segment.text }}</template>
-                </template>
-              </p>
+              <template v-if="isAiCommentLoading">
+                <p class="py-6 text-center text-[13px] text-muted">불러오는 중...</p>
+              </template>
+              <template v-else-if="isAiCommentFailed">
+                <p class="text-[15px] leading-[1.65] text-ink-sub">
+                  {{ aiCommentFallbackMessage }}
+                </p>
+                <button
+                  type="button"
+                  class="mt-3 rounded-full border border-line-card px-4 py-2 text-[13px] font-semibold text-ink-sub disabled:opacity-50"
+                  :disabled="isRetryingComment"
+                  @click="retryCommentMutation.mutate()"
+                >
+                  {{ isRetryingComment ? '요청하는 중...' : '다시 시도' }}
+                </button>
+              </template>
+              <template v-else>
+                <p class="text-[16px] font-extrabold text-warn">
+                  {{ report.scoreDetails.aiComment.headline }}
+                </p>
+                <p class="mt-2 whitespace-pre-line text-[15px] leading-[1.65] text-ink-sub">
+                  <template v-for="(segment, index) in aiCommentBodySegments" :key="index">
+                    <strong v-if="segment.bold" class="font-bold text-ink">{{
+                      segment.text
+                    }}</strong>
+                    <template v-else>{{ segment.text }}</template>
+                  </template>
+                </p>
+              </template>
             </div>
             <AnimatedCharacter
               :src="characterExcited"

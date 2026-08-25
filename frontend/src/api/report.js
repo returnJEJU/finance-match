@@ -139,3 +139,10 @@ export async function getReportStatus() {
   const data = await api.get('/v1/members/me/report/status')
   return reportStatusSchema.parse(data)
 }
+
+// AI 종합 코멘트 생성이 재시도까지 전부 실패해 비어있을 때 "다시 시도" 버튼이 부른다. 실제 생성은
+// 백엔드에서 비동기로 도니 이 호출은 트리거만 하고 바로 끝난다 — 완성 여부는 getReport()를 다시
+// 불러서 확인해야 한다.
+export async function retryExpertComment() {
+  await api.post('/v1/members/me/report/expert-comment/retry')
+}
