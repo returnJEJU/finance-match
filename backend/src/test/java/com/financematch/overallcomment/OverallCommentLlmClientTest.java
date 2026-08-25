@@ -63,6 +63,23 @@ class OverallCommentLlmClientTest {
     }
 
     @Test
+    void checkTone도_동일한_응답_파싱_경로를_거쳐_text를_반환한다() throws Exception {
+        String body =
+                """
+                {
+                  "output": [
+                    {"type": "message", "content": [{"text": "{\\"valid\\": true, \\"violations\\": []}"}]}
+                  ]
+                }
+                """;
+        stubSend(mockResponse(200, body));
+
+        String result = client.checkTone("톤 검증 프롬프트");
+
+        assertEquals("{\"valid\": true, \"violations\": []}", result);
+    }
+
+    @Test
     void 상태코드가_200이_아니면_예외() throws Exception {
         stubSend(mockResponse(500, "에러 본문"));
 
