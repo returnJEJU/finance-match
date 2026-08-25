@@ -5,11 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.financematch.auth.resolver.LoginMemberArgumentResolver;
+import com.financematch.match.service.MatchService;
 import com.financematch.report.dto.ReportResponse;
 import com.financematch.report.dto.ReportStatusResponse;
 import com.financematch.report.service.ReportService;
@@ -48,6 +50,7 @@ class ReportControllerTest {
     private static final Long MEMBER_ID = 42L;
 
     @Mock private ReportService reportService;
+    @Mock private MatchService matchService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -56,7 +59,7 @@ class ReportControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc =
-                MockMvcBuilders.standaloneSetup(new ReportController(reportService))
+                MockMvcBuilders.standaloneSetup(new ReportController(reportService, matchService))
                         .setCustomArgumentResolvers(new LoginMemberArgumentResolver())
                         .build();
 
@@ -117,6 +120,14 @@ class ReportControllerTest {
         JsonNode body = getJson("/v1/members/me/report/status");
 
         assertTrue(body.get("data").get("ready").asBoolean());
+    }
+
+    @Test
+    void 재시도는_expert_comment_retry_경로에서_인증된_회원_ID_로_서비스를_호출한다() throws Exception {
+        mockMvc.perform(post("/v1/members/me/report/expert-comment/retry"))
+                .andExpect(status().isOk());
+
+        verify(matchService).retryOverallComment(MEMBER_ID);
     }
 
     // ===== 도우미 =====

@@ -48,4 +48,21 @@ public class MatchCalculationPersistenceService {
 
         return new MatchCalculationPersistenceResult(savedResult, calculationInput, calculationResult);
     }
+
+    /**
+     * {@link #calculateAndPersist}와 달리 새로 저장(INSERT)하지 않는다 — 이미 {@code CompatibilityResult}가
+     * 있는 커플의 종합 코멘트만 재생성할 때(프론트 "다시 시도" 버튼) 계산 입력값·산출값만 다시 만들면
+     * 되기 때문이다. {@code existingResult}를 그대로 {@code savedResult}로 돌려준다.
+     */
+    public MatchCalculationPersistenceResult recalculate(
+            MatchCoupleData couple,
+            MatchMemberData memberA,
+            MatchMemberData memberB,
+            CompatibilityResult existingResult) {
+
+        MatchCalculationInput calculationInput = converter.convert(couple, memberA, memberB);
+        MatchCalculationResult calculationResult = calculator.calculate(calculationInput);
+
+        return new MatchCalculationPersistenceResult(existingResult, calculationInput, calculationResult);
+    }
 }
