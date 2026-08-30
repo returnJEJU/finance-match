@@ -205,6 +205,10 @@ docker compose -f docker-compose.prod.yml ps
 
 ## 8. 다시 배포할 때 — 자동
 
+> **2026-08-30 현재 자동 실행은 꺼져 있다.** 프로젝트 종료와 함께 EC2 를 내렸다.
+> 서버를 다시 띄우려면 ① 아래 Secrets 를 새 서버 기준으로 등록하고
+> ② `.github/workflows/deploy.yml` 의 `push:` 트리거 주석을 풀면 된다.
+
 **`develop` 에 머지하면 자동으로 배포된다.** 손으로 할 일이 없다.
 진행 상황은 GitHub 저장소의 **Actions** 탭에서 `deploy` 워크플로로 볼 수 있다.
 
